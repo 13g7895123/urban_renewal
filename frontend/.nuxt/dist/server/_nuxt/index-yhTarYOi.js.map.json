@@ -1,0 +1,1 @@
+{"file":"index-yhTarYOi.js","mappings":";;;;;;;;;;;;;;;;;;;;;;;AAMA,IAAA,CAAA,QAAA,SAAA,IAAAA,iBAAA,MAAM,WAAW,QAAQ,CAAA;;;;;;;;;;;;","names":["_withAsyncContext"],"sources":["../../../../pages/index.vue"],"sourcesContent":["<template>\n  <div></div>\n</template>\n\n<script setup>\n// Redirect to login page\nawait navigateTo('/login')\n</script>"],"version":3}
