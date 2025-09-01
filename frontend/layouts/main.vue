@@ -108,4 +108,13 @@
 .navbar-gradient {
   background: linear-gradient(to right, #2FA633, #72BB29);
 }
+
+aside {
+  background-color: rgba(31, 41, 55, 0.8) !important;
+  backdrop-filter: blur(4px);
+}
+
+main {
+  background-color: white !important;
+}
 </style>

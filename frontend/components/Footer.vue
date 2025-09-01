@@ -46,4 +46,8 @@ const props = withDefaults(defineProps<{
 .footer-logo {
   border-radius: 8px;
 }
+
+.footer-section {
+  background-color: white !important;
+}
 </style>
