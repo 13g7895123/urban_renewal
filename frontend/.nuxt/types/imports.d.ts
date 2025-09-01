@@ -110,7 +110,6 @@ declare global {
   const useAuthStore: typeof import('../../stores/auth')['useAuthStore']
   const useCarouselScroll: typeof import('../../node_modules/@nuxt/ui/dist/runtime/composables/useCarouselScroll')['useCarouselScroll']
   const useClients: typeof import('../../composables/useClients')['useClients']
-  const useColorMode: typeof import('../../node_modules/@nuxtjs/color-mode/dist/runtime/composables')['useColorMode']
   const useCookie: typeof import('../../node_modules/nuxt/dist/app/composables/cookie')['useCookie']
   const useCopyToClipboard: typeof import('../../node_modules/@nuxt/ui/dist/runtime/composables/useCopyToClipboard')['useCopyToClipboard']
   const useCssModule: typeof import('vue')['useCssModule']
@@ -136,7 +135,6 @@ declare global {
   const useNotificationsStore: typeof import('../../stores/notifications')['useNotificationsStore']
   const useNuxtApp: typeof import('../../node_modules/nuxt/dist/app/nuxt')['useNuxtApp']
   const useNuxtData: typeof import('../../node_modules/nuxt/dist/app/composables/asyncData')['useNuxtData']
-  const useNuxtDevTools: typeof import('../../node_modules/@nuxt/devtools/dist/runtime/use-nuxt-devtools')['useNuxtDevTools']
   const usePageTitle: typeof import('../../composables/usePageTitle')['usePageTitle']
   const usePinia: typeof import('../../node_modules/@pinia/nuxt/dist/runtime/composables')['usePinia']
   const usePopper: typeof import('../../node_modules/@nuxt/ui/dist/runtime/composables/usePopper')['usePopper']
@@ -194,15 +192,12 @@ declare global {
   const useState: typeof import('../../node_modules/nuxt/dist/app/composables/state')['useState']
   const useSweetAlert: typeof import('../../composables/useSweetAlert')['useSweetAlert']
   const useTemplateRef: typeof import('vue')['useTemplateRef']
-  const useTheme: typeof import('../../composables/useTheme')['useTheme']
-  const useThemeStore: typeof import('../../stores/theme')['useThemeStore']
   const useTimer: typeof import('../../node_modules/@nuxt/ui/dist/runtime/composables/useTimer')['useTimer']
   const useToast: typeof import('../../node_modules/@nuxt/ui/dist/runtime/composables/useToast')['useToast']
   const useTransitionState: typeof import('vue')['useTransitionState']
   const useUI: typeof import('../../node_modules/@nuxt/ui/dist/runtime/composables/useUI')['useUI']
   const useUsers: typeof import('../../composables/useUsers')['useUsers']
   const useWebsiteSettingsApi: typeof import('../../composables/useWebsiteSettingsApi')['useWebsiteSettingsApi']
-  const useWebsiteSettingsStore: typeof import('../../stores/websiteSettings')['useWebsiteSettingsStore']
   const watch: typeof import('vue')['watch']
   const watchEffect: typeof import('vue')['watchEffect']
   const watchPostEffect: typeof import('vue')['watchPostEffect']
@@ -333,7 +328,6 @@ declare module 'vue' {
     readonly useAuthStore: UnwrapRef<typeof import('../../stores/auth')['useAuthStore']>
     readonly useCarouselScroll: UnwrapRef<typeof import('../../node_modules/@nuxt/ui/dist/runtime/composables/useCarouselScroll')['useCarouselScroll']>
     readonly useClients: UnwrapRef<typeof import('../../composables/useClients')['useClients']>
-    readonly useColorMode: UnwrapRef<typeof import('../../node_modules/@nuxtjs/color-mode/dist/runtime/composables')['useColorMode']>
     readonly useCookie: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/cookie')['useCookie']>
     readonly useCopyToClipboard: UnwrapRef<typeof import('../../node_modules/@nuxt/ui/dist/runtime/composables/useCopyToClipboard')['useCopyToClipboard']>
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
@@ -359,7 +353,6 @@ declare module 'vue' {
     readonly useNotificationsStore: UnwrapRef<typeof import('../../stores/notifications')['useNotificationsStore']>
     readonly useNuxtApp: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/nuxt')['useNuxtApp']>
     readonly useNuxtData: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/asyncData')['useNuxtData']>
-    readonly useNuxtDevTools: UnwrapRef<typeof import('../../node_modules/@nuxt/devtools/dist/runtime/use-nuxt-devtools')['useNuxtDevTools']>
     readonly usePageTitle: UnwrapRef<typeof import('../../composables/usePageTitle')['usePageTitle']>
     readonly usePinia: UnwrapRef<typeof import('../../node_modules/@pinia/nuxt/dist/runtime/composables')['usePinia']>
     readonly usePopper: UnwrapRef<typeof import('../../node_modules/@nuxt/ui/dist/runtime/composables/usePopper')['usePopper']>
@@ -417,15 +410,12 @@ declare module 'vue' {
     readonly useState: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/state')['useState']>
     readonly useSweetAlert: UnwrapRef<typeof import('../../composables/useSweetAlert')['useSweetAlert']>
     readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
-    readonly useTheme: UnwrapRef<typeof import('../../composables/useTheme')['useTheme']>
-    readonly useThemeStore: UnwrapRef<typeof import('../../stores/theme')['useThemeStore']>
     readonly useTimer: UnwrapRef<typeof import('../../node_modules/@nuxt/ui/dist/runtime/composables/useTimer')['useTimer']>
     readonly useToast: UnwrapRef<typeof import('../../node_modules/@nuxt/ui/dist/runtime/composables/useToast')['useToast']>
     readonly useTransitionState: UnwrapRef<typeof import('vue')['useTransitionState']>
     readonly useUI: UnwrapRef<typeof import('../../node_modules/@nuxt/ui/dist/runtime/composables/useUI')['useUI']>
     readonly useUsers: UnwrapRef<typeof import('../../composables/useUsers')['useUsers']>
     readonly useWebsiteSettingsApi: UnwrapRef<typeof import('../../composables/useWebsiteSettingsApi')['useWebsiteSettingsApi']>
-    readonly useWebsiteSettingsStore: UnwrapRef<typeof import('../../stores/websiteSettings')['useWebsiteSettingsStore']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
     readonly watchEffect: UnwrapRef<typeof import('vue')['watchEffect']>
     readonly watchPostEffect: UnwrapRef<typeof import('vue')['watchPostEffect']>

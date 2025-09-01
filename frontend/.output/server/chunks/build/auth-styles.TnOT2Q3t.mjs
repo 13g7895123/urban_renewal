@@ -9,7 +9,6 @@ import 'node:url';
 import '@iconify/utils';
 import 'node:crypto';
 import 'consola';
-import 'node:module';
 import 'node:path';
 
 const authStyles_TnOT2Q3t = [auth_vue_vue_type_style_index_0_scoped_140ce645_lang, auth_vue_vue_type_style_index_0_scoped_140ce645_lang];

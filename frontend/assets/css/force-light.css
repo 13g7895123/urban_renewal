@@ -1,0 +1,102 @@
+/* Force light mode - Override all dark mode classes */
+
+/* Disable dark mode entirely */
+.dark {
+  display: none !important;
+}
+
+/* Override dark mode variables and classes */
+html.light,
+html:not(.dark) {
+  /* Force all components to use light mode styles */
+  --color-mode: 'light';
+}
+
+/* Sidebar should maintain its dark styling - EXCEPTIONS */
+html.light aside.bg-gray-800 {
+  background-color: #1f2937 !important; /* gray-800 */
+  color: white !important;
+}
+
+html.light aside.bg-gray-800 .bg-gray-600 {
+  background-color: #4b5563 !important; /* gray-600 */
+}
+
+html.light aside.bg-gray-800 .text-white {
+  color: white !important;
+}
+
+html.light aside.bg-gray-800 .hover\:bg-gray-700:hover {
+  background-color: #374151 !important; /* gray-700 */
+}
+
+html.light aside.bg-gray-800 .bg-blue-600 {
+  background-color: #2563eb !important; /* blue-600 for active state */
+}
+
+/* Remove dark mode styles completely - BUT preserve sidebar */
+@media (prefers-color-scheme: dark) {
+  /* Override all dark mode media queries */
+  html,
+  html * {
+    /* Force light backgrounds and text colors */
+    background-color: inherit !important;
+    color: inherit !important;
+  }
+  
+  /* Exception: Preserve sidebar dark styling */
+  html aside.bg-gray-800,
+  html aside.bg-gray-800 * {
+    background-color: inherit !important;
+    color: inherit !important;
+  }
+}
+
+/* Force override all Tailwind dark: prefixed classes */
+html.light .dark\:bg-gray-900,
+html.light .dark\:bg-gray-800,
+html.light .dark\:text-white,
+html.light .dark\:text-gray-200,
+html.light .dark\:border-gray-700,
+html.light .dark\:divide-gray-800,
+html.light .dark\:ring-gray-800,
+html.light .dark\:hover\:bg-gray-900,
+html.light .dark\:hover\:bg-gray-800,
+html.light .dark\:focus-visible\:ring-primary-400 {
+  /* Reset to default/light mode values */
+  background-color: transparent !important;
+  color: inherit !important;
+  border-color: inherit !important;
+  ring-color: inherit !important;
+}
+
+/* Specifically target common dark mode component classes */
+html.light [class*="dark:"] {
+  /* Remove any dark mode styling */
+  background-color: inherit !important;
+  color: inherit !important;
+  border-color: inherit !important;
+}
+
+/* Exception: Don't override sidebar dark classes */
+html.light aside.bg-gray-800 [class*="dark:"] {
+  background-color: initial !important;
+  color: initial !important;
+  border-color: initial !important;
+}
+
+/* Ensure buttons and interactive elements use light mode styling */
+html.light button[class*="dark:"],
+html.light a[class*="dark:"],
+html.light div[class*="dark:"] {
+  background-color: inherit !important;
+  color: inherit !important;
+}
+
+/* Exception: Don't override sidebar buttons */
+html.light aside.bg-gray-800 button[class*="dark:"],
+html.light aside.bg-gray-800 a[class*="dark:"],
+html.light aside.bg-gray-800 div[class*="dark:"] {
+  background-color: initial !important;
+  color: initial !important;
+}

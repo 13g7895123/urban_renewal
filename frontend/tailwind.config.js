@@ -33,7 +33,6 @@ module.exports = {
     'focus:ring-primary-500',
     'focus:border-primary-500'
   ],
-  darkMode: 'class',
   theme: {
     extend: {
       colors: {

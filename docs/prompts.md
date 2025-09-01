@@ -76,3 +76,15 @@
     - 把git commit請勿有任何協作相關寫入CLAUDE.md
     - 幫我為這個專案串聯上這個git，"https://github.com/13g7895123/urban_renewal.git"
     - add commit push
+26. source資料夾中有一個更新會管理的照片，檔名把_替換成/即為路由，請依據照片實作出前端的功能，目前先不用驗證帳號，登入就直接跳到這一頁
+27. 背景圖請參考首頁，Footer也一樣，看是不是直接幫我拉成components，並用layout使用
+28. 請移除專案中所有暗色模式相關的css，包含main.css
+29. source資料夾中有各個頁面的照片，檔名把_替換成/即為路由，請依據照片實作出前端的功能，並且sidebar要更新對應的頁面
+30. 你移除後出現500錯誤，[vite-node] [plugin:vite:vue] [UnexpectedReservedWord] /components/BackgroundImage.vue:2:0 <br><pre>1 | &lt;template&gt; | ^ 2 | &lt;div 3 | class="background-image"</pre><br>
+31. [vite-node] [plugin:vite:vue] [UnexpectedToken] /components/BackgroundImage.vue:3:16 <br><pre>2 | &lt;div 3 | class="background-image" 4 | :class="containerClass" data-v-inspector="components/BackgroundImage.vue:2:3" | ^ 5 | &gt; 6 | &lt;slot /&gt;</pre><br>，修復後，請執行網址，確保/tables/urban-renewal這個頁面沒有錯誤，如果有錯，請繼續修到正確為止
+32. 目前做完的頁面會有Failed to resolve import "/images/urban-renewal-icon.png" from "pages/index.vue". Does the file exist?，檢查所有的頁面，有這個的話先用網路上的圖片替代
+33. 找出專案中設定html的class加入dark的地方
+34. 修復這個錯誤，Nuxt instance is unavailable!，並強制html的class不要有dark
+35. 強制把html的class dark改成light，問題是dark class還在阿
+36. 幫我補上側邊欄的深底色，他是原本就要用那個顏色
+37. 先幫我add commit push

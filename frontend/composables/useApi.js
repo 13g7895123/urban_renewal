@@ -95,7 +95,13 @@ export const useApi = () => {
         
         // Redirect to login page (only if not already on login page)
         if (process.client && !window.location.pathname.includes('/auth/login')) {
-          await navigateTo('/auth/login')
+          try {
+            await navigateTo('/auth/login')
+          } catch (navError) {
+            // If Nuxt navigation fails, fall back to window.location
+            console.warn('[API] Navigation failed, using window.location fallback:', navError)
+            window.location.href = '/login'
+          }
         }
       }
       

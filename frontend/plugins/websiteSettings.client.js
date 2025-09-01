@@ -1,88 +1,29 @@
 export default defineNuxtPlugin(async () => {
-  // Initialize website settings on client side
-  const websiteSettingsStore = useWebsiteSettingsStore()
-  const colorMode = useColorMode()
+  // Website settings plugin disabled since color-mode is disabled
+  // and websiteSettingsStore doesn't exist
+  console.log('[Website Settings Plugin] Disabled to prevent Nuxt instance errors')
   
-  // Load settings from API/localStorage with await
-  await websiteSettingsStore.loadSettings()
-  
-  // Sync Nuxt color mode with website settings
+  // Basic page title management without dependencies
   if (process.client) {
-    const savedThemeMode = localStorage.getItem('website-theme-mode')
-    if (savedThemeMode) {
-      colorMode.preference = savedThemeMode
-    } else if (websiteSettingsStore.themeMode) {
-      colorMode.preference = websiteSettingsStore.themeMode
-      // Save to Nuxt storage
-      localStorage.setItem('website-theme-mode', websiteSettingsStore.themeMode)
+    const pageTitles = {
+      '/': '都更計票系統首頁',
+      '/login': '登入 - 都更計票系統',
+      '/signup': '註冊 - 都更計票系統',
+      '/tables/urban-renewal': '更新會管理 - 都更計票系統',
+      '/tables/meeting': '會議管理 - 都更計票系統',
+      '/tables/issue': '投票管理 - 都更計票系統',
+      '/pages/user': '使用者基本資料變更 - 都更計票系統'
     }
     
-    // Apply theme settings immediately after loading
-    websiteSettingsStore.applyThemeSettings()
+    // Simple title update function
+    const updateTitle = () => {
+      const currentPath = window.location.pathname
+      const pageTitle = pageTitles[currentPath] || '都更計票系統'
+      document.title = pageTitle
+    }
     
-    // Watch for color mode changes and sync with website settings
-    watch(() => colorMode.preference, (newMode) => {
-      if (newMode !== websiteSettingsStore.themeMode) {
-        websiteSettingsStore.themeMode = newMode
-        localStorage.setItem('website-theme-mode', newMode)
-        websiteSettingsStore.saveSettings()
-        websiteSettingsStore.applyThemeSettings()
-      }
-    }, { immediate: false })
-  }
-  
-  // Set up page title management
-  const router = useRouter()
-  
-  // Listen for settings changes and update document properties
-  if (process.client) {
-    window.addEventListener('website-settings-changed', (event) => {
-      const settings = event.detail
-      
-      // Update favicon
-      let favicon = document.querySelector('link[rel="icon"]')
-      if (!favicon) {
-        favicon = document.createElement('link')
-        favicon.rel = 'icon'
-        document.head.appendChild(favicon)
-      }
-      favicon.href = settings.faviconUrl
-      
-      // Force title update based on current route
-      nextTick(async () => {
-        const { usePageTitle } = await import('~/composables/usePageTitle')
-        usePageTitle()
-      })
-    })
-    
-    // Handle route-based title updates
-    router.afterEach(() => {
-      nextTick(() => {
-        const pageTitles = {
-          '/': '儀表板',
-          '/dashboard': '儀表板',
-          '/profile': '個人檔案',
-          '/settings': '設定',
-          '/settings/theme': '主題設定',
-          '/settings/website': '網站設定',
-          '/settings/ui': '介面設定',
-          '/settings/users': '用戶管理',
-          '/clients': '業主管理',
-          '/clients/create': '新增業主',
-          '/projects': '專案管理',
-          '/projects/create': '新增專案',
-          '/help': '幫助中心'
-        }
-        
-        const currentPath = router.currentRoute.value.path
-        const pageTitle = pageTitles[currentPath]
-        
-        if (pageTitle) {
-          websiteSettingsStore.updateDocumentTitle(pageTitle)
-        } else {
-          websiteSettingsStore.updateDocumentTitle()
-        }
-      })
-    })
+    // Update title on load and navigation
+    updateTitle()
+    window.addEventListener('popstate', updateTitle)
   }
 })

@@ -80,12 +80,10 @@ const handleLogin = async () => {
   
   loading.value = true
   try {
-    // Add login logic here
-    console.log('Login attempt:', { username: username.value, password: password.value })
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000))
-    // Redirect after successful login
-    // await navigateTo('/dashboard')
+    // Redirect to urban renewal management page (no authentication required for now)
+    await navigateTo('/tables/urban-renewal')
   } catch (error) {
     console.error('Login error:', error)
   } finally {

@@ -1,18 +1,19 @@
 export default defineNuxtConfig({
-  devtools: { enabled: true },
+  devtools: { enabled: false },
   ssr: true,
   modules: [
     '@nuxt/ui',
     '@pinia/nuxt'
   ],
   plugins: [
-    '~/plugins/apexcharts.client.js'
+    '~/plugins/apexcharts.client.js',
+    '~/plugins/force-light-mode.client.js'
   ],
   // Transpile ApexCharts for better compatibility
   build: {
     transpile: ['vue3-apexcharts']
   },
-  css: ['~/assets/css/main.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/force-light.css'],
   runtimeConfig: {
     // Private keys (only available on server-side)
     // Public keys (exposed to client-side)
@@ -35,16 +36,10 @@ export default defineNuxtConfig({
       }
     })
   },
-  colorMode: {
-    preference: 'system', // Default to system preference
-    fallback: 'light',
-    hid: 'nuxt-color-mode-script',
-    globalName: '__NUXT_COLOR_MODE__',
-    componentName: 'ColorScheme',
-    classPrefix: '',
-    classSuffix: '',
-    storageKey: 'website-theme-mode', // Use custom storage key to sync with website settings
-    dataValue: 'theme' // This sets data-theme attribute
+  // Disable color-mode completely to prevent HTML class manipulation
+  colorMode: false,
+  ui: {
+    colorMode: false
   },
   // Build optimization - ensure apexcharts can be imported correctly
   vite: {

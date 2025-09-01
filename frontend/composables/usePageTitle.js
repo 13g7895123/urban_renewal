@@ -1,11 +1,11 @@
 export const usePageTitle = (title) => {
-  const websiteSettingsStore = useWebsiteSettingsStore()
   const route = useRoute()
   
-  // Set page title
+  // Set page title directly without store dependency
   const setPageTitle = (newTitle) => {
     if (process.client) {
-      websiteSettingsStore.updateDocumentTitle(newTitle)
+      const baseTitle = '都更計票系統'
+      document.title = newTitle ? `${newTitle} - ${baseTitle}` : baseTitle
     }
   }
   
