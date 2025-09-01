@@ -9,15 +9,15 @@
           <div class="contact-info space-y-2 text-sm text-gray-600 text-center md:text-left">
             <div class="flex items-center justify-center md:justify-start">
               <Icon name="heroicons:phone" class="w-4 h-4 mr-2" />
-              服務電話: (02) 1234-5678
+              服務電話: (02)-8913-6162
             </div>
             <div class="flex items-center justify-center md:justify-start">
               <Icon name="heroicons:printer" class="w-4 h-4 mr-2" />
-              服務傳真: (02) 1234-5679
+              服務傳真: (02)-3393-0761
             </div>
             <div class="flex items-center justify-center md:justify-start whitespace-nowrap">
               <Icon name="heroicons:envelope" class="w-4 h-4 mr-2" />
-              服務信箱: service@example.com
+              服務信箱: service@都更平台.tw
             </div>
           </div>
         </div>
