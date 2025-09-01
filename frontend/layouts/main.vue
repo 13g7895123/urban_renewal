@@ -2,15 +2,48 @@
   <div class="min-h-screen flex flex-col">
     <!-- Header -->
     <header class="navbar-gradient h-16 flex items-center px-6 shadow-sm">
-      <h1 class="text-white text-xl font-bold w-full text-center">
+      <div class="flex-1"></div>
+      
+      <h1 class="text-white text-xl font-bold">
         <slot name="title">更新會管理</slot>
       </h1>
+      
+      <div class="flex-1 flex justify-end items-center space-x-4">
+        <UButton 
+          variant="ghost" 
+          color="white" 
+          size="sm"
+          class="text-white hover:bg-green-600"
+        >
+          <Icon name="heroicons:shopping-cart" class="w-5 h-5 mr-2" />
+          購物車
+        </UButton>
+        
+        <UButton 
+          variant="ghost" 
+          color="white" 
+          size="sm"
+          class="text-white hover:bg-green-600"
+        >
+          <Icon name="heroicons:arrow-right-on-rectangle" class="w-5 h-5 mr-2" />
+          登出
+        </UButton>
+      </div>
     </header>
 
     <div class="flex flex-1">
       <!-- Sidebar -->
       <aside class="w-64 bg-gray-800 min-h-full text-white">
         <div class="p-4">
+          <div class="flex items-center space-x-3 mb-8">
+            <div class="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center">
+              <Icon name="heroicons:user" class="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <div class="text-white font-medium">許湘淳</div>
+              <div class="w-6 h-6 bg-gray-600 rounded-full mt-1"></div>
+            </div>
+          </div>
           
           <nav class="space-y-2">
             <NuxtLink to="/" class="flex items-center space-x-3 p-3 rounded hover:bg-gray-700 transition-colors" :class="{ 'bg-blue-600': $route.path === '/' }">
