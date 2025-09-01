@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex flex-col">
+  <div class="min-h-screen flex flex-col bg-gray-100">
     <!-- Header -->
     <header class="navbar-gradient h-16 flex items-center px-6 shadow-sm">
       <div class="flex-1"></div>
@@ -33,15 +33,15 @@
 
     <div class="flex flex-1">
       <!-- Sidebar -->
-      <aside class="w-64 bg-gray-800 min-h-full text-white">
+      <aside class="w-64 bg-gray-800/90 min-h-full text-white">
         <div class="p-4">
           <div class="flex items-center space-x-3 mb-8">
-            <div class="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center">
+            <div class="w-16 h-16 bg-gray-600/90 rounded-full flex items-center justify-center">
               <Icon name="heroicons:user" class="w-8 h-8 text-white" />
             </div>
             <div>
               <div class="text-white font-medium">許湘淳</div>
-              <div class="w-6 h-6 bg-gray-600 rounded-full mt-1"></div>
+              <div class="w-6 h-6 bg-gray-600/90 rounded-full mt-1"></div>
             </div>
           </div>
           
