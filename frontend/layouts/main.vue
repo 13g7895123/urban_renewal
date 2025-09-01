@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex flex-col">
+  <BackgroundImage container-class="min-h-screen flex flex-col">
     <!-- Header -->
     <header class="navbar-gradient h-16 flex items-center px-6 shadow-sm">
       <div class="flex-1"></div>
@@ -33,55 +33,55 @@
 
     <div class="flex flex-1">
       <!-- Sidebar -->
-      <aside class="w-64 bg-gray-800 min-h-full text-white">
+      <aside class="w-64 bg-gray-800/80 backdrop-blur-sm min-h-full text-white">
         <div class="p-4">
           <div class="flex items-center space-x-3 mb-8">
-            <div class="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center">
+            <div class="w-16 h-16 bg-gray-600/70 rounded-full flex items-center justify-center">
               <Icon name="heroicons:user" class="w-8 h-8 text-white" />
             </div>
             <div>
               <div class="text-white font-medium">許湘淳</div>
-              <div class="w-6 h-6 bg-gray-600 rounded-full mt-1"></div>
+              <div class="w-6 h-6 bg-gray-600/70 rounded-full mt-1"></div>
             </div>
           </div>
           
           <nav class="space-y-2">
-            <NuxtLink to="/" class="flex items-center space-x-3 p-3 rounded hover:bg-gray-700 transition-colors" :class="{ 'bg-blue-600': $route.path === '/' }">
+            <NuxtLink to="/" class="flex items-center space-x-3 p-3 rounded hover:bg-white/20 transition-colors" :class="{ 'bg-blue-600/80': $route.path === '/' }">
               <Icon name="heroicons:home" class="w-5 h-5" />
               <span>首頁</span>
             </NuxtLink>
             
-            <NuxtLink to="/tables/urban-renewal" class="flex items-center space-x-3 p-3 rounded hover:bg-gray-700 transition-colors" :class="{ 'bg-blue-600': $route.path === '/tables/urban-renewal' }">
+            <NuxtLink to="/tables/urban-renewal" class="flex items-center space-x-3 p-3 rounded hover:bg-white/20 transition-colors" :class="{ 'bg-blue-600/80': $route.path === '/tables/urban-renewal' }">
               <Icon name="heroicons:building-office-2" class="w-5 h-5" />
               <span>更新會管理</span>
             </NuxtLink>
             
-            <NuxtLink to="/tables/meeting" class="flex items-center space-x-3 p-3 rounded hover:bg-gray-700 transition-colors" :class="{ 'bg-blue-600': $route.path === '/tables/meeting' }">
+            <NuxtLink to="/tables/meeting" class="flex items-center space-x-3 p-3 rounded hover:bg-white/20 transition-colors" :class="{ 'bg-blue-600/80': $route.path === '/tables/meeting' }">
               <Icon name="heroicons:document-text" class="w-5 h-5" />
               <span>會議管理</span>
             </NuxtLink>
             
-            <NuxtLink to="/tables/issue" class="flex items-center space-x-3 p-3 rounded hover:bg-gray-700 transition-colors" :class="{ 'bg-blue-600': $route.path === '/tables/issue' }">
+            <NuxtLink to="/tables/issue" class="flex items-center space-x-3 p-3 rounded hover:bg-white/20 transition-colors" :class="{ 'bg-blue-600/80': $route.path === '/tables/issue' }">
               <Icon name="heroicons:check-badge" class="w-5 h-5" />
               <span>投票管理</span>
             </NuxtLink>
             
-            <NuxtLink to="/pages/shopping" class="flex items-center space-x-3 p-3 rounded hover:bg-gray-700 transition-colors" :class="{ 'bg-blue-600': $route.path === '/pages/shopping' }">
+            <NuxtLink to="/pages/shopping" class="flex items-center space-x-3 p-3 rounded hover:bg-white/20 transition-colors" :class="{ 'bg-blue-600/80': $route.path === '/pages/shopping' }">
               <Icon name="heroicons:shopping-bag" class="w-5 h-5" />
               <span>商城</span>
             </NuxtLink>
             
-            <NuxtLink to="/tables/order" class="flex items-center space-x-3 p-3 rounded hover:bg-gray-700 transition-colors" :class="{ 'bg-blue-600': $route.path === '/tables/order' }">
+            <NuxtLink to="/tables/order" class="flex items-center space-x-3 p-3 rounded hover:bg-white/20 transition-colors" :class="{ 'bg-blue-600/80': $route.path === '/tables/order' }">
               <Icon name="heroicons:clipboard-document-list" class="w-5 h-5" />
               <span>購買紀錄</span>
             </NuxtLink>
             
-            <NuxtLink to="/pages/user" class="flex items-center space-x-3 p-3 rounded hover:bg-gray-700 transition-colors" :class="{ 'bg-blue-600': $route.path === '/pages/user' }">
+            <NuxtLink to="/pages/user" class="flex items-center space-x-3 p-3 rounded hover:bg-white/20 transition-colors" :class="{ 'bg-blue-600/80': $route.path === '/pages/user' }">
               <Icon name="heroicons:user" class="w-5 h-5" />
               <span>使用者基本資料變更</span>
             </NuxtLink>
             
-            <NuxtLink to="/tables/company-profile" class="flex items-center space-x-3 p-3 rounded hover:bg-gray-700 transition-colors" :class="{ 'bg-blue-600': $route.path === '/tables/company-profile' }">
+            <NuxtLink to="/tables/company-profile" class="flex items-center space-x-3 p-3 rounded hover:bg-white/20 transition-colors" :class="{ 'bg-blue-600/80': $route.path === '/tables/company-profile' }">
               <Icon name="heroicons:building-office" class="w-5 h-5" />
               <span>企業管理</span>
             </NuxtLink>
@@ -90,14 +90,14 @@
       </aside>
 
       <!-- Main Content -->
-      <main class="flex-1 bg-gray-50 flex flex-col">
+      <main class="flex-1 bg-white/90 backdrop-blur-sm flex flex-col">
         <div class="flex-1">
           <slot />
         </div>
         <Footer copyright-text="© 2020, made with ❤️ by Thread Tech" />
       </main>
     </div>
-  </div>
+  </BackgroundImage>
 </template>
 
 <script setup>
