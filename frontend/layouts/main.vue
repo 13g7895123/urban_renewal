@@ -90,7 +90,7 @@
       </aside>
 
       <!-- Main Content -->
-      <main class="flex-1 bg-white/90 backdrop-blur-sm flex flex-col">
+      <main class="flex-1 bg-white flex flex-col">
         <div class="flex-1">
           <slot />
         </div>

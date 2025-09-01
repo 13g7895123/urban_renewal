@@ -15,7 +15,7 @@ const props = withDefaults(defineProps<{
 <style scoped>
 .background-image {
   background-image: url('/assets/images/bg.jpg');
-  background-size: cover;
+  background-size: auto;
   background-position: center;
   background-repeat: no-repeat;
 }
