@@ -33,7 +33,7 @@
 
     <div class="flex flex-1">
       <!-- Sidebar -->
-      <aside class="w-64 bg-gray-800 min-h-full text-white">
+      <aside class="w-64 bg-gray-800/95 min-h-full text-white">
         <div class="p-4">
           <div class="flex items-center space-x-3 mb-8">
             <div class="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center">
@@ -91,8 +91,10 @@
 
       <!-- Main Content -->
       <main class="flex-1 bg-gray-50 flex flex-col">
-        <div class="flex-1">
-          <slot />
+        <div class="flex-1 p-6">
+          <div class="bg-white rounded-lg shadow-lg h-full p-6">
+            <slot />
+          </div>
         </div>
         <Footer copyright-text="© 2020, made with ❤️ by Thread Tech" />
       </main>
