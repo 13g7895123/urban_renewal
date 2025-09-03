@@ -115,3 +115,4 @@
 46. 幫我建置一個ci4的專案，位置在backend資料夾，請幫我連同資料夾一同建置，完成後幫我撰寫docker文件，同步更新跟目錄的docker-compose.yml，並且，請依據.env的外部PORT依序往下編號，最後，請執行並測試，確認ci4的路徑於瀏覽器正常顯示
 47. 調整一下顯示，每個頁面主要的內容給一個白底，並且加入陰影的效果
 48. 這個檔案中的項目，執行完成請依據規則commit add push，寫入CLAUDE.md
+49. 移除CLAUDE.md最後的Completed Tasks，項目只要完成後add commit push即可，不必寫入CLAUDE.md
