@@ -30,6 +30,50 @@
           新建更新會
         </UButton>
       </div>
+
+      <!-- Create Urban Renewal Modal -->
+      <UModal v-model="showCreateModal">
+        <UCard>
+          <template #header>
+            <h3 class="text-lg font-semibold">新建更新會</h3>
+          </template>
+          
+          <UForm :state="formData" @submit="onSubmit">
+            <div class="space-y-4">
+              <UFormGroup label="更新會名稱" name="name" required>
+                <UInput v-model="formData.name" placeholder="請輸入更新會名稱" />
+              </UFormGroup>
+              
+              <UFormGroup label="土地面積(平方公尺)" name="area" required>
+                <UInput v-model="formData.area" type="number" placeholder="請輸入土地面積" />
+              </UFormGroup>
+              
+              <UFormGroup label="所有權人數" name="memberCount" required>
+                <UInput v-model="formData.memberCount" type="number" placeholder="請輸入所有權人數" />
+              </UFormGroup>
+              
+              <UFormGroup label="理事長姓名" name="chairmanName" required>
+                <UInput v-model="formData.chairmanName" placeholder="請輸入理事長姓名" />
+              </UFormGroup>
+              
+              <UFormGroup label="理事長電話" name="chairmanPhone" required>
+                <UInput v-model="formData.chairmanPhone" placeholder="請輸入理事長電話" />
+              </UFormGroup>
+            </div>
+
+            <template #footer>
+              <div class="flex justify-end gap-3">
+                <UButton color="gray" variant="ghost" @click="closeModal">
+                  取消
+                </UButton>
+                <UButton type="submit" color="green">
+                  確認新建
+                </UButton>
+              </div>
+            </template>
+          </UForm>
+        </UCard>
+      </UModal>
       
       <!-- Urban Renewal Table -->
       <UCard>
@@ -117,13 +161,23 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 
 definePageMeta({
   layout: false
 })
 
 const pageSize = ref(10)
+const showCreateModal = ref(false)
+
+// Form data
+const formData = reactive({
+  name: '',
+  area: '',
+  memberCount: '',
+  chairmanName: '',
+  chairmanPhone: ''
+})
 
 const renewals = ref([
   {
@@ -142,8 +196,43 @@ const allocateRenewal = () => {
 }
 
 const createRenewal = () => {
-  console.log('Creating new renewal meeting')
-  // TODO: Implement create functionality
+  showCreateModal.value = true
+}
+
+const closeModal = () => {
+  showCreateModal.value = false
+  resetForm()
+}
+
+const resetForm = () => {
+  formData.name = ''
+  formData.area = ''
+  formData.memberCount = ''
+  formData.chairmanName = ''
+  formData.chairmanPhone = ''
+}
+
+const onSubmit = () => {
+  // Basic validation
+  if (!formData.name || !formData.area || !formData.memberCount || !formData.chairmanName || !formData.chairmanPhone) {
+    alert('請填寫所有必填項目')
+    return
+  }
+
+  const newRenewal = {
+    id: renewals.value.length + 1,
+    name: formData.name,
+    area: formData.area,
+    memberCount: parseInt(formData.memberCount),
+    chairmanName: formData.chairmanName,
+    chairmanPhone: formData.chairmanPhone
+  }
+  
+  renewals.value.push(newRenewal)
+  closeModal()
+  
+  // Show success message or handle as needed
+  console.log('New urban renewal association created:', newRenewal)
 }
 
 const viewBasicInfo = (renewal) => {
