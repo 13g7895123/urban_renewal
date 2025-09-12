@@ -32,8 +32,8 @@
       </div>
 
       <!-- Create Urban Renewal Modal -->
-      <UModal v-model="showCreateModal">
-        <UCard>
+      <UModal v-model="showCreateModal" :ui="{ background: 'bg-white' }">
+        <UCard class="bg-white">
           <template #header>
             <h3 class="text-lg font-semibold">新建更新會</h3>
           </template>
@@ -90,6 +90,11 @@
               </tr>
             </thead>
             <tbody>
+              <tr v-if="renewals.length === 0">
+                <td colspan="6" class="p-8 text-center text-gray-500">
+                  暫無資料，請點擊「新建更新會」新增資料
+                </td>
+              </tr>
               <tr v-for="(renewal, index) in renewals" :key="index" class="border-b hover:bg-gray-50">
                 <td class="p-3 text-sm">{{ renewal.name }}</td>
                 <td class="p-3 text-sm text-center">{{ renewal.area }}</td>
@@ -143,7 +148,7 @@
             />
           </div>
           <div class="text-sm text-gray-500">
-            1-1 共 1
+            {{ renewals.length > 0 ? `1-${renewals.length} 共 ${renewals.length}` : '0-0 共 0' }}
           </div>
           <div class="flex gap-2">
             <UButton variant="ghost" size="sm" disabled>
@@ -179,16 +184,7 @@ const formData = reactive({
   chairmanPhone: ''
 })
 
-const renewals = ref([
-  {
-    id: 1,
-    name: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會',
-    area: '1955.00',
-    memberCount: 74,
-    chairmanName: '王文忠',
-    chairmanPhone: '0933-734063'
-  }
-])
+const renewals = ref([])
 
 const allocateRenewal = () => {
   console.log('Allocating renewal meeting')
