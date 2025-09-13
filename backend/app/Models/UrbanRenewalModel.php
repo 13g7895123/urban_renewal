@@ -18,7 +18,9 @@ class UrbanRenewalModel extends Model
         'area',
         'member_count',
         'chairman_name',
-        'chairman_phone'
+        'chairman_phone',
+        'address',
+        'representative'
     ];
 
     protected $useTimestamps = true;

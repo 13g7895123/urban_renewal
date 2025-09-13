@@ -116,6 +116,8 @@ class UrbanRenewalController extends BaseController
                 'member_count' => $this->request->getPost('memberCount') ?? $this->request->getPost('member_count'),
                 'chairman_name' => $this->request->getPost('chairmanName') ?? $this->request->getPost('chairman_name'),
                 'chairman_phone' => $this->request->getPost('chairmanPhone') ?? $this->request->getPost('chairman_phone'),
+                'address' => $this->request->getPost('address'),
+                'representative' => $this->request->getPost('representative'),
             ];
 
             // Handle JSON requests
@@ -127,6 +129,8 @@ class UrbanRenewalController extends BaseController
                     'member_count' => $json['memberCount'] ?? $json['member_count'] ?? null,
                     'chairman_name' => $json['chairmanName'] ?? $json['chairman_name'] ?? null,
                     'chairman_phone' => $json['chairmanPhone'] ?? $json['chairman_phone'] ?? null,
+                    'address' => $json['address'] ?? null,
+                    'representative' => $json['representative'] ?? null,
                 ];
             }
 
@@ -187,6 +191,8 @@ class UrbanRenewalController extends BaseController
                     'member_count' => $json['memberCount'] ?? $json['member_count'] ?? null,
                     'chairman_name' => $json['chairmanName'] ?? $json['chairman_name'] ?? null,
                     'chairman_phone' => $json['chairmanPhone'] ?? $json['chairman_phone'] ?? null,
+                    'address' => $json['address'] ?? null,
+                    'representative' => $json['representative'] ?? null,
                 ];
             } else {
                 $data = [
@@ -195,6 +201,8 @@ class UrbanRenewalController extends BaseController
                     'member_count' => $this->request->getPost('memberCount') ?? $this->request->getPost('member_count'),
                     'chairman_name' => $this->request->getPost('chairmanName') ?? $this->request->getPost('chairman_name'),
                     'chairman_phone' => $this->request->getPost('chairmanPhone') ?? $this->request->getPost('chairman_phone'),
+                    'address' => $this->request->getPost('address'),
+                    'representative' => $this->request->getPost('representative'),
                 ];
             }
 
