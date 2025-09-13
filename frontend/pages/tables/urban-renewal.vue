@@ -32,8 +32,8 @@
       </div>
 
       <!-- Create Urban Renewal Modal -->
-      <UModal v-model="showCreateModal" :ui="{ background: 'bg-white' }">
-        <UCard class="bg-white">
+      <UModal v-model="showCreateModal" :ui="{ overlay: { background: 'bg-gray-900/75' }, background: 'bg-white', width: 'sm:max-w-md' }">
+        <UCard class="bg-white border shadow-lg">
           <template #header>
             <h3 class="text-lg font-semibold">新建更新會</h3>
           </template>
