@@ -123,20 +123,31 @@
                 </div>
               </div>
 
+              <!-- Error message -->
+              <div v-if="error" class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                {{ error }}
+              </div>
+
               <!-- Footer -->
               <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-200">
                 <button
                   type="button"
                   @click="closeModal"
-                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200"
+                  :disabled="isSubmitting"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   取消
                 </button>
                 <button
                   type="submit"
-                  class="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
+                  :disabled="isSubmitting"
+                  class="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                 >
-                  確認新建
+                  <svg v-if="isSubmitting" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {{ isSubmitting ? '新增中...' : '確認新建' }}
                 </button>
               </div>
             </form>
@@ -159,17 +170,28 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-if="renewals.length === 0">
+              <tr v-if="loading">
+                <td colspan="6" class="p-8 text-center text-gray-500">
+                  <div class="flex items-center justify-center">
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    載入中...
+                  </div>
+                </td>
+              </tr>
+              <tr v-else-if="renewals.length === 0">
                 <td colspan="6" class="p-8 text-center text-gray-500">
                   暫無資料，請點擊「新建更新會」新增資料
                 </td>
               </tr>
-              <tr v-for="(renewal, index) in renewals" :key="index" class="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150">
+              <tr v-for="(renewal, index) in renewals" :key="renewal.id || index" class="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150">
                 <td class="p-4 text-sm text-gray-900">{{ renewal.name }}</td>
                 <td class="p-4 text-sm text-gray-900 text-center">{{ renewal.area }}</td>
-                <td class="p-4 text-sm text-gray-900 text-center">{{ renewal.memberCount }}</td>
-                <td class="p-4 text-sm text-gray-900">{{ renewal.chairmanName }}</td>
-                <td class="p-4 text-sm text-gray-900">{{ renewal.chairmanPhone }}</td>
+                <td class="p-4 text-sm text-gray-900 text-center">{{ renewal.member_count }}</td>
+                <td class="p-4 text-sm text-gray-900">{{ renewal.chairman_name }}</td>
+                <td class="p-4 text-sm text-gray-900">{{ renewal.chairman_phone }}</td>
                 <td class="p-4 text-center">
                   <div class="flex justify-center gap-2 flex-wrap">
                     <button
@@ -241,7 +263,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 
 definePageMeta({
   layout: false
@@ -249,6 +271,9 @@ definePageMeta({
 
 const pageSize = ref(10)
 const showCreateModal = ref(false)
+const loading = ref(false)
+const isSubmitting = ref(false)
+const error = ref('')
 
 // Form data
 const formData = reactive({
@@ -260,7 +285,70 @@ const formData = reactive({
 })
 
 const renewals = ref([])
+const runtimeConfig = useRuntimeConfig()
 
+// API Functions
+const fetchRenewals = async () => {
+  loading.value = true
+  error.value = ''
+
+  try {
+    const response = await $fetch('/api/urban-renewals', {
+      baseURL: runtimeConfig.public.apiBaseUrl
+    })
+
+    if (response.status === 'success') {
+      renewals.value = response.data || []
+    } else {
+      error.value = response.message || '獲取資料失敗'
+    }
+  } catch (err) {
+    console.error('Fetch error:', err)
+    error.value = '無法連接到伺服器'
+  } finally {
+    loading.value = false
+  }
+}
+
+const createUrbanRenewal = async (data) => {
+  try {
+    const response = await $fetch('/api/urban-renewals', {
+      method: 'POST',
+      baseURL: runtimeConfig.public.apiBaseUrl,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: {
+        name: data.name,
+        area: parseFloat(data.area),
+        memberCount: parseInt(data.memberCount),
+        chairmanName: data.chairmanName,
+        chairmanPhone: data.chairmanPhone
+      }
+    })
+
+    return response
+  } catch (err) {
+    console.error('Create error:', err)
+    throw new Error(err.data?.message || '新增失敗')
+  }
+}
+
+const deleteUrbanRenewal = async (id) => {
+  try {
+    const response = await $fetch(`/api/urban-renewals/${id}`, {
+      method: 'DELETE',
+      baseURL: runtimeConfig.public.apiBaseUrl
+    })
+
+    return response
+  } catch (err) {
+    console.error('Delete error:', err)
+    throw new Error(err.data?.message || '刪除失敗')
+  }
+}
+
+// UI Functions
 const allocateRenewal = () => {
   console.log('Allocating renewal meeting')
   // TODO: Implement allocate functionality
@@ -273,6 +361,7 @@ const createRenewal = () => {
 const closeModal = () => {
   showCreateModal.value = false
   resetForm()
+  error.value = ''
 }
 
 const resetForm = () => {
@@ -335,27 +424,34 @@ const fillRandomTestData = () => {
   formData.chairmanPhone = generateTaiwanPhone()
 }
 
-const onSubmit = () => {
+const onSubmit = async () => {
   // Basic validation
   if (!formData.name || !formData.area || !formData.memberCount || !formData.chairmanName || !formData.chairmanPhone) {
-    alert('請填寫所有必填項目')
+    error.value = '請填寫所有必填項目'
     return
   }
 
-  const newRenewal = {
-    id: renewals.value.length + 1,
-    name: formData.name,
-    area: formData.area,
-    memberCount: parseInt(formData.memberCount),
-    chairmanName: formData.chairmanName,
-    chairmanPhone: formData.chairmanPhone
+  isSubmitting.value = true
+  error.value = ''
+
+  try {
+    const response = await createUrbanRenewal(formData)
+
+    if (response.status === 'success') {
+      // Refresh the list to get updated data
+      await fetchRenewals()
+      closeModal()
+
+      // Show success message (you can implement a proper toast system)
+      alert('新增更新會成功！')
+    } else {
+      error.value = response.message || '新增失敗'
+    }
+  } catch (err) {
+    error.value = err.message || '新增失敗，請稍後再試'
+  } finally {
+    isSubmitting.value = false
   }
-
-  renewals.value.push(newRenewal)
-  closeModal()
-
-  // Show success message or handle as needed
-  console.log('New urban renewal association created:', newRenewal)
 }
 
 const viewBasicInfo = (renewal) => {
@@ -373,8 +469,28 @@ const viewJointInfo = (renewal) => {
   // TODO: Implement view joint info functionality
 }
 
-const deleteRenewal = (renewal) => {
-  console.log('Deleting renewal:', renewal)
-  // TODO: Implement delete functionality
+const deleteRenewal = async (renewal) => {
+  if (!confirm(`確定要刪除「${renewal.name}」嗎？`)) {
+    return
+  }
+
+  try {
+    const response = await deleteUrbanRenewal(renewal.id)
+
+    if (response.status === 'success') {
+      // Refresh the list
+      await fetchRenewals()
+      alert('刪除成功！')
+    } else {
+      alert(response.message || '刪除失敗')
+    }
+  } catch (err) {
+    alert(err.message || '刪除失敗，請稍後再試')
+  }
 }
+
+// Load data when component mounts
+onMounted(() => {
+  fetchRenewals()
+})
 </script>

@@ -40,14 +40,14 @@ html.light aside.bg-gray-800 .bg-blue-600 {
   html,
   html * {
     /* Force light backgrounds and text colors */
-    background-color: inherit !important;
+    /* background-color: inherit !important; */
     color: inherit !important;
   }
   
   /* Exception: Preserve sidebar dark styling */
   html aside.bg-gray-800,
   html aside.bg-gray-800 * {
-    background-color: inherit !important;
+    /* background-color: inherit !important; */
     color: inherit !important;
   }
 }
@@ -73,7 +73,7 @@ html.light .dark\:focus-visible\:ring-primary-400 {
 /* Specifically target common dark mode component classes */
 html.light [class*="dark:"] {
   /* Remove any dark mode styling */
-  background-color: inherit !important;
+  
   color: inherit !important;
   border-color: inherit !important;
 }
@@ -89,7 +89,7 @@ html.light aside.bg-gray-800 [class*="dark:"] {
 html.light button[class*="dark:"],
 html.light a[class*="dark:"],
 html.light div[class*="dark:"] {
-  background-color: inherit !important;
+  /* background-color: inherit !important; */
   color: inherit !important;
 }
 
