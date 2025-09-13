@@ -41,7 +41,17 @@
           <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
             <!-- Header -->
             <div class="border-b border-gray-200 pb-4 mb-6">
-              <h3 class="text-lg font-semibold text-gray-900">新建更新會</h3>
+              <div class="flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-gray-900">新建更新會</h3>
+                <button
+                  type="button"
+                  @click="fillRandomTestData"
+                  class="px-3 py-1 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-md transition-colors duration-200"
+                >
+                  <Icon name="heroicons:beaker" class="w-4 h-4 mr-1 inline" />
+                  填入測試資料
+                </button>
+              </div>
             </div>
 
             <!-- Form -->
@@ -271,6 +281,58 @@ const resetForm = () => {
   formData.memberCount = ''
   formData.chairmanName = ''
   formData.chairmanPhone = ''
+}
+
+// Generate random test data
+const fillRandomTestData = () => {
+  const urbanRenewalNames = [
+    '大安區忠孝更新會',
+    '信義區松仁更新會',
+    '中山區民權更新會',
+    '萬華區西門更新會',
+    '士林區天母更新會',
+    '內湖區科技更新會',
+    '南港區經貿更新會',
+    '文山區木柵更新會',
+    '北投區石牌更新會',
+    '松山區民生更新會',
+    '中正區博愛更新會',
+    '大同區迪化更新會'
+  ]
+
+  const chairmanNames = [
+    '陳志明', '林美玲', '王建國', '張淑芬', '李國華',
+    '劉玉婷', '吳明德', '黃秀英', '鄭文昌', '謝雅雯',
+    '周志偉', '徐淑惠', '蔡政宏', '許雅琴', '楊明峰',
+    '游淑華', '賴志強', '沈美珠', '潘文傑', '蘇雅雲'
+  ]
+
+  // Random name selection
+  const randomName = urbanRenewalNames[Math.floor(Math.random() * urbanRenewalNames.length)]
+
+  // Random area between 500-5000 square meters
+  const randomArea = Math.floor(Math.random() * 4500) + 500
+
+  // Random member count between 15-150
+  const randomMemberCount = Math.floor(Math.random() * 135) + 15
+
+  // Random chairman name
+  const randomChairmanName = chairmanNames[Math.floor(Math.random() * chairmanNames.length)]
+
+  // Generate Taiwan mobile phone number (09XXXXXXXX)
+  const generateTaiwanPhone = () => {
+    const prefixes = ['09']
+    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)]
+    const suffix = Math.floor(Math.random() * 100000000).toString().padStart(8, '0')
+    return prefix + suffix
+  }
+
+  // Fill form data
+  formData.name = randomName
+  formData.area = randomArea.toString()
+  formData.memberCount = randomMemberCount.toString()
+  formData.chairmanName = randomChairmanName
+  formData.chairmanPhone = generateTaiwanPhone()
 }
 
 const onSubmit = () => {
