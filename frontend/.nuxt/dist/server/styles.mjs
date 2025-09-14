@@ -1,14 +1,16 @@
 const interopDefault = r => r.default || r || []
 export default {
-  "node_modules/nuxt/dist/app/entry.js": () => import('./_nuxt/entry-styles.DiY-gP70.mjs').then(interopDefault),
-  "error.vue": () => import('./_nuxt/error-styles.Bh8oHvhA.mjs').then(interopDefault),
-  "pages/login.vue": () => import('./_nuxt/login-styles.Ct7l5Omm.mjs').then(interopDefault),
-  "pages/signup.vue": () => import('./_nuxt/signup-styles.C3yWKwQ_.mjs').then(interopDefault),
-  "error.vue?vue&type=style&index=0&scoped=d7ab52d6&lang.css": () => import('./_nuxt/error-styles.DN5fcLT1.mjs').then(interopDefault),
-  "pages/login.vue?vue&type=style&index=0&scoped=77fd791f&lang.css": () => import('./_nuxt/login-styles.Bsg7BfMx.mjs').then(interopDefault),
-  "pages/signup.vue?vue&type=style&index=0&scoped=c59a5275&lang.css": () => import('./_nuxt/signup-styles.DnpwyFfm.mjs').then(interopDefault),
-  "components/AppSidebar.vue": () => import('./_nuxt/AppSidebar-styles.1u1fO6Pf.mjs').then(interopDefault),
-  "components/AppSidebar.vue?vue&type=style&index=0&scoped=68d18aac&lang.css": () => import('./_nuxt/AppSidebar-styles.CEuLeu5-.mjs').then(interopDefault),
-  "layouts/auth.vue": () => import('./_nuxt/auth-styles.TnOT2Q3t.mjs').then(interopDefault),
-  "layouts/auth.vue?vue&type=style&index=0&scoped=140ce645&lang.css": () => import('./_nuxt/auth-styles.CKFWoLFc.mjs').then(interopDefault)
+  "node_modules/nuxt/dist/app/entry.js": () => import('./_nuxt/entry-styles.D9iReFeC.mjs').then(interopDefault),
+  "pages/login.vue": () => import('./_nuxt/login-styles.DRrEujVx.mjs').then(interopDefault),
+  "pages/signup.vue": () => import('./_nuxt/signup-styles.CkUGBfxY.mjs').then(interopDefault),
+  "pages/login.vue?vue&type=style&index=0&scoped=83f78889&lang.css": () => import('./_nuxt/login-styles.CkaR4dmH.mjs').then(interopDefault),
+  "pages/signup.vue?vue&type=style&index=0&scoped=bd9e0b1f&lang.css": () => import('./_nuxt/signup-styles.mFtS3d61.mjs').then(interopDefault),
+  "components/BackgroundImage.vue": () => import('./_nuxt/BackgroundImage-styles.Ba8uzbr6.mjs').then(interopDefault),
+  "components/Footer.vue": () => import('./_nuxt/Footer-styles.cyGj29ye.mjs').then(interopDefault),
+  "components/BackgroundImage.vue?vue&type=style&index=0&scoped=06b05c46&lang.css": () => import('./_nuxt/BackgroundImage-styles.d5HCwcbO.mjs').then(interopDefault),
+  "components/Footer.vue?vue&type=style&index=0&scoped=cb09cb6d&lang.css": () => import('./_nuxt/Footer-styles.XUGKQGJw.mjs').then(interopDefault),
+  "layouts/auth.vue": () => import('./_nuxt/auth-styles.Dr8j0VGG.mjs').then(interopDefault),
+  "layouts/main.vue": () => import('./_nuxt/main-styles.CsRN6XPY.mjs').then(interopDefault),
+  "layouts/auth.vue?vue&type=style&index=0&scoped=47c578d1&lang.css": () => import('./_nuxt/auth-styles.Bn_JfW6w.mjs').then(interopDefault),
+  "layouts/main.vue?vue&type=style&index=0&scoped=3f6d57da&lang.css": () => import('./_nuxt/main-styles.DFP956_O.mjs').then(interopDefault)
 }

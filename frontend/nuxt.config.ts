@@ -1,5 +1,10 @@
 export default defineNuxtConfig({
   devtools: { enabled: false },
+  // Development server configuration
+  devServer: {
+    port: 3303,
+    host: '0.0.0.0'
+  },
   ssr: true,
   modules: [
     '@nuxt/ui',
@@ -7,7 +12,8 @@ export default defineNuxtConfig({
   ],
   plugins: [
     '~/plugins/apexcharts.client.js',
-    '~/plugins/force-light-mode.client.js'
+    '~/plugins/force-light-mode.client.js',
+    '~/plugins/sweetalert.client.js'
   ],
   // Transpile ApexCharts for better compatibility
   build: {
@@ -18,10 +24,10 @@ export default defineNuxtConfig({
     // Private keys (only available on server-side)
     // Public keys (exposed to client-side)
     public: {
-      apiBaseUrl: process.env.BACKEND_API_URL || 'https://project.mercylife.cc/api',
-      backendUrl: process.env.BACKEND_URL || process.env.BACKEND_API_URL || 'https://project.mercylife.cc/api',
-      backendHost: process.env.BACKEND_HOST || 'project.mercylife.cc',
-      backendPort: process.env.BACKEND_PORT || '443'
+      apiBaseUrl: process.env.BACKEND_API_URL || 'http://localhost:9228',
+      backendUrl: process.env.BACKEND_URL || process.env.BACKEND_API_URL || 'http://localhost:9228',
+      backendHost: process.env.BACKEND_HOST || 'localhost',
+      backendPort: process.env.BACKEND_PORT || '9228'
     }
   },
   nitro: {
@@ -29,7 +35,7 @@ export default defineNuxtConfig({
     ...(process.env.NODE_ENV !== 'production' && {
       devProxy: {
         '/api': {
-          target: 'http://localhost:9018/api',
+          target: 'http://localhost:9228',
           changeOrigin: true,
           prependPath: true,
         }

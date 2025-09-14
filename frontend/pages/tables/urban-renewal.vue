@@ -161,12 +161,12 @@
           <table class="w-full">
             <thead>
               <tr class="border-b border-gray-200">
-                <th class="p-4 text-left text-sm font-medium text-gray-700">更新會名稱</th>
-                <th class="p-4 text-left text-sm font-medium text-gray-700">土地面積 (平方公尺)</th>
-                <th class="p-4 text-left text-sm font-medium text-gray-700">所有權人數</th>
-                <th class="p-4 text-left text-sm font-medium text-gray-700">理事長姓名</th>
-                <th class="p-4 text-left text-sm font-medium text-gray-700">理事長電話</th>
-                <th class="p-4 text-center text-sm font-medium text-gray-700">操作</th>
+                <th class="p-4 text-left text-sm font-medium text-green-600">更新會名稱</th>
+                <th class="p-4 text-left text-sm font-medium text-green-600">土地面積 (平方公尺)</th>
+                <th class="p-4 text-left text-sm font-medium text-green-600">所有權人數</th>
+                <th class="p-4 text-left text-sm font-medium text-green-600">理事長姓名</th>
+                <th class="p-4 text-left text-sm font-medium text-green-600">理事長電話</th>
+                <th class="p-4 text-center text-sm font-medium text-green-600">操作</th>
               </tr>
             </thead>
             <tbody>
@@ -204,13 +204,13 @@
                       @click="viewMembers(renewal)"
                       class="px-2 py-1 text-xs font-medium text-white bg-blue-500 hover:bg-blue-600 rounded transition-colors duration-200"
                     >
-                      查詢會員
+                      所有權人
                     </button>
                     <button
                       @click="viewJointInfo(renewal)"
-                      class="px-2 py-1 text-xs font-medium text-white bg-blue-500 hover:bg-blue-600 rounded transition-colors duration-200"
+                      class="px-2 py-1 text-xs font-medium text-white bg-blue-800 hover:bg-blue-900 rounded transition-colors duration-200"
                     >
-                      共舉資訊
+                      共有部分
                     </button>
                     <button
                       @click="deleteRenewal(renewal)"
@@ -269,6 +269,9 @@ definePageMeta({
   layout: false
 })
 
+// Use SweetAlert2
+const { $swal } = useNuxtApp()
+
 const pageSize = ref(10)
 const showCreateModal = ref(false)
 const loading = ref(false)
@@ -286,6 +289,7 @@ const formData = reactive({
 
 const renewals = ref([])
 const runtimeConfig = useRuntimeConfig()
+const router = useRouter()
 
 // API Functions
 const fetchRenewals = async () => {
@@ -442,8 +446,14 @@ const onSubmit = async () => {
       await fetchRenewals()
       closeModal()
 
-      // Show success message (you can implement a proper toast system)
-      alert('新增更新會成功！')
+      // Show success message with SweetAlert2
+      $swal.fire({
+        title: '新增成功！',
+        text: '更新會已成功建立',
+        icon: 'success',
+        confirmButtonText: '確定',
+        confirmButtonColor: '#10b981'
+      })
     } else {
       error.value = response.message || '新增失敗'
     }
@@ -455,13 +465,11 @@ const onSubmit = async () => {
 }
 
 const viewBasicInfo = (renewal) => {
-  console.log('Viewing basic info for:', renewal)
-  // TODO: Implement view basic info functionality
+  router.push(`/tables/urban-renewal/${renewal.id}/basic-info`)
 }
 
 const viewMembers = (renewal) => {
-  console.log('Viewing members for:', renewal)
-  // TODO: Implement view members functionality
+  router.push(`/tables/urban-renewal/${renewal.id}/property-owners`)
 }
 
 const viewJointInfo = (renewal) => {
@@ -470,7 +478,18 @@ const viewJointInfo = (renewal) => {
 }
 
 const deleteRenewal = async (renewal) => {
-  if (!confirm(`確定要刪除「${renewal.name}」嗎？`)) {
+  const result = await $swal.fire({
+    title: '確認刪除',
+    text: `確定要刪除「${renewal.name}」嗎？`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: '確定刪除',
+    cancelButtonText: '取消'
+  })
+
+  if (!result.isConfirmed) {
     return
   }
 
@@ -480,12 +499,30 @@ const deleteRenewal = async (renewal) => {
     if (response.status === 'success') {
       // Refresh the list
       await fetchRenewals()
-      alert('刪除成功！')
+      $swal.fire({
+        title: '刪除成功！',
+        text: '更新會已成功刪除',
+        icon: 'success',
+        confirmButtonText: '確定',
+        confirmButtonColor: '#10b981'
+      })
     } else {
-      alert(response.message || '刪除失敗')
+      $swal.fire({
+        title: '刪除失敗',
+        text: response.message || '刪除失敗',
+        icon: 'error',
+        confirmButtonText: '確定',
+        confirmButtonColor: '#ef4444'
+      })
     }
   } catch (err) {
-    alert(err.message || '刪除失敗，請稍後再試')
+    $swal.fire({
+      title: '刪除失敗',
+      text: err.message || '刪除失敗，請稍後再試',
+      icon: 'error',
+      confirmButtonText: '確定',
+      confirmButtonColor: '#ef4444'
+    })
   }
 }
 

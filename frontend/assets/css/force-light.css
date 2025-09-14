@@ -41,14 +41,14 @@ html.light aside.bg-gray-800 .bg-blue-600 {
   html * {
     /* Force light backgrounds and text colors */
     /* background-color: inherit !important; */
-    color: inherit !important;
+    /* color: inherit !important; */
   }
   
   /* Exception: Preserve sidebar dark styling */
   html aside.bg-gray-800,
   html aside.bg-gray-800 * {
     /* background-color: inherit !important; */
-    color: inherit !important;
+    /* color: inherit !important; */
   }
 }
 
@@ -65,7 +65,7 @@ html.light .dark\:hover\:bg-gray-800,
 html.light .dark\:focus-visible\:ring-primary-400 {
   /* Reset to default/light mode values */
   background-color: transparent !important;
-  color: inherit !important;
+  /* color: inherit !important; */
   border-color: inherit !important;
   ring-color: inherit !important;
 }
@@ -74,14 +74,14 @@ html.light .dark\:focus-visible\:ring-primary-400 {
 html.light [class*="dark:"] {
   /* Remove any dark mode styling */
   
-  color: inherit !important;
+  /* color: inherit !important; */
   border-color: inherit !important;
 }
 
 /* Exception: Don't override sidebar dark classes */
 html.light aside.bg-gray-800 [class*="dark:"] {
   background-color: initial !important;
-  color: initial !important;
+  /* color: initial !important; */
   border-color: initial !important;
 }
 
@@ -90,7 +90,7 @@ html.light button[class*="dark:"],
 html.light a[class*="dark:"],
 html.light div[class*="dark:"] {
   /* background-color: inherit !important; */
-  color: inherit !important;
+  /* color: inherit !important; */
 }
 
 /* Exception: Don't override sidebar buttons */
@@ -98,5 +98,5 @@ html.light aside.bg-gray-800 button[class*="dark:"],
 html.light aside.bg-gray-800 a[class*="dark:"],
 html.light aside.bg-gray-800 div[class*="dark:"] {
   background-color: initial !important;
-  color: initial !important;
+  /* color: initial !important; */
 }

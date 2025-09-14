@@ -25,6 +25,7 @@ type NuxtAppInjections =
   InjectionType<typeof import("../../node_modules/nuxt/dist/app/plugins/check-if-layout-used.js")> &
   InjectionType<typeof import("../../plugins/apexcharts.client.js")> &
   InjectionType<typeof import("../../plugins/force-light-mode.client.js")> &
+  InjectionType<typeof import("../../plugins/sweetalert.client.js")> &
   InjectionType<typeof import("../../plugins/auth.client.js")> &
   InjectionType<typeof import("../../plugins/error-handler.client.js")> &
   InjectionType<typeof import("../../plugins/theme.client.js")> &

@@ -22,7 +22,14 @@
       "Bash(docker-compose up:*)",
       "Bash(docker-compose down:*)",
       "Bash(docker-compose build:*)",
-      "Bash(docker-compose stop:*)"
+      "Bash(docker-compose stop:*)",
+      "Bash(php spark:*)",
+      "Bash(./spark migrate)",
+      "Bash(docker-compose:*)",
+      "Bash(docker volume rm:*)",
+      "Bash(grep:*)",
+      "Bash(docker:*)",
+      "Bash(composer install:*)"
     ],
     "deny": [],
     "ask": []

@@ -871,10 +871,10 @@ const _inlineRuntimeConfig = {
     }
   },
   "public": {
-    "apiBaseUrl": "https://project.mercylife.cc/api",
-    "backendUrl": "https://project.mercylife.cc/api",
-    "backendHost": "project.mercylife.cc",
-    "backendPort": "443"
+    "apiBaseUrl": "http://localhost:9228",
+    "backendUrl": "http://localhost:9228",
+    "backendHost": "localhost",
+    "backendPort": "9228"
   },
   "icon": {
     "serverKnownCssClasses": []

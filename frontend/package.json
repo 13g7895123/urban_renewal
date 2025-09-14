@@ -19,7 +19,7 @@
     "apexcharts": "^5.3.3",
     "nuxt": "^3.13.0",
     "pinia": "^2.2.4",
-    "sweetalert2": "^11.22.4",
+    "sweetalert2": "^11.23.0",
     "vue": "latest",
     "vue3-apexcharts": "^1.8.0"
   },

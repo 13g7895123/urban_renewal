@@ -216,6 +216,7 @@
 </template>
 
 <script setup>
+const { $swal } = useNuxtApp()
 const currentStep = ref(1)
 const selectedAccountType = ref('')
 const loading = ref(false)
@@ -252,7 +253,7 @@ const goBack = () => {
 }
 
 const handleRegister = async () => {
-  if (!validateForm()) {
+  if (!(await validateForm())) {
     return
   }
   
@@ -263,31 +264,55 @@ const handleRegister = async () => {
     currentStep.value = 3
   } catch (error) {
     console.error('Registration error:', error)
-    alert('註冊失敗，請稍後再試')
+    await $swal.fire({
+      title: '註冊失敗',
+      text: '請稍後再試',
+      icon: 'error',
+      confirmButtonText: '確定',
+      confirmButtonColor: '#ef4444'
+    })
   } finally {
     loading.value = false
   }
 }
 
-const validateForm = () => {
+const validateForm = async () => {
   const requiredFields = ['account', 'nickname', 'password', 'confirmPassword', 'fullName', 'email', 'phone']
   
   for (const field of requiredFields) {
     if (!formData.value[field]) {
-      alert('請填寫所有必填欄位')
+      await $swal.fire({
+        title: '欄位未填寫完整',
+        text: '請填寫所有必填欄位',
+        icon: 'warning',
+        confirmButtonText: '確定',
+        confirmButtonColor: '#f59e0b'
+      })
       return false
     }
   }
   
   if (formData.value.password !== formData.value.confirmPassword) {
-    alert('密碼與確認密碼不符')
+    await $swal.fire({
+      title: '密碼不一致',
+      text: '密碼與確認密碼不符',
+      icon: 'error',
+      confirmButtonText: '確定',
+      confirmButtonColor: '#ef4444'
+    })
     return false
   }
   
   // Additional validation for business accounts
   if (selectedAccountType.value === 'business') {
     if (!formData.value.businessName || !formData.value.taxId) {
-      alert('請填寫企業相關資料')
+      await $swal.fire({
+        title: '企業資料未完整',
+        text: '請填寫企業相關資料',
+        icon: 'warning',
+        confirmButtonText: '確定',
+        confirmButtonColor: '#f59e0b'
+      })
       return false
     }
   }
