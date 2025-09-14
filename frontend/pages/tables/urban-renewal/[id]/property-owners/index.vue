@@ -131,10 +131,6 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 
-definePageMeta({
-  layout: false
-})
-
 // Use SweetAlert2
 const { $swal } = useNuxtApp()
 
@@ -154,9 +150,7 @@ const fetchPropertyOwners = async () => {
   loading.value = true
 
   try {
-    const response = await $fetch(`/api/urban-renewals/${urbanRenewalId.value}/property-owners`, {
-      baseURL: runtimeConfig.public.apiBaseUrl
-    })
+    const response = await $fetch(`http://localhost:9228/api/urban-renewals/${urbanRenewalId.value}/property-owners`)
 
     if (response.status === 'success') {
       propertyOwners.value = response.data || []
@@ -179,9 +173,8 @@ const fetchPropertyOwners = async () => {
 
 const deletePropertyOwner = async (id) => {
   try {
-    const response = await $fetch(`/api/property-owners/${id}`, {
-      method: 'DELETE',
-      baseURL: runtimeConfig.public.apiBaseUrl
+    const response = await $fetch(`http://localhost:9228/api/property-owners/${id}`, {
+      method: 'DELETE'
     })
 
     return response

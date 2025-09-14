@@ -31,16 +31,13 @@ export default defineNuxtConfig({
     }
   },
   nitro: {
-    // Only use proxy in development mode
-    ...(process.env.NODE_ENV !== 'production' && {
-      devProxy: {
-        '/api': {
-          target: 'http://localhost:9228',
-          changeOrigin: true,
-          prependPath: true,
-        }
+    devProxy: {
+      '/api': {
+        target: 'http://localhost:9228',
+        changeOrigin: true,
+        prependPath: true,
       }
-    })
+    }
   },
   // Disable color-mode completely to prevent HTML class manipulation
   colorMode: false,

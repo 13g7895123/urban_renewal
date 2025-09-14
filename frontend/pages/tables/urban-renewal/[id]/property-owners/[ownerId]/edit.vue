@@ -494,10 +494,6 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 
-definePageMeta({
-  layout: false
-})
-
 // Use SweetAlert2
 const { $swal } = useNuxtApp()
 
@@ -557,8 +553,7 @@ const buildingForm = reactive({
 // Fetch property owner data
 const fetchPropertyOwner = async () => {
   try {
-    const response = await $fetch(`/api/property-owners/${ownerId.value}`, {
-      baseURL: runtimeConfig.public.apiBaseUrl
+    const response = await $fetch(`http://localhost:9228/api/property-owners/${ownerId.value}`, {
     })
 
     if (response.status === 'success') {
@@ -596,8 +591,7 @@ const fetchPropertyOwner = async () => {
 // Fetch urban renewal info
 const fetchUrbanRenewalInfo = async () => {
   try {
-    const response = await $fetch(`/api/urban-renewals/${urbanRenewalId.value}`, {
-      baseURL: runtimeConfig.public.apiBaseUrl
+    const response = await $fetch(`http://localhost:9228/api/urban-renewals/${urbanRenewalId.value}`, {
     })
 
     if (response.status === 'success') {
@@ -611,8 +605,7 @@ const fetchUrbanRenewalInfo = async () => {
 // Fetch available land plots
 const fetchAvailablePlots = async () => {
   try {
-    const response = await $fetch(`/api/urban-renewals/${urbanRenewalId.value}/land-plots`, {
-      baseURL: runtimeConfig.public.apiBaseUrl
+    const response = await $fetch(`http://localhost:9228/api/urban-renewals/${urbanRenewalId.value}/land-plots`, {
     })
 
     if (response.status === 'success') {
@@ -696,9 +689,8 @@ const onSubmit = async () => {
   isSubmitting.value = true
 
   try {
-    const response = await $fetch(`/api/property-owners/${ownerId.value}`, {
+    const response = await $fetch(`http://localhost:9228/api/property-owners/${ownerId.value}`, {
       method: 'PUT',
-      baseURL: runtimeConfig.public.apiBaseUrl,
       headers: {
         'Content-Type': 'application/json'
       },

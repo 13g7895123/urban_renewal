@@ -357,10 +357,6 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 
-definePageMeta({
-  layout: false
-})
-
 const route = useRoute()
 const router = useRouter()
 const runtimeConfig = useRuntimeConfig()
@@ -400,74 +396,10 @@ const landNumberErrors = reactive({
 const landPlots = ref([])
 const editingLandPlot = ref({})
 
-// Taiwan Administrative Data
-const counties = ref([
-  { code: 'TPE', name: '臺北市' },
-  { code: 'KHH', name: '高雄市' },
-  { code: 'TPH', name: '新北市' },
-  { code: 'TCH', name: '臺中市' },
-  { code: 'TNN', name: '臺南市' },
-  { code: 'TYC', name: '桃園市' },
-  { code: 'HSC', name: '新竹市' },
-  { code: 'HSH', name: '新竹縣' },
-  { code: 'MIA', name: '苗栗縣' },
-  { code: 'CHA', name: '彰化縣' },
-  { code: 'NTO', name: '南投縣' },
-  { code: 'YUN', name: '雲林縣' },
-  { code: 'CYI', name: '嘉義市' },
-  { code: 'CYQ', name: '嘉義縣' },
-  { code: 'PIF', name: '屏東縣' },
-  { code: 'ILA', name: '宜蘭縣' },
-  { code: 'HUA', name: '花蓮縣' },
-  { code: 'TTT', name: '臺東縣' },
-  { code: 'PEN', name: '澎湖縣' },
-  { code: 'KIN', name: '金門縣' },
-  { code: 'LIE', name: '連江縣' }
-])
-
+// Location Data from API
+const counties = ref([])
 const districts = ref([])
 const sections = ref([])
-
-// Administrative Data Mapping
-const administrativeData = {
-  'TPE': [
-    { code: 'ZS', name: '中山區' },
-    { code: 'DA', name: '大安區' },
-    { code: 'XY', name: '信義區' },
-    { code: 'SS', name: '松山區' },
-    { code: 'WH', name: '萬華區' },
-    { code: 'ZZ', name: '中正區' },
-    { code: 'DT', name: '大同區' },
-    { code: 'SL', name: '士林區' },
-    { code: 'BT', name: '北投區' },
-    { code: 'NH', name: '內湖區' },
-    { code: 'NG', name: '南港區' },
-    { code: 'WS', name: '文山區' }
-  ],
-  'KHH': [
-    { code: 'XZ', name: '新興區' },
-    { code: 'QJ', name: '前金區' },
-    { code: 'LY', name: '苓雅區' },
-    { code: 'YC', name: '鹽埕區' },
-    { code: 'GS', name: '鼓山區' },
-    { code: 'QZ', name: '前鎮區' },
-    { code: 'XL', name: '小港區' },
-    { code: 'ZS', name: '左營區' }
-  ]
-}
-
-const sectionData = {
-  'ZS': [
-    { code: '001', name: '中山段' },
-    { code: '002', name: '長安段' },
-    { code: '003', name: '民權段' }
-  ],
-  'DA': [
-    { code: '001', name: '大安段' },
-    { code: '002', name: '忠孝段' },
-    { code: '003', name: '信義段' }
-  ]
-}
 
 // Computed
 const canAddLandPlot = computed(() => {
@@ -480,11 +412,45 @@ const canAddLandPlot = computed(() => {
 })
 
 // Methods
+const fetchCounties = async () => {
+  try {
+    const response = await $fetch('http://localhost:9228/api/locations/counties')
+    if (response.status === 'success') {
+      counties.value = response.data
+    }
+  } catch (err) {
+    console.error('Failed to fetch counties:', err)
+  }
+}
+
+const fetchDistricts = async (countyCode) => {
+  try {
+    const response = await $fetch(`http://localhost:9228/api/locations/districts/${countyCode}`)
+    if (response.status === 'success') {
+      districts.value = response.data
+    }
+  } catch (err) {
+    console.error('Failed to fetch districts:', err)
+    districts.value = []
+  }
+}
+
+const fetchSections = async (countyCode, districtCode) => {
+  try {
+    const response = await $fetch(`http://localhost:9228/api/locations/sections/${countyCode}/${districtCode}`)
+    if (response.status === 'success') {
+      sections.value = response.data
+    }
+  } catch (err) {
+    console.error('Failed to fetch sections:', err)
+    sections.value = []
+  }
+}
+
 const fetchRenewalData = async () => {
   loading.value = true
   try {
-    const response = await $fetch(`/api/urban-renewals/${route.params.id}`, {
-      baseURL: runtimeConfig.public.apiBaseUrl
+    const response = await $fetch(`http://localhost:9228/api/urban-renewals/${route.params.id}`, {
     })
 
     if (response.status === 'success') {
@@ -512,16 +478,26 @@ const updatePageTitle = () => {
   document.title = `${renewalData.name} - 更新會基本資料管理`
 }
 
-const onCountyChange = () => {
+const onCountyChange = async () => {
   landForm.district = ''
   landForm.section = ''
-  districts.value = administrativeData[landForm.county] || []
   sections.value = []
+
+  if (landForm.county) {
+    await fetchDistricts(landForm.county)
+  } else {
+    districts.value = []
+  }
 }
 
-const onDistrictChange = () => {
+const onDistrictChange = async () => {
   landForm.section = ''
-  sections.value = sectionData[landForm.district] || []
+
+  if (landForm.county && landForm.district) {
+    await fetchSections(landForm.county, landForm.district)
+  } else {
+    sections.value = []
+  }
 }
 
 const validateLandNumber = (type) => {
@@ -632,7 +608,7 @@ const deleteLandPlot = async (plot) => {
 const saveChanges = async () => {
   isSaving.value = true
   try {
-    const response = await $fetch(`/api/urban-renewals/${route.params.id}`, {
+    const response = await $fetch(`http://localhost:9228/api/urban-renewals/${route.params.id}`, {
       method: 'PUT',
       baseURL: runtimeConfig.public.apiBaseUrl,
       headers: {
@@ -682,7 +658,10 @@ const goBack = () => {
 watch(() => renewalData.name, updatePageTitle)
 
 // Load data when component mounts
-onMounted(() => {
-  fetchRenewalData()
+onMounted(async () => {
+  await Promise.all([
+    fetchCounties(),
+    fetchRenewalData()
+  ])
 })
 </script>

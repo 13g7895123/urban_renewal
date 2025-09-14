@@ -1,27 +1,27 @@
 <template>
-  <div class="min-h-screen flex flex-col">
+  <div class="h-screen flex flex-col overflow-hidden">
     <!-- Header -->
-    <header class="navbar-gradient h-16 flex items-center px-6 shadow-sm">
+    <header class="navbar-gradient h-16 flex-shrink-0 flex items-center px-6 shadow-sm">
       <div class="flex-1"></div>
-      
+
       <h1 class="text-white text-xl font-bold">
         <slot name="title">更新會管理</slot>
       </h1>
-      
+
       <div class="flex-1 flex justify-end items-center space-x-4">
-        <UButton 
-          variant="ghost" 
-          color="white" 
+        <UButton
+          variant="ghost"
+          color="white"
           size="sm"
           class="text-white hover:bg-green-600"
         >
           <Icon name="heroicons:shopping-cart" class="w-5 h-5 mr-2" />
           購物車
         </UButton>
-        
-        <UButton 
-          variant="ghost" 
-          color="white" 
+
+        <UButton
+          variant="ghost"
+          color="white"
           size="sm"
           class="text-white hover:bg-green-600"
         >
@@ -31,9 +31,9 @@
       </div>
     </header>
 
-    <div class="flex flex-1">
+    <div class="flex flex-1 overflow-hidden">
       <!-- Sidebar -->
-      <aside class="w-64 bg-gray-800 min-h-full text-white">
+      <aside class="w-64 bg-gray-800 text-white flex-shrink-0 overflow-y-auto">
         <div class="p-4">
           <div class="flex items-center space-x-3 mb-8">
             <div class="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center">
@@ -90,9 +90,9 @@
       </aside>
 
       <!-- Main Content -->
-      <main class="flex-1 bg-gray-50 flex flex-col">
-        <div class="flex-1 p-6">
-          <div class="bg-white rounded-lg shadow-lg h-full p-6">
+      <main class="flex-1 bg-gray-50 flex flex-col overflow-hidden">
+        <div class="flex-1 p-6 overflow-y-auto">
+          <div class="bg-white rounded-lg shadow-lg min-h-full p-6">
             <slot />
           </div>
         </div>

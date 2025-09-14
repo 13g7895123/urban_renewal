@@ -493,10 +493,6 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 
-definePageMeta({
-  layout: false
-})
-
 // Use SweetAlert2
 const { $swal } = useNuxtApp()
 
@@ -560,8 +556,7 @@ const generateOwnerCode = () => {
 // Fetch urban renewal info
 const fetchUrbanRenewalInfo = async () => {
   try {
-    const response = await $fetch(`/api/urban-renewals/${urbanRenewalId.value}`, {
-      baseURL: runtimeConfig.public.apiBaseUrl
+    const response = await $fetch(`http://localhost:9228/api/urban-renewals/${urbanRenewalId.value}`, {
     })
 
     if (response.status === 'success') {
@@ -575,8 +570,7 @@ const fetchUrbanRenewalInfo = async () => {
 // Fetch available land plots
 const fetchAvailablePlots = async () => {
   try {
-    const response = await $fetch(`/api/urban-renewals/${urbanRenewalId.value}/land-plots`, {
-      baseURL: runtimeConfig.public.apiBaseUrl
+    const response = await $fetch(`http://localhost:9228/api/urban-renewals/${urbanRenewalId.value}/land-plots`, {
     })
 
     if (response.status === 'success') {
@@ -660,7 +654,7 @@ const onSubmit = async () => {
   isSubmitting.value = true
 
   try {
-    const response = await $fetch('/api/property-owners', {
+    const response = await $fetch('http://localhost:9228/api/property-owners', {
       method: 'POST',
       baseURL: runtimeConfig.public.apiBaseUrl,
       headers: {

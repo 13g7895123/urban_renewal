@@ -59,4 +59,15 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         $routes->options('/', 'PropertyOwnerController::options');
         $routes->options('(:num)', 'PropertyOwnerController::options');
     });
+
+    // Location API for cascading dropdowns
+    $routes->group('locations', function ($routes) {
+        $routes->get('counties', 'LocationController::counties');                          // GET /api/locations/counties
+        $routes->get('districts/(:segment)', 'LocationController::districts/$1');          // GET /api/locations/districts/{countyCode}
+        $routes->get('sections/(:segment)/(:segment)', 'LocationController::sections/$1/$2'); // GET /api/locations/sections/{countyCode}/{districtCode}
+        $routes->get('hierarchy', 'LocationController::hierarchy');                        // GET /api/locations/hierarchy
+
+        // Handle OPTIONS for specific routes
+        $routes->options('(:any)', 'LocationController::options');
+    });
 });

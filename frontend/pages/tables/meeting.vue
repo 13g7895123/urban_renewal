@@ -43,10 +43,10 @@
                 <th class="p-3 text-left text-sm font-medium text-gray-700">會議名稱</th>
                 <th class="p-3 text-left text-sm font-medium text-gray-700">所屬更新會</th>
                 <th class="p-3 text-left text-sm font-medium text-gray-700">會議日期時間</th>
-                <th class="p-3 text-left text-sm font-medium text-gray-700">出席人數</th>
-                <th class="p-3 text-left text-sm font-medium text-gray-700">缺入對象人數</th>
-                <th class="p-3 text-left text-sm font-medium text-gray-700">列席人數</th>
-                <th class="p-3 text-left text-sm font-medium text-gray-700">記錄狀態</th>
+                <th class="p-3 text-center text-sm font-medium text-gray-700">出席人數</th>
+                <th class="p-3 text-center text-sm font-medium text-gray-700">納入計算總人數</th>
+                <th class="p-3 text-center text-sm font-medium text-gray-700">列席總人數</th>
+                <th class="p-3 text-center text-sm font-medium text-gray-700">投票議題數</th>
                 <th class="p-3 text-center text-sm font-medium text-gray-700">操作</th>
               </tr>
             </thead>
@@ -57,33 +57,47 @@
                 </td>
                 <td class="p-3 text-sm">{{ meeting.name }}</td>
                 <td class="p-3 text-sm">{{ meeting.renewalGroup }}</td>
-                <td class="p-3 text-sm">{{ meeting.date }}</td>
+                <td class="p-3 text-sm">
+                  <div class="text-center">
+                    <div>{{ meeting.date }}</div>
+                    <div>{{ meeting.time }}</div>
+                  </div>
+                </td>
                 <td class="p-3 text-sm text-center">{{ meeting.attendees }}</td>
-                <td class="p-3 text-sm text-center">{{ meeting.absent }}</td>
-                <td class="p-3 text-sm text-center">{{ meeting.observers }}</td>
-                <td class="p-3 text-sm text-center">{{ meeting.recordStatus }}</td>
-                <td class="p-3 text-center space-x-2">
-                  <UButton 
-                    color="green" 
-                    size="xs"
-                    @click="viewRecord(meeting)"
-                  >
-                    基本資料
-                  </UButton>
-                  <UButton 
-                    color="blue" 
-                    size="xs"
-                    @click="viewMeeting(meeting)"
-                  >
-                    投票會議
-                  </UButton>
-                  <UButton 
-                    color="purple" 
-                    size="xs"
-                    @click="viewResults(meeting)"
-                  >
-                    會議結果
-                  </UButton>
+                <td class="p-3 text-sm text-center">{{ meeting.totalCountedAttendees }}</td>
+                <td class="p-3 text-sm text-center">{{ meeting.totalObservers }}</td>
+                <td class="p-3 text-sm text-center">{{ meeting.votingTopicCount }}</td>
+                <td class="p-3 text-center">
+                  <div class="flex flex-wrap gap-1 justify-center">
+                    <UButton
+                      color="green"
+                      size="xs"
+                      @click="showBasicInfo(meeting)"
+                    >
+                      基本資料
+                    </UButton>
+                    <UButton
+                      color="blue"
+                      size="xs"
+                      @click="showVotingTopics(meeting)"
+                    >
+                      投票議題
+                    </UButton>
+                    <UButton
+                      color="purple"
+                      size="xs"
+                      @click="showMemberCheckin(meeting)"
+                    >
+                      會員報到
+                    </UButton>
+                    <UButton
+                      color="orange"
+                      size="xs"
+                      @click="showCheckinDisplay(meeting)"
+                    >
+                      報到顯示
+                    </UButton>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -116,6 +130,242 @@
         </div>
       </UCard>
     </div>
+
+    <!-- Basic Info Modal -->
+    <UModal v-model="showBasicInfoModal" :ui="{ width: 'max-w-6xl' }">
+      <UCard>
+        <template #header>
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900">會議基本資料</h3>
+            <UButton
+              variant="ghost"
+              icon="i-heroicons-x-mark-20-solid"
+              @click="showBasicInfoModal = false"
+            />
+          </div>
+        </template>
+
+        <div class="space-y-6 p-6">
+          <!-- Basic Meeting Info -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- 所屬更新會 (readonly) -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">所屬更新會</label>
+              <UInput :value="selectedMeeting?.renewalGroup" readonly class="bg-gray-50" />
+            </div>
+
+            <!-- 會議類型 (readonly) -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">會議類型</label>
+              <UInput value="會員大會" readonly class="bg-gray-50" />
+            </div>
+
+            <!-- 會議日期時間 -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">會議日期時間</label>
+              <UInput v-model="meetingDateTime" />
+            </div>
+
+            <!-- 開會地點 -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">開會地點</label>
+              <UInput v-model="meetingLocation" />
+            </div>
+
+            <!-- 出席人數 (readonly) -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">出席人數</label>
+              <UInput :value="selectedMeeting?.attendees" readonly class="bg-gray-50" />
+            </div>
+
+            <!-- 納入計算總人數 (readonly) -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">納入計算總人數</label>
+              <UInput :value="selectedMeeting?.totalCountedAttendees" readonly class="bg-gray-50" />
+            </div>
+
+            <!-- 列席總人數 -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">列席總人數</label>
+              <UInput v-model="totalObservers" type="number" />
+            </div>
+          </div>
+
+          <!-- Meeting Ratios and Areas -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Land Area Ratio -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">成會土地面積比例分子</label>
+              <UInput v-model="landAreaRatioNumerator" type="number" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">成會土地面積比例分母</label>
+              <UInput v-model="landAreaRatioDenominator" type="number" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">成會土地面積(平方公尺)</label>
+              <UInput v-model="totalLandArea" type="number" />
+            </div>
+
+            <!-- Building Area Ratio -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">成會建物面積比例分子</label>
+              <UInput v-model="buildingAreaRatioNumerator" type="number" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">成會建物面積比例分母</label>
+              <UInput v-model="buildingAreaRatioDenominator" type="number" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">成會建物面積(平方公尺)</label>
+              <UInput v-model="totalBuildingArea" type="number" />
+            </div>
+
+            <!-- People Count Ratio -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">成會人數比例分子</label>
+              <UInput v-model="peopleRatioNumerator" type="number" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">成會人數比例分母</label>
+              <UInput v-model="peopleRatioDenominator" type="number" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">成會人數</label>
+              <UInput v-model="totalPeopleCount" type="number" />
+            </div>
+          </div>
+
+          <!-- 列席者 Table -->
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <label class="block text-sm font-medium text-gray-700">列席者</label>
+              <UButton color="green" size="sm" @click="addObserver">
+                <Icon name="heroicons:plus" class="w-4 h-4 mr-2" />
+                新增列席者
+              </UButton>
+            </div>
+            <div class="border border-gray-200 rounded-lg">
+              <div class="max-h-48 overflow-y-auto">
+                <table class="w-full">
+                  <thead class="bg-gray-50 sticky top-0">
+                    <tr>
+                      <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">姓名</th>
+                      <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">職稱</th>
+                      <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">聯絡電話</th>
+                      <th class="px-4 py-2 text-center text-sm font-medium text-gray-700">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-if="observers.length === 0">
+                      <td colspan="4" class="px-4 py-8 text-center text-gray-500">暫無列席者資料</td>
+                    </tr>
+                    <tr v-for="(observer, index) in observers" :key="index" class="border-b border-gray-100">
+                      <td class="px-4 py-2">
+                        <UInput v-model="observer.name" size="sm" />
+                      </td>
+                      <td class="px-4 py-2">
+                        <UInput v-model="observer.title" size="sm" />
+                      </td>
+                      <td class="px-4 py-2">
+                        <UInput v-model="observer.phone" size="sm" />
+                      </td>
+                      <td class="px-4 py-2 text-center">
+                        <UButton color="red" size="xs" @click="removeObserver(index)">刪除</UButton>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- 會議通知單資訊 -->
+          <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
+            <h4 class="text-lg font-medium text-gray-900 mb-4">會議通知單資訊</h4>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">發文字號</label>
+                <UInput v-model="noticeDocNumber" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">字第</label>
+                <UInput v-model="noticeWordNumber" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">oooooo</label>
+                <UInput v-model="noticeMidNumber" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">號</label>
+                <UInput v-model="noticeEndNumber" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">理事長姓名</label>
+                <UInput v-model="chairmanName" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">聯絡人姓名</label>
+                <UInput v-model="contactName" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">聯絡人電話</label>
+                <UInput v-model="contactPhone" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">附件</label>
+                <UInput v-model="attachments" />
+              </div>
+            </div>
+
+            <!-- 發文說明 -->
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <label class="block text-sm font-medium text-gray-700">發文說明</label>
+                <UButton color="blue" size="sm" @click="addDescription">
+                  <Icon name="heroicons:plus" class="w-4 h-4 mr-2" />
+                  新增說明
+                </UButton>
+              </div>
+              <div class="space-y-2">
+                <div v-for="(desc, index) in descriptions" :key="index" class="flex items-center gap-3">
+                  <span class="text-sm font-medium text-gray-600 w-8">{{ getChineseNumber(index + 1) }}、</span>
+                  <UInput v-model="desc.content" class="flex-1" />
+                  <UButton color="red" size="xs" @click="removeDescription(index)">刪除</UButton>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex justify-between pt-6 border-t border-gray-200">
+            <div class="flex gap-3">
+              <UButton color="green" @click="exportSignatureBook">
+                <Icon name="heroicons:document-arrow-down" class="w-4 h-4 mr-2" />
+                匯出簽到冊
+              </UButton>
+              <UButton color="blue" @click="exportMeetingNotice">
+                <Icon name="heroicons:document-arrow-down" class="w-4 h-4 mr-2" />
+                匯出會議通知
+              </UButton>
+            </div>
+            <div class="flex gap-3">
+              <UButton variant="outline" @click="showBasicInfoModal = false">
+                回上一頁
+              </UButton>
+              <UButton color="green" @click="saveBasicInfo">
+                <Icon name="heroicons:check" class="w-4 h-4 mr-2" />
+                儲存
+              </UButton>
+            </div>
+          </div>
+        </div>
+      </UCard>
+    </UModal>
   </NuxtLayout>
 </template>
 
@@ -130,26 +380,60 @@ const selectAll = ref(false)
 const selectedMeetings = ref([])
 const pageSize = ref(10)
 
+// Modal state
+const showBasicInfoModal = ref(false)
+const selectedMeeting = ref(null)
+
+// Basic info form fields
+const meetingDateTime = ref('')
+const meetingLocation = ref('')
+const totalObservers = ref(0)
+const landAreaRatioNumerator = ref(0)
+const landAreaRatioDenominator = ref(0)
+const totalLandArea = ref(0)
+const buildingAreaRatioNumerator = ref(0)
+const buildingAreaRatioDenominator = ref(0)
+const totalBuildingArea = ref(0)
+const peopleRatioNumerator = ref(0)
+const peopleRatioDenominator = ref(0)
+const totalPeopleCount = ref(0)
+
+// Observer table
+const observers = ref([])
+
+// Meeting notice fields
+const noticeDocNumber = ref('')
+const noticeWordNumber = ref('')
+const noticeMidNumber = ref('')
+const noticeEndNumber = ref('')
+const chairmanName = ref('')
+const contactName = ref('')
+const contactPhone = ref('')
+const attachments = ref('')
+const descriptions = ref([])
+
 const meetings = ref([
   {
     id: 1,
     name: '114年度第一屆第1次會員大會',
     renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會',
-    date: '2025年3月15日下午2:00:00',
+    date: '2025年3月15日',
+    time: '下午2:00:00',
     attendees: 73,
-    absent: 72,
-    observers: 0,
-    recordStatus: 3
+    totalCountedAttendees: 72,
+    totalObservers: 0,
+    votingTopicCount: 5
   },
   {
     id: 2,
     name: '114年度第一屆第2次會員大會',
     renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會',
-    date: '2025年8月9日下午2:00:00',
+    date: '2025年8月9日',
+    time: '下午2:00:00',
     attendees: 74,
-    absent: 74,
-    observers: 0,
-    recordStatus: 3
+    totalCountedAttendees: 74,
+    totalObservers: 0,
+    votingTopicCount: 3
   }
 ])
 
@@ -171,18 +455,90 @@ const deleteMeetings = () => {
   // TODO: Implement delete functionality
 }
 
-const viewRecord = (meeting) => {
-  console.log('Viewing record for:', meeting)
-  // TODO: Implement view record functionality
+const showBasicInfo = (meeting) => {
+  console.log('Showing basic info for:', meeting)
+  selectedMeeting.value = meeting
+
+  // Initialize form fields with existing data or defaults
+  meetingDateTime.value = `${meeting.date} ${meeting.time}`
+  meetingLocation.value = meeting.location || ''
+  totalObservers.value = meeting.totalObservers || 0
+
+  // Show modal
+  showBasicInfoModal.value = true
 }
 
-const viewMeeting = (meeting) => {
-  console.log('Viewing meeting for:', meeting)
-  // TODO: Implement view meeting functionality
+const showVotingTopics = (meeting) => {
+  console.log('Showing voting topics for:', meeting)
+  // TODO: Implement voting topics functionality
 }
 
-const viewResults = (meeting) => {
-  console.log('Viewing results for:', meeting)
-  // TODO: Implement view results functionality
+const showMemberCheckin = (meeting) => {
+  console.log('Showing member check-in for:', meeting)
+  // TODO: Implement member check-in functionality
+}
+
+const showCheckinDisplay = (meeting) => {
+  console.log('Showing check-in display for:', meeting)
+  // TODO: Implement check-in display functionality
+}
+
+// Observer management functions
+const addObserver = () => {
+  observers.value.push({
+    name: '',
+    title: '',
+    phone: ''
+  })
+}
+
+const removeObserver = (index) => {
+  observers.value.splice(index, 1)
+}
+
+// Description management functions
+const addDescription = () => {
+  descriptions.value.push({
+    content: ''
+  })
+}
+
+const removeDescription = (index) => {
+  descriptions.value.splice(index, 1)
+}
+
+// Chinese number conversion helper
+const getChineseNumber = (num) => {
+  const chineseNumbers = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十']
+  if (num <= 10) {
+    return chineseNumbers[num]
+  }
+  // For numbers > 10, we can add more logic if needed
+  return num.toString()
+}
+
+// Export functions
+const exportSignatureBook = () => {
+  console.log('Exporting signature book for meeting:', selectedMeeting.value)
+  // TODO: Implement export signature book functionality
+}
+
+const exportMeetingNotice = () => {
+  console.log('Exporting meeting notice for meeting:', selectedMeeting.value)
+  // TODO: Implement export meeting notice functionality
+}
+
+// Save function
+const saveBasicInfo = () => {
+  console.log('Saving basic info for meeting:', selectedMeeting.value)
+  console.log('Form data:', {
+    meetingDateTime: meetingDateTime.value,
+    meetingLocation: meetingLocation.value,
+    totalObservers: totalObservers.value,
+    observers: observers.value,
+    descriptions: descriptions.value
+  })
+  // TODO: Implement save functionality
+  showBasicInfoModal.value = false
 }
 </script>

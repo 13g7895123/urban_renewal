@@ -8,24 +8,25 @@ export const useApi = () => {
   const getBaseURL = () => {
     // Check if we're in development mode
     const isDev = process.dev || process.env.NODE_ENV === 'development'
-    
+
     if (isDev) {
       // In development, use proxy
       console.log('[API] Using development proxy: /api')
       return '/api'
     }
-    
-    // In production, always use the full API URL
+
+    // In production, always use the full API URL with /api path
     const apiBaseUrl = config.public.apiBaseUrl || config.public.backendUrl
-    if (apiBaseUrl && apiBaseUrl !== '/api') {
-      console.log('[API] Using production API URL:', apiBaseUrl)
-      return apiBaseUrl
+    if (apiBaseUrl) {
+      const fullApiUrl = `${apiBaseUrl}/api`
+      console.log('[API] Using production API URL:', fullApiUrl)
+      return fullApiUrl
     }
-    
-    // Ensure we never use relative paths in production
-    const productionUrl = 'https://project.mercylife.cc/api'
-    console.log('[API] Using fallback production URL:', productionUrl)
-    return productionUrl
+
+    // Fallback - use localhost backend
+    const fallbackUrl = 'http://localhost:9228/api'
+    console.log('[API] Using fallback API URL:', fallbackUrl)
+    return fallbackUrl
   }
   
   const baseURL = getBaseURL()

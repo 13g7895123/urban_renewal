@@ -1,1 +1,0 @@
-import{aq as s,ar as o,as as i,v as r}from"./DnNEn_NX.js";const d=s(async n=>{let e,t;const a=o();if([e,t]=i(()=>a.initializeAuth()),await e,t(),a.isLoggedIn)return console.log("[Guest Middleware] User is authenticated, redirecting to home"),r("/")});export{d as default};
