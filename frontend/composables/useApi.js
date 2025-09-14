@@ -10,9 +10,9 @@ export const useApi = () => {
     const isDev = process.dev || process.env.NODE_ENV === 'development'
 
     if (isDev) {
-      // In development, use proxy
-      console.log('[API] Using development proxy: /api')
-      return '/api'
+      // In development, use proxy - return empty string since endpoints already include /api
+      console.log('[API] Using development proxy: (empty baseURL)')
+      return ''
     }
 
     // In production, always use the full API URL with /api path

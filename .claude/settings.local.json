@@ -37,7 +37,9 @@
       "mcp__playwright__browser_close",
       "mcp__playwright__browser_evaluate",
       "mcp__playwright__browser_select_option",
-      "Bash(/c/xampp/php/php spark migrate)"
+      "Bash(/c/xampp/php/php spark migrate)",
+      "WebSearch",
+      "Bash(php:*)"
     ],
     "deny": [],
     "ask": []
