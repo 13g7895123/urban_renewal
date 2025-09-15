@@ -136,22 +136,51 @@
       <UCard>
         <template #header>
           <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-gray-900">會議基本資料</h3>
-            <UButton
-              variant="ghost"
-              icon="i-heroicons-x-mark-20-solid"
-              @click="showBasicInfoModal = false"
-            />
+            <h3 class="text-lg font-semibold text-gray-900">
+              {{ selectedMeeting ? '會議基本資料' : '新增會議' }}
+            </h3>
+            <div class="flex items-center gap-2">
+              <UButton
+                v-if="!selectedMeeting"
+                color="blue"
+                size="sm"
+                @click="fillMeetingTestData"
+              >
+                <Icon name="heroicons:beaker" class="w-4 h-4 mr-1" />
+                填入測試資料
+              </UButton>
+              <UButton
+                variant="ghost"
+                icon="i-heroicons-x-mark-20-solid"
+                @click="showBasicInfoModal = false"
+              />
+            </div>
           </div>
         </template>
 
         <div class="space-y-6 p-6">
           <!-- Basic Meeting Info -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- 所屬更新會 (readonly) -->
+            <!-- 所屬更新會 -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">所屬更新會</label>
-              <UInput :value="selectedMeeting?.renewalGroup" readonly class="bg-gray-50" />
+              <UInput
+                v-if="selectedMeeting"
+                :value="selectedMeeting?.renewalGroup"
+                readonly
+                class="bg-gray-50"
+              />
+              <UInput
+                v-else
+                v-model="renewalGroup"
+                placeholder="請輸入所屬更新會"
+              />
+            </div>
+
+            <!-- 會議名稱 -->
+            <div v-if="!selectedMeeting">
+              <label class="block text-sm font-medium text-gray-700 mb-2">會議名稱</label>
+              <UInput v-model="meetingName" placeholder="請輸入會議名稱" />
             </div>
 
             <!-- 會議類型 (readonly) -->
@@ -344,11 +373,11 @@
           <!-- Action Buttons -->
           <div class="flex justify-between pt-6 border-t border-gray-200">
             <div class="flex gap-3">
-              <UButton color="green" @click="exportSignatureBook">
+              <UButton v-if="selectedMeeting" color="green" @click="exportSignatureBook">
                 <Icon name="heroicons:document-arrow-down" class="w-4 h-4 mr-2" />
                 匯出簽到冊
               </UButton>
-              <UButton color="blue" @click="exportMeetingNotice">
+              <UButton v-if="selectedMeeting" color="blue" @click="exportMeetingNotice">
                 <Icon name="heroicons:document-arrow-down" class="w-4 h-4 mr-2" />
                 匯出會議通知
               </UButton>
@@ -385,6 +414,8 @@ const showBasicInfoModal = ref(false)
 const selectedMeeting = ref(null)
 
 // Basic info form fields
+const renewalGroup = ref('')
+const meetingName = ref('')
 const meetingDateTime = ref('')
 const meetingLocation = ref('')
 const totalObservers = ref(0)
@@ -447,7 +478,36 @@ const toggleSelectAll = () => {
 
 const addMeeting = () => {
   console.log('Adding new meeting')
-  // TODO: Implement add meeting functionality
+  selectedMeeting.value = null // Clear selected meeting for new creation
+
+  // Reset all form fields to empty/default values
+  renewalGroup.value = ''
+  meetingName.value = ''
+  meetingDateTime.value = ''
+  meetingLocation.value = ''
+  totalObservers.value = 0
+  landAreaRatioNumerator.value = 0
+  landAreaRatioDenominator.value = 0
+  totalLandArea.value = 0
+  buildingAreaRatioNumerator.value = 0
+  buildingAreaRatioDenominator.value = 0
+  totalBuildingArea.value = 0
+  peopleRatioNumerator.value = 0
+  peopleRatioDenominator.value = 0
+  totalPeopleCount.value = 0
+  observers.value = []
+  noticeDocNumber.value = ''
+  noticeWordNumber.value = ''
+  noticeMidNumber.value = ''
+  noticeEndNumber.value = ''
+  chairmanName.value = ''
+  contactName.value = ''
+  contactPhone.value = ''
+  attachments.value = ''
+  descriptions.value = []
+
+  // Show modal
+  showBasicInfoModal.value = true
 }
 
 const deleteMeetings = () => {
@@ -470,7 +530,7 @@ const showBasicInfo = (meeting) => {
 
 const showVotingTopics = (meeting) => {
   console.log('Showing voting topics for:', meeting)
-  // TODO: Implement voting topics functionality
+  navigateTo(`/tables/meeting/${meeting.id}/voting-topics`)
 }
 
 const showMemberCheckin = (meeting) => {
@@ -530,15 +590,125 @@ const exportMeetingNotice = () => {
 
 // Save function
 const saveBasicInfo = () => {
-  console.log('Saving basic info for meeting:', selectedMeeting.value)
-  console.log('Form data:', {
-    meetingDateTime: meetingDateTime.value,
-    meetingLocation: meetingLocation.value,
-    totalObservers: totalObservers.value,
-    observers: observers.value,
-    descriptions: descriptions.value
-  })
-  // TODO: Implement save functionality
+  if (selectedMeeting.value) {
+    // Editing existing meeting
+    console.log('Updating existing meeting:', selectedMeeting.value)
+    console.log('Form data:', {
+      meetingDateTime: meetingDateTime.value,
+      meetingLocation: meetingLocation.value,
+      totalObservers: totalObservers.value,
+      observers: observers.value,
+      descriptions: descriptions.value
+    })
+    // TODO: Implement update functionality
+  } else {
+    // Creating new meeting
+    console.log('Creating new meeting')
+    console.log('Form data:', {
+      renewalGroup: renewalGroup.value,
+      meetingName: meetingName.value,
+      meetingDateTime: meetingDateTime.value,
+      meetingLocation: meetingLocation.value,
+      totalObservers: totalObservers.value,
+      landAreaRatioNumerator: landAreaRatioNumerator.value,
+      landAreaRatioDenominator: landAreaRatioDenominator.value,
+      totalLandArea: totalLandArea.value,
+      buildingAreaRatioNumerator: buildingAreaRatioNumerator.value,
+      buildingAreaRatioDenominator: buildingAreaRatioDenominator.value,
+      totalBuildingArea: totalBuildingArea.value,
+      peopleRatioNumerator: peopleRatioNumerator.value,
+      peopleRatioDenominator: peopleRatioDenominator.value,
+      totalPeopleCount: totalPeopleCount.value,
+      observers: observers.value,
+      noticeDocNumber: noticeDocNumber.value,
+      noticeWordNumber: noticeWordNumber.value,
+      noticeMidNumber: noticeMidNumber.value,
+      noticeEndNumber: noticeEndNumber.value,
+      chairmanName: chairmanName.value,
+      contactName: contactName.value,
+      contactPhone: contactPhone.value,
+      attachments: attachments.value,
+      descriptions: descriptions.value
+    })
+    // TODO: Implement create functionality and add to meetings list
+  }
   showBasicInfoModal.value = false
+}
+
+// Fill meeting test data
+const fillMeetingTestData = () => {
+  const testRenewalGroups = [
+    '臺北市大安區忠孝東路更新事宜臺北市政府會',
+    '臺北市信義區松仁路更新事宜臺北市政府會',
+    '臺北市中山區民權東路更新事宜臺北市政府會',
+    '臺北市萬華區西門町更新事宜臺北市政府會',
+    '臺北市士林區天母更新事宜臺北市政府會'
+  ]
+
+  const testMeetingNames = [
+    '114年度第一屆第1次會員大會',
+    '114年度第一屆第2次會員大會',
+    '114年度第一屆第3次會員大會',
+    '114年度理事會第1次會議',
+    '114年度理事會第2次會議'
+  ]
+
+  const testLocations = [
+    '台北市大安區信義路三段134號3樓會議室',
+    '台北市信義區松仁路123號會議廳',
+    '台北市中山區民權東路88號2樓',
+    '台北市萬華區西門町168號活動中心',
+    '台北市士林區天母東路99號社區中心'
+  ]
+
+  const testChairmanNames = ['王大明', '李美華', '張志強', '陳淑芬', '林建國']
+  const testContactNames = ['王秘書', '李助理', '張專員', '陳經理', '林主任']
+
+  // Current date and time for meeting
+  const currentDate = new Date()
+  const futureDate = new Date(currentDate.getTime() + (Math.floor(Math.random() * 30) + 1) * 24 * 60 * 60 * 1000)
+  const meetingDate = futureDate.toISOString().split('T')[0]
+  const meetingTime = `${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}:${['00', '30'][Math.floor(Math.random() * 2)]}:00`
+
+  // Fill form data
+  renewalGroup.value = testRenewalGroups[Math.floor(Math.random() * testRenewalGroups.length)]
+  meetingName.value = testMeetingNames[Math.floor(Math.random() * testMeetingNames.length)]
+  meetingDateTime.value = `${meetingDate} ${meetingTime}`
+  meetingLocation.value = testLocations[Math.floor(Math.random() * testLocations.length)]
+  totalObservers.value = Math.floor(Math.random() * 10)
+  landAreaRatioNumerator.value = Math.floor(Math.random() * 500) + 100
+  landAreaRatioDenominator.value = Math.floor(Math.random() * 1000) + 500
+  totalLandArea.value = Math.floor(Math.random() * 2000) + 1000
+  buildingAreaRatioNumerator.value = Math.floor(Math.random() * 300) + 50
+  buildingAreaRatioDenominator.value = Math.floor(Math.random() * 800) + 200
+  totalBuildingArea.value = Math.floor(Math.random() * 1500) + 500
+  peopleRatioNumerator.value = Math.floor(Math.random() * 50) + 20
+  peopleRatioDenominator.value = Math.floor(Math.random() * 100) + 50
+  totalPeopleCount.value = Math.floor(Math.random() * 80) + 40
+
+  // Notice information
+  noticeDocNumber.value = `北市都更字第${Math.floor(Math.random() * 100000).toString().padStart(6, '0')}號`
+  noticeWordNumber.value = Math.floor(Math.random() * 1000).toString().padStart(4, '0')
+  noticeMidNumber.value = Math.floor(Math.random() * 100000).toString().padStart(6, '0')
+  noticeEndNumber.value = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
+  chairmanName.value = testChairmanNames[Math.floor(Math.random() * testChairmanNames.length)]
+  contactName.value = testContactNames[Math.floor(Math.random() * testContactNames.length)]
+  contactPhone.value = `02-${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`
+  attachments.value = '會議資料、財務報表、工程進度報告'
+
+  // Add some test observers
+  observers.value = [
+    { name: '政府代表', title: '都市更新處科長', phone: '02-27208889' },
+    { name: '建築師代表', title: '主持建築師', phone: '02-27654321' }
+  ]
+
+  // Add some test descriptions
+  descriptions.value = [
+    { content: '討論都市更新計畫執行進度' },
+    { content: '審議財務收支狀況' },
+    { content: '決議下階段工作項目' }
+  ]
+
+  console.log('Meeting test data filled successfully')
 }
 </script>

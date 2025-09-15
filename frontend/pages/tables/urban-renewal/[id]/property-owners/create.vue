@@ -6,7 +6,17 @@
       <form @submit.prevent="onSubmit" class="max-w-6xl mx-auto">
         <!-- 基本資料 -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <h2 class="text-xl font-semibold text-gray-900 mb-6">基本資料</h2>
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-semibold text-gray-900">基本資料</h2>
+            <button
+              type="button"
+              @click="fillTestData"
+              class="px-3 py-1 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-md transition-colors duration-200"
+            >
+              <Icon name="heroicons:beaker" class="w-4 h-4 mr-1 inline" />
+              填入測試資料
+            </button>
+          </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- 所屬更新會 -->
@@ -694,6 +704,58 @@ const onSubmit = async () => {
   } finally {
     isSubmitting.value = false
   }
+}
+
+// Fill test data
+const fillTestData = () => {
+  const testNames = [
+    '張三丰', '李四海', '王五明', '陳六福', '林七星',
+    '黃八方', '劉九龍', '吳十全', '鄭一品', '謝二郎'
+  ]
+
+  const testCompanies = [
+    '富邦建設股份有限公司', '遠雄建設股份有限公司', '潤泰建設股份有限公司',
+    '華固建設股份有限公司', '興富發建設股份有限公司', '長虹建設股份有限公司'
+  ]
+
+  const testPositions = [
+    '董事長', '總經理', '副總經理', '經理', '副理', '專員', '工程師', '會計師'
+  ]
+
+  const testExcludeReasons = [
+    '法院囑託查封', '假扣押', '假處分', '破產登記', '未經繼承'
+  ]
+
+  const randomName = testNames[Math.floor(Math.random() * testNames.length)]
+  const randomCompany = testCompanies[Math.floor(Math.random() * testCompanies.length)]
+  const randomPosition = testPositions[Math.floor(Math.random() * testPositions.length)]
+
+  // Generate random ID
+  const idPrefixes = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D1', 'D2', 'E1', 'E2']
+  const randomPrefix = idPrefixes[Math.floor(Math.random() * idPrefixes.length)]
+  const randomNumbers = Math.floor(Math.random() * 100000000).toString().padStart(8, '0')
+
+  // Fill form data
+  formData.owner_name = randomName
+  formData.identity_number = randomPrefix + randomNumbers
+  formData.phone1 = `09${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`
+  formData.phone2 = `02-${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`
+  formData.contact_address = `台北市${['大安區', '信義區', '中山區', '松山區', '萬華區'][Math.floor(Math.random() * 5)]}${randomName}路${Math.floor(Math.random() * 999) + 1}號`
+  formData.household_address = `台北市${['中正區', '大同區', '中山區', '松山區', '大安區'][Math.floor(Math.random() * 5)]}${randomName}街${Math.floor(Math.random() * 999) + 1}號`
+  formData.exclude_calculation = testExcludeReasons[Math.floor(Math.random() * testExcludeReasons.length)]
+  formData.company_name = randomCompany
+  formData.position = randomPosition
+  formData.remarks = `${randomName}的測試資料，包含相關地號和建號資訊。`
+
+  // Show notification
+  $swal.fire({
+    title: '測試資料已填入',
+    text: '所有表單欄位已自動填入測試資料',
+    icon: 'success',
+    confirmButtonText: '確定',
+    confirmButtonColor: '#10b981',
+    timer: 2000
+  })
 }
 
 // Go back

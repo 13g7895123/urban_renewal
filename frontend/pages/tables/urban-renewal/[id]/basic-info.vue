@@ -23,7 +23,17 @@
       <div v-else class="space-y-8">
         <!-- Basic Info Section -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 class="text-lg font-semibold text-gray-900 mb-4">基本資訊</h2>
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-semibold text-gray-900">基本資訊</h2>
+            <button
+              type="button"
+              @click="fillBasicInfoTestData"
+              class="px-3 py-1 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-md transition-colors duration-200"
+            >
+              <Icon name="heroicons:beaker" class="w-4 h-4 mr-1 inline" />
+              填入測試資料
+            </button>
+          </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -62,7 +72,17 @@
 
         <!-- Land Plot Management Section -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 class="text-lg font-semibold text-gray-900 mb-4">地號管理</h2>
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-semibold text-gray-900">地號管理</h2>
+            <button
+              type="button"
+              @click="fillLandPlotTestData"
+              class="px-3 py-1 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-md transition-colors duration-200"
+            >
+              <Icon name="heroicons:beaker" class="w-4 h-4 mr-1 inline" />
+              填入測試地號
+            </button>
+          </div>
 
           <!-- Add Land Plot Form -->
           <div class="bg-gray-50 rounded-lg p-6 shadow-sm mb-6">
@@ -648,6 +668,78 @@ const saveChanges = async () => {
   } finally {
     isSaving.value = false
   }
+}
+
+// Fill basic info test data
+const fillBasicInfoTestData = () => {
+  const testNames = [
+    '臺北市大安區忠孝東路更新事宜臺北市政府會',
+    '臺北市信義區松仁路更新事宜臺北市政府會',
+    '臺北市中山區民權東路更新事宜臺北市政府會',
+    '臺北市萬華區西門町更新事宜臺北市政府會',
+    '臺北市士林區天母更新事宜臺北市政府會'
+  ]
+
+  const testChairmanNames = ['王大明', '李美華', '張志強', '陳淑芬', '林建國']
+  const testAddresses = [
+    '台北市大安區信義路三段134號',
+    '台北市信義區松仁路123號',
+    '台北市中山區民權東路88號',
+    '台北市萬華區西門町168號',
+    '台北市士林區天母東路99號'
+  ]
+
+  renewalData.name = testNames[Math.floor(Math.random() * testNames.length)]
+  renewalData.land_area = Math.floor(Math.random() * 5000) + 1000
+  renewalData.member_count = Math.floor(Math.random() * 100) + 20
+  renewalData.chairman_name = testChairmanNames[Math.floor(Math.random() * testChairmanNames.length)]
+  renewalData.chairman_phone = `09${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`
+  renewalData.established_address = testAddresses[Math.floor(Math.random() * testAddresses.length)]
+  renewalData.responsible_person = testChairmanNames[Math.floor(Math.random() * testChairmanNames.length)]
+
+  $swal.fire({
+    title: '基本資料已填入',
+    text: '基本資訊已自動填入測試資料',
+    icon: 'success',
+    confirmButtonText: '確定',
+    confirmButtonColor: '#10b981',
+    timer: 2000
+  })
+}
+
+// Fill land plot test data
+const fillLandPlotTestData = () => {
+  // Set to Taipei City and 大安區
+  landForm.county = '臺北市'
+  onCountyChange() // Trigger district update
+
+  // Wait for districts to load, then set
+  nextTick(() => {
+    if (districts.value.length > 0) {
+      landForm.district = '大安區'
+      onDistrictChange() // Trigger section update
+
+      nextTick(() => {
+        if (sections.value.length > 0) {
+          landForm.section = sections.value[0]?.name || '大安段'
+        }
+      })
+    }
+  })
+
+  // Generate random land plot numbers
+  landForm.main_number = String(Math.floor(Math.random() * 999) + 1).padStart(4, '0')
+  landForm.sub_number = String(Math.floor(Math.random() * 99)).padStart(4, '0')
+  landForm.land_area = Math.floor(Math.random() * 500) + 100
+
+  $swal.fire({
+    title: '測試地號已填入',
+    text: '地號表單已自動填入測試資料',
+    icon: 'success',
+    confirmButtonText: '確定',
+    confirmButtonColor: '#10b981',
+    timer: 2000
+  })
 }
 
 const goBack = () => {
