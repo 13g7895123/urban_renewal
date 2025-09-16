@@ -1,7 +1,7 @@
 <template>
   <NuxtLayout name="main">
-    <template #title>會議管理</template>
-    
+    <template #title>會議基本資料</template>
+
     <div class="p-8">
       <!-- Header with green background and icon -->
       <div class="bg-green-500 text-white p-6 rounded-lg mb-6">
@@ -9,156 +9,24 @@
           <div class="bg-white/20 p-3 rounded-lg mr-4">
             <Icon name="heroicons:document-text" class="w-8 h-8 text-white" />
           </div>
-          <h2 class="text-2xl font-semibold">會議</h2>
+          <h2 class="text-2xl font-semibold">{{ selectedMeeting ? '會議基本資料' : '新增會議' }}</h2>
         </div>
       </div>
-      
-      <!-- Action Buttons -->
-      <div class="flex justify-end gap-4 mb-6">
-        <UButton 
-          color="red" 
-          @click="deleteMeetings"
-        >
-          <Icon name="heroicons:trash" class="w-5 h-5 mr-2" />
-          刪除
-        </UButton>
-        <UButton 
-          color="green" 
-          @click="addMeeting"
-        >
-          <Icon name="heroicons:plus" class="w-5 h-5 mr-2" />
-          新增會議
-        </UButton>
-      </div>
-      
-      <!-- Meetings Table -->
-      <UCard>
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead>
-              <tr class="border-b">
-                <th class="p-3 text-left">
-                  <UCheckbox v-model="selectAll" @change="toggleSelectAll" />
-                </th>
-                <th class="p-3 text-left text-sm font-medium text-gray-700">會議名稱</th>
-                <th class="p-3 text-left text-sm font-medium text-gray-700">所屬更新會</th>
-                <th class="p-3 text-left text-sm font-medium text-gray-700">會議日期時間</th>
-                <th class="p-3 text-center text-sm font-medium text-gray-700">出席人數</th>
-                <th class="p-3 text-center text-sm font-medium text-gray-700">納入計算總人數</th>
-                <th class="p-3 text-center text-sm font-medium text-gray-700">列席總人數</th>
-                <th class="p-3 text-center text-sm font-medium text-gray-700">投票議題數</th>
-                <th class="p-3 text-center text-sm font-medium text-gray-700">操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(meeting, index) in meetings" :key="index" class="border-b hover:bg-gray-50">
-                <td class="p-3">
-                  <UCheckbox v-model="selectedMeetings" :value="meeting.id" />
-                </td>
-                <td class="p-3 text-sm">{{ meeting.name }}</td>
-                <td class="p-3 text-sm">{{ meeting.renewalGroup }}</td>
-                <td class="p-3 text-sm">
-                  <div class="text-center">
-                    <div>{{ meeting.date }}</div>
-                    <div>{{ meeting.time }}</div>
-                  </div>
-                </td>
-                <td class="p-3 text-sm text-center">{{ meeting.attendees }}</td>
-                <td class="p-3 text-sm text-center">{{ meeting.totalCountedAttendees }}</td>
-                <td class="p-3 text-sm text-center">{{ meeting.totalObservers }}</td>
-                <td class="p-3 text-sm text-center">{{ meeting.votingTopicCount }}</td>
-                <td class="p-3 text-center">
-                  <div class="flex flex-wrap gap-1 justify-center">
-                    <UButton
-                      color="green"
-                      size="xs"
-                      @click="showBasicInfo(meeting)"
-                    >
-                      基本資料
-                    </UButton>
-                    <UButton
-                      color="blue"
-                      size="xs"
-                      @click="showVotingTopics(meeting)"
-                    >
-                      投票議題
-                    </UButton>
-                    <UButton
-                      color="purple"
-                      size="xs"
-                      @click="showMemberCheckin(meeting)"
-                    >
-                      會員報到
-                    </UButton>
-                    <UButton
-                      color="orange"
-                      size="xs"
-                      @click="showCheckinDisplay(meeting)"
-                    >
-                      報到顯示
-                    </UButton>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        
-        <!-- Pagination -->
-        <div class="flex justify-between items-center mt-4 pt-4 border-t">
-          <div class="text-sm text-gray-500">
-            每頁顯示：
-            <USelectMenu 
-              v-model="pageSize" 
-              :options="[10, 20, 50]" 
-              size="sm"
-              class="inline-block w-20 ml-2"
-            />
-          </div>
-          <div class="text-sm text-gray-500">
-            1-2 共 2
-          </div>
-          <div class="flex gap-2">
-            <UButton variant="ghost" size="sm" disabled>
-              <Icon name="heroicons:chevron-left" class="w-4 h-4" />
-            </UButton>
-            <UButton variant="ghost" size="sm" class="bg-blue-500 text-white">1</UButton>
-            <UButton variant="ghost" size="sm" disabled>
-              <Icon name="heroicons:chevron-right" class="w-4 h-4" />
-            </UButton>
-          </div>
-        </div>
-      </UCard>
-    </div>
 
-    <!-- Basic Info Modal -->
-    <UModal v-model="showBasicInfoModal" :ui="{ width: 'max-w-6xl' }">
       <UCard>
-        <template #header>
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-gray-900">
-              {{ selectedMeeting ? '會議基本資料' : '新增會議' }}
-            </h3>
-            <div class="flex items-center gap-2">
-              <UButton
-                v-if="!selectedMeeting"
-                color="blue"
-                size="sm"
-                @click="fillMeetingTestData"
-              >
-                <Icon name="heroicons:beaker" class="w-4 h-4 mr-1" />
-                填入測試資料
-              </UButton>
-              <UButton
-                variant="ghost"
-                icon="i-heroicons-x-mark-20-solid"
-                @click="showBasicInfoModal = false"
-              />
-            </div>
-          </div>
-        </template>
-
         <div class="space-y-6 p-6">
+          <!-- Test Data Button -->
+          <div v-if="!selectedMeeting" class="flex justify-end">
+            <UButton
+              color="blue"
+              size="sm"
+              @click="fillMeetingTestData"
+            >
+              <Icon name="heroicons:beaker" class="w-4 h-4 mr-1" />
+              填入測試資料
+            </UButton>
+          </div>
+
           <!-- Basic Meeting Info -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- 所屬更新會 -->
@@ -383,7 +251,7 @@
               </UButton>
             </div>
             <div class="flex gap-3">
-              <UButton variant="outline" @click="showBasicInfoModal = false">
+              <UButton variant="outline" @click="goBack">
                 回上一頁
               </UButton>
               <UButton color="green" @click="saveBasicInfo">
@@ -394,121 +262,22 @@
           </div>
         </div>
       </UCard>
-    </UModal>
-
-    <!-- Voting Topics Modal -->
-    <UModal v-model="showVotingTopicsModal" :ui="{ width: 'max-w-6xl' }">
-      <UCard>
-        <template #header>
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-gray-900">投票議題管理</h3>
-            <UButton
-              variant="ghost"
-              icon="i-heroicons-x-mark-20-solid"
-              @click="showVotingTopicsModal = false"
-            />
-          </div>
-        </template>
-
-        <div class="space-y-6 p-6">
-          <!-- Action Buttons -->
-          <div class="flex justify-end gap-4">
-            <UButton
-              color="green"
-              @click="addVotingTopic"
-            >
-              <Icon name="heroicons:plus" class="w-5 h-5 mr-2" />
-              新增議題
-            </UButton>
-          </div>
-
-          <!-- Voting Topics Table -->
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead>
-                <tr class="border-b">
-                  <th class="p-3 text-left text-sm font-medium text-green-600">議題名稱</th>
-                  <th class="p-3 text-left text-sm font-medium text-green-600">所屬會議</th>
-                  <th class="p-3 text-center text-sm font-medium text-green-600">最大有效圈選數</th>
-                  <th class="p-3 text-center text-sm font-medium text-green-600">正取數量</th>
-                  <th class="p-3 text-center text-sm font-medium text-green-600">備取數量</th>
-                  <th class="p-3 text-center text-sm font-medium text-green-600">操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(topic, index) in votingTopics" :key="index" class="border-b hover:bg-gray-50">
-                  <td class="p-3 text-sm">{{ topic.name }}</td>
-                  <td class="p-3 text-sm">{{ topic.meetingName }}</td>
-                  <td class="p-3 text-sm text-center">{{ topic.maxSelections }}</td>
-                  <td class="p-3 text-sm text-center">{{ topic.winnerCount }}</td>
-                  <td class="p-3 text-sm text-center">{{ topic.backupCount }}</td>
-                  <td class="p-3 text-center">
-                    <div class="flex flex-wrap gap-1 justify-center">
-                      <UButton
-                        color="green"
-                        size="xs"
-                        @click="showVotingTopicBasicInfo(topic)"
-                      >
-                        <span class="text-white">基本資料</span>
-                      </UButton>
-                      <UButton
-                        color="blue"
-                        size="xs"
-                        @click="startVotingTopic(topic)"
-                      >
-                        <span class="text-white">開始投票</span>
-                      </UButton>
-                      <UButton
-                        color="purple"
-                        size="xs"
-                        @click="showVotingTopicResults(topic)"
-                      >
-                        <span class="text-white">投票結果</span>
-                      </UButton>
-                      <UButton
-                        color="gray"
-                        size="xs"
-                        @click="showVotingTopicOther(topic)"
-                      >
-                        <span class="text-white">其他</span>
-                      </UButton>
-                    </div>
-                  </td>
-                </tr>
-                <tr v-if="votingTopics.length === 0">
-                  <td colspan="6" class="p-8 text-center text-gray-500">暫無投票議題資料</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Action Buttons -->
-          <div class="flex justify-center pt-6 border-t border-gray-200">
-            <UButton variant="outline" @click="showVotingTopicsModal = false">
-              關閉
-            </UButton>
-          </div>
-        </div>
-      </UCard>
-    </UModal>
+    </div>
   </NuxtLayout>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { navigateTo } from '#app'
+import { ref, onMounted } from 'vue'
+import { useRoute, navigateTo } from '#app'
 
 definePageMeta({
   layout: false
 })
 
-const selectAll = ref(false)
-const selectedMeetings = ref([])
-const pageSize = ref(10)
+const route = useRoute()
+const meetingId = route.params.meetingId
 
-// Modal state
-const showBasicInfoModal = ref(false)
-const showVotingTopicsModal = ref(false)
+// Get meeting data (this would typically come from an API)
 const selectedMeeting = ref(null)
 
 // Basic info form fields
@@ -541,29 +310,10 @@ const contactPhone = ref('')
 const attachments = ref('')
 const descriptions = ref([])
 
-// Voting topics data
-const votingTopics = ref([
+// Mock meetings data (this would typically come from an API)
+const meetings = [
   {
-    id: 1,
-    name: '理事會選舉',
-    meetingName: '114年度第一屆第1次會員大會',
-    maxSelections: 3,
-    winnerCount: 3,
-    backupCount: 2
-  },
-  {
-    id: 2,
-    name: '監事會選舉',
-    meetingName: '114年度第一屆第1次會員大會',
-    maxSelections: 2,
-    winnerCount: 2,
-    backupCount: 1
-  }
-])
-
-const meetings = ref([
-  {
-    id: 1,
+    id: '1',
     name: '114年度第一屆第1次會員大會',
     renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會',
     date: '2025年3月15日',
@@ -571,10 +321,11 @@ const meetings = ref([
     attendees: 73,
     totalCountedAttendees: 72,
     totalObservers: 0,
-    votingTopicCount: 5
+    votingTopicCount: 5,
+    location: '台北市南港區玉成街1號'
   },
   {
-    id: 2,
+    id: '2',
     name: '114年度第一屆第2次會員大會',
     renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會',
     date: '2025年8月9日',
@@ -582,23 +333,29 @@ const meetings = ref([
     attendees: 74,
     totalCountedAttendees: 74,
     totalObservers: 0,
-    votingTopicCount: 3
+    votingTopicCount: 3,
+    location: '台北市南港區玉成街2號'
   }
-])
+]
 
-const toggleSelectAll = () => {
-  if (selectAll.value) {
-    selectedMeetings.value = meetings.value.map(m => m.id)
+onMounted(() => {
+  if (meetingId === 'new') {
+    // Creating new meeting
+    selectedMeeting.value = null
+    resetFormFields()
   } else {
-    selectedMeetings.value = []
+    // Load existing meeting data
+    selectedMeeting.value = meetings.find(m => m.id === meetingId)
+    if (selectedMeeting.value) {
+      // Initialize form fields with existing data
+      meetingDateTime.value = `${selectedMeeting.value.date} ${selectedMeeting.value.time}`
+      meetingLocation.value = selectedMeeting.value.location || ''
+      totalObservers.value = selectedMeeting.value.totalObservers || 0
+    }
   }
-}
+})
 
-const addMeeting = () => {
-  console.log('Adding new meeting')
-  selectedMeeting.value = null // Clear selected meeting for new creation
-
-  // Reset all form fields to empty/default values
+const resetFormFields = () => {
   renewalGroup.value = ''
   meetingName.value = ''
   meetingDateTime.value = ''
@@ -623,42 +380,6 @@ const addMeeting = () => {
   contactPhone.value = ''
   attachments.value = ''
   descriptions.value = []
-
-  // Show modal
-  showBasicInfoModal.value = true
-}
-
-const deleteMeetings = () => {
-  console.log('Deleting meetings:', selectedMeetings.value)
-  // TODO: Implement delete functionality
-}
-
-const showBasicInfo = (meeting) => {
-  console.log('Showing basic info for:', meeting)
-  selectedMeeting.value = meeting
-
-  // Initialize form fields with existing data or defaults
-  meetingDateTime.value = `${meeting.date} ${meeting.time}`
-  meetingLocation.value = meeting.location || ''
-  totalObservers.value = meeting.totalObservers || 0
-
-  // Show modal
-  showBasicInfoModal.value = true
-}
-
-const showVotingTopics = (meeting) => {
-  console.log('Showing voting topics for:', meeting)
-  navigateTo(`/tables/meeting/${meeting.id}/voting-topics`)
-}
-
-const showMemberCheckin = (meeting) => {
-  console.log('Showing member check-in for:', meeting)
-  // TODO: Implement member check-in functionality
-}
-
-const showCheckinDisplay = (meeting) => {
-  console.log('Showing check-in display for:', meeting)
-  // TODO: Implement check-in display functionality
 }
 
 // Observer management functions
@@ -691,7 +412,6 @@ const getChineseNumber = (num) => {
   if (num <= 10) {
     return chineseNumbers[num]
   }
-  // For numbers > 10, we can add more logic if needed
   return num.toString()
 }
 
@@ -704,6 +424,49 @@ const exportSignatureBook = () => {
 const exportMeetingNotice = () => {
   console.log('Exporting meeting notice for meeting:', selectedMeeting.value)
   // TODO: Implement export meeting notice functionality
+}
+
+// Fill test data function
+const fillMeetingTestData = () => {
+  renewalGroup.value = '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會'
+  meetingName.value = '114年度第一屆第3次會員大會'
+  meetingDateTime.value = '2025年12月15日 下午2:00:00'
+  meetingLocation.value = '台北市南港區玉成街1號'
+  totalObservers.value = 5
+  landAreaRatioNumerator.value = 3
+  landAreaRatioDenominator.value = 4
+  totalLandArea.value = 1500
+  buildingAreaRatioNumerator.value = 2
+  buildingAreaRatioDenominator.value = 3
+  totalBuildingArea.value = 2000
+  peopleRatioNumerator.value = 50
+  peopleRatioDenominator.value = 100
+  totalPeopleCount.value = 75
+
+  observers.value = [
+    { name: '張三', title: '市政府代表', phone: '02-1234-5678' },
+    { name: '李四', title: '建築師', phone: '02-2345-6789' }
+  ]
+
+  noticeDocNumber.value = '北市都更'
+  noticeWordNumber.value = '字第'
+  noticeMidNumber.value = '1140001'
+  noticeEndNumber.value = '號'
+  chairmanName.value = '王理事長'
+  contactName.value = '陳小明'
+  contactPhone.value = '02-3456-7890'
+  attachments.value = '會議議程、投票單'
+
+  descriptions.value = [
+    { content: '請各位會員準時出席會議' },
+    { content: '會議當日請攜帶身分證明文件' },
+    { content: '如有疑問請聯繫承辦人員' }
+  ]
+}
+
+// Navigation functions
+const goBack = () => {
+  navigateTo('/tables/meeting')
 }
 
 // Save function
@@ -750,32 +513,8 @@ const saveBasicInfo = () => {
     })
     // TODO: Implement create functionality and add to meetings list
   }
-  showBasicInfoModal.value = false
-}
 
-// Voting topics functions
-const addVotingTopic = () => {
-  console.log('Adding new voting topic for meeting:', selectedMeeting.value)
-  // TODO: Implement add voting topic functionality
-}
-
-const showVotingTopicBasicInfo = (topic) => {
-  console.log('Showing basic info for voting topic:', topic)
-  // TODO: Implement voting topic basic info functionality
-}
-
-const startVotingTopic = (topic) => {
-  console.log('Starting voting for topic:', topic)
-  // TODO: Implement start voting functionality
-}
-
-const showVotingTopicResults = (topic) => {
-  console.log('Showing voting results for topic:', topic)
-  // TODO: Implement voting results functionality
-}
-
-const showVotingTopicOther = (topic) => {
-  console.log('Showing other options for topic:', topic)
-  // TODO: Implement other options functionality
+  // Navigate back to meeting list after save
+  navigateTo('/tables/meeting')
 }
 </script>
