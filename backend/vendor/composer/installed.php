@@ -37,6 +37,15 @@
             'aliases' => array(),
             'dev_requirement' => true,
         ),
+        'firebase/php-jwt' => array(
+            'pretty_version' => 'v6.11.1',
+            'version' => '6.11.1.0',
+            'reference' => 'd1e91ecf8c598d073d0995afa8cd5c75c6e19e66',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../firebase/php-jwt',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'laminas/laminas-escaper' => array(
             'pretty_version' => '2.17.0',
             'version' => '2.17.0.0',
@@ -137,9 +146,9 @@
             'dev_requirement' => true,
         ),
         'phpunit/phpunit' => array(
-            'pretty_version' => '10.5.54',
-            'version' => '10.5.54.0',
-            'reference' => 'b1dbbaaf96106b76d500b9d3db51f9b01f6a3589',
+            'pretty_version' => '10.5.55',
+            'version' => '10.5.55.0',
+            'reference' => '4b2d546b336876bd9562f24641b08a25335b06b6',
             'type' => 'library',
             'install_path' => __DIR__ . '/../phpunit/phpunit',
             'aliases' => array(),
