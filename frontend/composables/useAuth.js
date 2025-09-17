@@ -1,88 +1,67 @@
 /**
- * Authentication API composable - Updated to match Laravel backend
+ * Authentication API composable - Updated to match CodeIgniter backend
  */
 export const useAuth = () => {
   const { post, get, put } = useApi()
 
   /**
-   * Login user with email/username and password
+   * Login user with username/email and password
    */
   const login = async (credentials) => {
     const loginData = {
-      login: credentials.username || credentials.email, // Backend expects 'login' field
+      username: credentials.username || credentials.email,
       password: credentials.password
     }
-    return await post('/auth/login', loginData)
-  }
-
-  /**
-   * Register new user
-   */
-  const register = async (userData) => {
-    return await post('/auth/register', userData)
+    return await post('/api/auth/login', loginData)
   }
 
   /**
    * Logout current user
    */
   const logout = async () => {
-    return await post('/auth/logout')
-  }
-
-  /**
-   * Logout from all devices
-   */
-  const logoutAll = async () => {
-    return await post('/auth/logout-all')
+    return await post('/api/auth/logout')
   }
 
   /**
    * Get current authenticated user data
    */
   const getCurrentUser = async () => {
-    return await get('/auth/me')
-  }
-
-  /**
-   * Update user profile (using profile endpoint)
-   */
-  const updateProfile = async (profileData) => {
-    return await put('/profile', profileData)
-  }
-
-  /**
-   * Change password
-   */
-  const changePassword = async (passwordData) => {
-    return await put('/auth/change-password', passwordData)
+    return await get('/api/auth/me')
   }
 
   /**
    * Refresh authentication token
    */
   const refreshToken = async () => {
-    return await post('/auth/refresh')
+    return await post('/api/auth/refresh')
   }
 
   /**
-   * Request password reset (if implemented in backend)
+   * Request password reset
    */
   const requestPasswordReset = async (email) => {
-    return await post('/auth/forgot-password', { email })
+    return await post('/api/auth/forgot-password', { email })
   }
 
   /**
-   * Reset password with token (if implemented in backend)
+   * Reset password with token
    */
   const resetPassword = async (resetData) => {
-    return await post('/auth/reset-password', resetData)
+    return await post('/api/auth/reset-password', resetData)
   }
 
   /**
-   * Verify email address (if implemented in backend)
+   * Change password (through users endpoint)
    */
-  const verifyEmail = async (token) => {
-    return await post('/auth/verify-email', { token })
+  const changePassword = async (passwordData) => {
+    return await post('/api/users/change-password', passwordData)
+  }
+
+  /**
+   * Update user profile (through users endpoint)
+   */
+  const updateProfile = async (profileData) => {
+    return await get('/api/users/profile')
   }
 
   /**
@@ -91,7 +70,7 @@ export const useAuth = () => {
   const checkAuth = async () => {
     try {
       const response = await getCurrentUser()
-      return response.success && response.data?.user
+      return response.success && response.data
     } catch (error) {
       return false
     }

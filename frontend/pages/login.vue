@@ -77,15 +77,53 @@ const handleLogin = async () => {
   if (!username.value || !password.value) {
     return
   }
-  
+
   loading.value = true
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    // Redirect to urban renewal management page (no authentication required for now)
-    await navigateTo('/tables/urban-renewal')
+    const { login } = useAuth()
+    const { setAuthToken } = useApi()
+
+    const response = await login({
+      username: username.value,
+      password: password.value
+    })
+
+    if (response.success && response.data?.token) {
+      // Store the token
+      setAuthToken(response.data.token)
+
+      // Store user data if available
+      if (response.data.user && process.client) {
+        localStorage.setItem('auth_user', JSON.stringify(response.data.user))
+      }
+
+      // Show success message
+      const toast = useToast()
+      toast.add({
+        title: '登入成功',
+        description: `歡迎回來，${response.data.user?.name || '用戶'}！`,
+        color: 'green'
+      })
+
+      // Redirect to dashboard
+      await navigateTo('/tables/urban-renewal')
+    } else {
+      // Show error message
+      const toast = useToast()
+      toast.add({
+        title: '登入失敗',
+        description: response.error?.message || '帳號或密碼錯誤',
+        color: 'red'
+      })
+    }
   } catch (error) {
     console.error('Login error:', error)
+    const toast = useToast()
+    toast.add({
+      title: '登入錯誤',
+      description: '系統錯誤，請稍後再試',
+      color: 'red'
+    })
   } finally {
     loading.value = false
   }
