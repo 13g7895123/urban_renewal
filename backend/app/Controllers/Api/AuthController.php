@@ -2,13 +2,13 @@
 
 namespace App\Controllers\Api;
 
-use App\Controllers\BaseController;
+use CodeIgniter\RESTful\ResourceController;
 use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
-class AuthController extends BaseController
+class AuthController extends ResourceController
 {
     protected $userModel;
     protected $format = 'json';
@@ -16,6 +16,9 @@ class AuthController extends BaseController
     public function __construct()
     {
         $this->userModel = new UserModel();
+
+        // Load helper functions
+        helper(['auth', 'response']);
 
         // Set CORS headers
         header('Access-Control-Allow-Origin: *');
@@ -44,14 +47,7 @@ class AuthController extends BaseController
             ];
 
             if (!$this->validate($rules)) {
-                return $this->fail([
-                    'success' => false,
-                    'error' => [
-                        'code' => 'VALIDATION_ERROR',
-                        'message' => '驗證失敗',
-                        'details' => $this->validator->getErrors()
-                    ]
-                ], 422);
+                return response_validation_error('驗證失敗', $this->validator->getErrors());
             }
 
             $username = $this->request->getJSON()->username;
@@ -63,24 +59,12 @@ class AuthController extends BaseController
                                    ->first();
 
             if (!$user) {
-                return $this->fail([
-                    'success' => false,
-                    'error' => [
-                        'code' => 'UNAUTHORIZED',
-                        'message' => '帳號或密碼錯誤'
-                    ]
-                ], 401);
+                return response_error('帳號或密碼錯誤', 401);
             }
 
             // 檢查帳號鎖定狀態
             if ($user['locked_until'] && strtotime($user['locked_until']) > time()) {
-                return $this->fail([
-                    'success' => false,
-                    'error' => [
-                        'code' => 'ACCOUNT_LOCKED',
-                        'message' => '帳號已被鎖定，請稍後再試'
-                    ]
-                ], 401);
+                return response_error('帳號已被鎖定，請稍後再試', 401);
             }
 
             // 驗證密碼
@@ -98,13 +82,7 @@ class AuthController extends BaseController
 
                 $this->userModel->update($user['id'], $updateData);
 
-                return $this->fail([
-                    'success' => false,
-                    'error' => [
-                        'code' => 'UNAUTHORIZED',
-                        'message' => '帳號或密碼錯誤'
-                    ]
-                ], 401);
+                return response_error('帳號或密碼錯誤', 401);
             }
 
             // 重置登入失敗次數
@@ -137,13 +115,7 @@ class AuthController extends BaseController
 
         } catch (\Exception $e) {
             log_message('error', 'Login error: ' . $e->getMessage());
-            return $this->fail([
-                'success' => false,
-                'error' => [
-                    'code' => 'INTERNAL_ERROR',
-                    'message' => '登入處理失敗'
-                ]
-            ], 500);
+            return response_error('登入處理失敗', 500);
         }
     }
 
