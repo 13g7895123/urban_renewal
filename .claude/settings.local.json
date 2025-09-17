@@ -40,7 +40,8 @@
       "Bash(/c/xampp/php/php spark migrate)",
       "WebSearch",
       "Bash(php:*)",
-      "Read(//d/**)"
+      "Read(//d/**)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
