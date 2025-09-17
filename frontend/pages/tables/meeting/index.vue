@@ -321,12 +321,12 @@ const showVotingTopics = (meeting) => {
 
 const showMemberCheckin = (meeting) => {
   console.log('Showing member check-in for:', meeting)
-  // TODO: Implement member check-in functionality
+  navigateTo(`/tables/meeting/${meeting.id}/member-checkin`)
 }
 
 const showCheckinDisplay = (meeting) => {
   console.log('Showing check-in display for:', meeting)
-  // TODO: Implement check-in display functionality
+  navigateTo(`/tables/meeting/${meeting.id}/checkin-display`)
 }
 
 
