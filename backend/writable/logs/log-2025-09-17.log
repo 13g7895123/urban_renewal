@@ -92,3 +92,46 @@ CRITICAL - 2025-09-17 04:45:33 --> ErrorException: Declaration of App\Controller
 [Method: GET, Route: api/system-settings/public]
 in APPPATH/Controllers/Api/SystemSettingsController.php on line 321.
  1 [internal function]: CodeIgniter\Debug\Exceptions->shutdownHandler()
+CRITICAL - 2025-09-17 09:30:15 --> Error: Call to undefined method App\Controllers\Api\AuthController::fail()
+[Method: POST, Route: api/auth/login]
+in APPPATH/Controllers/Api/AuthController.php on line 66.
+ 1 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\Api\AuthController->login()
+ 2 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Api\AuthController))
+ 3 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 4 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 5 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 6 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-09-17 09:32:24 --> Error: Call to undefined function App\Controllers\Api\response_error()
+[Method: POST, Route: api/auth/login]
+in APPPATH/Controllers/Api/AuthController.php on line 59.
+ 1 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\Api\AuthController->login()
+ 2 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Api\AuthController))
+ 3 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 4 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 5 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 6 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+ERROR - 2025-09-17 09:33:29 --> mysqli_sql_exception: Unknown column 'name' in 'INSERT INTO' in /var/www/html/vendor/codeigniter4/framework/system/Database/MySQLi/Connection.php:327
+Stack trace:
+#0 /var/www/html/vendor/codeigniter4/framework/system/Database/MySQLi/Connection.php(327): mysqli->query('INSERT INTO `us...', 0)
+#1 /var/www/html/vendor/codeigniter4/framework/system/Database/BaseConnection.php(729): CodeIgniter\Database\MySQLi\Connection->execute('INSERT INTO `us...')
+#2 /var/www/html/vendor/codeigniter4/framework/system/Database/BaseConnection.php(646): CodeIgniter\Database\BaseConnection->simpleQuery('INSERT INTO `us...')
+#3 /var/www/html/vendor/codeigniter4/framework/system/Database/BaseBuilder.php(1841): CodeIgniter\Database\BaseConnection->query('INSERT INTO `us...', NULL, false)
+#4 /var/www/html/vendor/codeigniter4/framework/system/Database/BaseBuilder.php(2230): CodeIgniter\Database\BaseBuilder->batchExecute('_insertBatch', 100)
+#5 /var/www/html/app/Database/Seeds/UserSeeder.php(55): CodeIgniter\Database\BaseBuilder->insertBatch(Array)
+#6 /var/www/html/vendor/codeigniter4/framework/system/Database/Seeder.php(149): App\Database\Seeds\UserSeeder->run()
+#7 /var/www/html/vendor/codeigniter4/framework/system/Commands/Database/Seed.php(79): CodeIgniter\Database\Seeder->call('App\\Database\\Se...')
+#8 /var/www/html/vendor/codeigniter4/framework/system/CLI/Commands.php(74): CodeIgniter\Commands\Database\Seed->run(Array)
+#9 /var/www/html/vendor/codeigniter4/framework/system/CLI/Console.php(47): CodeIgniter\CLI\Commands->run('db:seed', Array)
+#10 /var/www/html/vendor/codeigniter4/framework/system/Boot.php(388): CodeIgniter\CLI\Console->run()
+#11 /var/www/html/vendor/codeigniter4/framework/system/Boot.php(133): CodeIgniter\Boot::runCommand(Object(CodeIgniter\CLI\Console))
+#12 /var/www/html/spark(87): CodeIgniter\Boot::bootSpark(Object(Config\Paths))
+#13 {main}
+CRITICAL - 2025-09-17 09:34:15 --> Error: Call to undefined method App\Controllers\Api\AuthController::respond()
+[Method: POST, Route: api/auth/login]
+in APPPATH/Controllers/Api/AuthController.php on line 105.
+ 1 SYSTEMPATH/CodeIgniter.php(933): App\Controllers\Api\AuthController->login()
+ 2 SYSTEMPATH/CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Api\AuthController))
+ 3 SYSTEMPATH/CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 4 SYSTEMPATH/Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 5 SYSTEMPATH/Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 6 FCPATH/index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))

@@ -105,6 +105,7 @@ declare global {
   const useApi: typeof import('../../composables/useApi')['useApi']
   const useAppConfig: typeof import('../../node_modules/nuxt/dist/app/config')['useAppConfig']
   const useAsyncData: typeof import('../../node_modules/nuxt/dist/app/composables/asyncData')['useAsyncData']
+  const useAttendance: typeof import('../../composables/useAttendance')['useAttendance']
   const useAttrs: typeof import('vue')['useAttrs']
   const useAuth: typeof import('../../composables/useAuth')['useAuth']
   const useAuthStore: typeof import('../../stores/auth')['useAuthStore']
@@ -129,6 +130,7 @@ declare global {
   const useLazyFetch: typeof import('../../node_modules/nuxt/dist/app/composables/fetch')['useLazyFetch']
   const useLink: typeof import('../../node_modules/vue-router')['useLink']
   const useLoadingIndicator: typeof import('../../node_modules/nuxt/dist/app/composables/loading-indicator')['useLoadingIndicator']
+  const useMeetings: typeof import('../../composables/useMeetings')['useMeetings']
   const useModal: typeof import('../../node_modules/@nuxt/ui/dist/runtime/composables/useModal')['useModal']
   const useModel: typeof import('vue')['useModel']
   const useNotifications: typeof import('../../composables/useNotifications')['useNotifications']
@@ -191,12 +193,16 @@ declare global {
   const useSlots: typeof import('vue')['useSlots']
   const useState: typeof import('../../node_modules/nuxt/dist/app/composables/state')['useState']
   const useSweetAlert: typeof import('../../composables/useSweetAlert')['useSweetAlert']
+  const useSystemSettings: typeof import('../../composables/useSystemSettings')['useSystemSettings']
   const useTemplateRef: typeof import('vue')['useTemplateRef']
   const useTimer: typeof import('../../node_modules/@nuxt/ui/dist/runtime/composables/useTimer')['useTimer']
   const useToast: typeof import('../../node_modules/@nuxt/ui/dist/runtime/composables/useToast')['useToast']
   const useTransitionState: typeof import('vue')['useTransitionState']
   const useUI: typeof import('../../node_modules/@nuxt/ui/dist/runtime/composables/useUI')['useUI']
+  const useUrbanRenewal: typeof import('../../composables/useUrbanRenewal')['useUrbanRenewal']
   const useUsers: typeof import('../../composables/useUsers')['useUsers']
+  const useVoting: typeof import('../../composables/useVoting')['useVoting']
+  const useVotingTopics: typeof import('../../composables/useVoting')['useVotingTopics']
   const useWebsiteSettingsApi: typeof import('../../composables/useWebsiteSettingsApi')['useWebsiteSettingsApi']
   const watch: typeof import('vue')['watch']
   const watchEffect: typeof import('vue')['watchEffect']
@@ -323,6 +329,7 @@ declare module 'vue' {
     readonly useApi: UnwrapRef<typeof import('../../composables/useApi')['useApi']>
     readonly useAppConfig: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/config')['useAppConfig']>
     readonly useAsyncData: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/asyncData')['useAsyncData']>
+    readonly useAttendance: UnwrapRef<typeof import('../../composables/useAttendance')['useAttendance']>
     readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
     readonly useAuth: UnwrapRef<typeof import('../../composables/useAuth')['useAuth']>
     readonly useAuthStore: UnwrapRef<typeof import('../../stores/auth')['useAuthStore']>
@@ -347,6 +354,7 @@ declare module 'vue' {
     readonly useLazyFetch: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/fetch')['useLazyFetch']>
     readonly useLink: UnwrapRef<typeof import('../../node_modules/vue-router')['useLink']>
     readonly useLoadingIndicator: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/loading-indicator')['useLoadingIndicator']>
+    readonly useMeetings: UnwrapRef<typeof import('../../composables/useMeetings')['useMeetings']>
     readonly useModal: UnwrapRef<typeof import('../../node_modules/@nuxt/ui/dist/runtime/composables/useModal')['useModal']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
     readonly useNotifications: UnwrapRef<typeof import('../../composables/useNotifications')['useNotifications']>
@@ -409,12 +417,16 @@ declare module 'vue' {
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
     readonly useState: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/state')['useState']>
     readonly useSweetAlert: UnwrapRef<typeof import('../../composables/useSweetAlert')['useSweetAlert']>
+    readonly useSystemSettings: UnwrapRef<typeof import('../../composables/useSystemSettings')['useSystemSettings']>
     readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
     readonly useTimer: UnwrapRef<typeof import('../../node_modules/@nuxt/ui/dist/runtime/composables/useTimer')['useTimer']>
     readonly useToast: UnwrapRef<typeof import('../../node_modules/@nuxt/ui/dist/runtime/composables/useToast')['useToast']>
     readonly useTransitionState: UnwrapRef<typeof import('vue')['useTransitionState']>
     readonly useUI: UnwrapRef<typeof import('../../node_modules/@nuxt/ui/dist/runtime/composables/useUI')['useUI']>
+    readonly useUrbanRenewal: UnwrapRef<typeof import('../../composables/useUrbanRenewal')['useUrbanRenewal']>
     readonly useUsers: UnwrapRef<typeof import('../../composables/useUsers')['useUsers']>
+    readonly useVoting: UnwrapRef<typeof import('../../composables/useVoting')['useVoting']>
+    readonly useVotingTopics: UnwrapRef<typeof import('../../composables/useVoting')['useVotingTopics']>
     readonly useWebsiteSettingsApi: UnwrapRef<typeof import('../../composables/useWebsiteSettingsApi')['useWebsiteSettingsApi']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
     readonly watchEffect: UnwrapRef<typeof import('vue')['watchEffect']>
