@@ -5,7 +5,7 @@
     <div class="p-8">
       <!-- Page Title -->
       <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">{{ renewalData.name || '載入中...' }}</h1>
+        <h1 class="text-2xl font-bold text-gray-900">{{ renewalData.name || '' }}</h1>
       </div>
 
       <!-- Loading State -->
@@ -415,6 +415,8 @@ const landNumberErrors = reactive({
 
 const landPlots = ref([])
 const editingLandPlot = ref({})
+const originalLandPlots = ref([]) // 保存原始地號資料
+const deletedLandPlots = ref([]) // 保存已刪除的地號ID
 
 // Location Data from API
 const counties = ref([])
@@ -493,6 +495,21 @@ const fetchRenewalData = async () => {
   }
 }
 
+const fetchLandPlots = async () => {
+  try {
+    const response = await $fetch(`http://localhost:9228/api/urban-renewals/${route.params.id}/land-plots`)
+
+    if (response.status === 'success') {
+      landPlots.value = response.data
+      originalLandPlots.value = JSON.parse(JSON.stringify(response.data)) // 深拷貝保存原始資料
+    }
+  } catch (err) {
+    console.error('Fetch land plots error:', err)
+    landPlots.value = []
+    originalLandPlots.value = []
+  }
+}
+
 const updatePageTitle = () => {
   // This would update the page title when name changes
   document.title = `${renewalData.name} - 更新會基本資料管理`
@@ -545,7 +562,7 @@ const addLandPlot = () => {
   const fullLandNumber = `${countyName}${districtName}${sectionName}${landNumber}`
 
   const newPlot = {
-    id: Date.now(), // Temporary ID
+    id: `temp_${Date.now()}`, // Temporary ID for new plots
     county: landForm.county,
     district: landForm.district,
     section: landForm.section,
@@ -554,7 +571,8 @@ const addLandPlot = () => {
     landNumber: landNumber,
     fullLandNumber: fullLandNumber,
     landArea: landForm.landArea,
-    isRepresentative: landPlots.value.length === 0 // First plot is representative by default
+    isRepresentative: landPlots.value.length === 0, // First plot is representative by default
+    isNew: true // 標記為新增的地號
   }
 
   landPlots.value.push(newPlot)
@@ -616,6 +634,12 @@ const deleteLandPlot = async (plot) => {
   const index = landPlots.value.findIndex(p => p.id === plot.id)
   if (index !== -1) {
     const wasRepresentative = plot.isRepresentative
+
+    // 如果是已存在的地號，加入刪除列表
+    if (!plot.isNew && !plot.id.toString().startsWith('temp_')) {
+      deletedLandPlots.value.push(plot.id)
+    }
+
     landPlots.value.splice(index, 1)
 
     // If deleted plot was representative, set first remaining plot as representative
@@ -628,9 +652,9 @@ const deleteLandPlot = async (plot) => {
 const saveChanges = async () => {
   isSaving.value = true
   try {
+    // 1. 先儲存基本資料
     const response = await $fetch(`http://localhost:9228/api/urban-renewals/${route.params.id}`, {
       method: 'PUT',
-      baseURL: runtimeConfig.public.apiBaseUrl,
       headers: {
         'Content-Type': 'application/json'
       },
@@ -645,17 +669,104 @@ const saveChanges = async () => {
       }
     })
 
-    if (response.status === 'success') {
-      await $swal.fire({
-        title: '儲存成功！',
-        text: '資料已成功更新',
-        icon: 'success',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#10b981'
-      })
-    } else {
-      throw new Error(response.message || '儲存失敗')
+    if (response.status !== 'success') {
+      throw new Error(response.message || '基本資料儲存失敗')
     }
+
+    // 2. 處理地號刪除
+    for (const deletedId of deletedLandPlots.value) {
+      try {
+        await $fetch(`http://localhost:9228/api/land-plots/${deletedId}`, {
+          method: 'DELETE'
+        })
+      } catch (err) {
+        console.error('Delete land plot error:', err)
+      }
+    }
+
+    // 3. 處理地號新增
+    const newPlots = landPlots.value.filter(plot => plot.isNew || plot.id.toString().startsWith('temp_'))
+    let landPlotErrors = []
+
+    for (const newPlot of newPlots) {
+      try {
+        const plotResponse = await $fetch(`http://localhost:9228/api/urban-renewals/${route.params.id}/land-plots`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: {
+            county: newPlot.county,
+            district: newPlot.district,
+            section: newPlot.section,
+            landNumberMain: newPlot.landNumberMain,
+            landNumberSub: newPlot.landNumberSub,
+            landArea: parseFloat(newPlot.landArea) || null,
+            isRepresentative: newPlot.isRepresentative ? 1 : 0
+          }
+        })
+
+        if (plotResponse.status !== 'success') {
+          landPlotErrors.push(`地號 ${newPlot.fullLandNumber} 新增失敗`)
+        }
+      } catch (err) {
+        console.error('Create land plot error:', err)
+        landPlotErrors.push(`地號 ${newPlot.fullLandNumber} 新增失敗：${err.message || '網路錯誤'}`)
+      }
+    }
+
+    // 如果有地號新增失敗，顯示警告
+    if (landPlotErrors.length > 0) {
+      await $swal.fire({
+        title: '部分地號新增失敗',
+        html: landPlotErrors.join('<br>'),
+        icon: 'warning',
+        confirmButtonText: '確定',
+        confirmButtonColor: '#f59e0b'
+      })
+    }
+
+    // 4. 處理地號更新（編輯過的現有地號）
+    const existingPlots = landPlots.value.filter(plot => !plot.isNew && !plot.id.toString().startsWith('temp_'))
+    for (const plot of existingPlots) {
+      const original = originalLandPlots.value.find(orig => orig.id === plot.id)
+      if (original && (
+        original.landArea !== plot.landArea ||
+        original.isRepresentative !== plot.isRepresentative
+      )) {
+        try {
+          await $fetch(`http://localhost:9228/api/land-plots/${plot.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: {
+              landArea: parseFloat(plot.landArea) || null,
+              isRepresentative: plot.isRepresentative ? 1 : 0
+            }
+          })
+        } catch (err) {
+          console.error('Update land plot error:', err)
+        }
+      }
+    }
+
+    // 5. 重新載入地號資料
+    await fetchLandPlots()
+
+    // 6. 清除變更追蹤
+    deletedLandPlots.value = []
+
+    // 7. 顯示成功訊息（1.5秒自動關閉）
+    await $swal.fire({
+      title: '儲存成功！',
+      text: '資料已成功更新',
+      icon: 'success',
+      timer: 1500,
+      timerProgressBar: true,
+      showConfirmButton: false
+    })
+
   } catch (err) {
     console.error('Save error:', err)
     await $swal.fire({
@@ -690,20 +801,20 @@ const fillBasicInfoTestData = () => {
   ]
 
   renewalData.name = testNames[Math.floor(Math.random() * testNames.length)]
-  renewalData.land_area = Math.floor(Math.random() * 5000) + 1000
+  renewalData.area = Math.floor(Math.random() * 5000) + 1000
   renewalData.member_count = Math.floor(Math.random() * 100) + 20
   renewalData.chairman_name = testChairmanNames[Math.floor(Math.random() * testChairmanNames.length)]
   renewalData.chairman_phone = `09${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`
-  renewalData.established_address = testAddresses[Math.floor(Math.random() * testAddresses.length)]
-  renewalData.responsible_person = testChairmanNames[Math.floor(Math.random() * testChairmanNames.length)]
+  renewalData.address = testAddresses[Math.floor(Math.random() * testAddresses.length)]
+  renewalData.representative = testChairmanNames[Math.floor(Math.random() * testChairmanNames.length)]
 
   $swal.fire({
     title: '基本資料已填入',
     text: '基本資訊已自動填入測試資料',
     icon: 'success',
-    confirmButtonText: '確定',
-    confirmButtonColor: '#10b981',
-    timer: 2000
+    timer: 1500,
+    timerProgressBar: true,
+    showConfirmButton: false
   })
 }
 
@@ -728,17 +839,17 @@ const fillLandPlotTestData = () => {
   })
 
   // Generate random land plot numbers
-  landForm.main_number = String(Math.floor(Math.random() * 999) + 1).padStart(4, '0')
-  landForm.sub_number = String(Math.floor(Math.random() * 99)).padStart(4, '0')
-  landForm.land_area = Math.floor(Math.random() * 500) + 100
+  landForm.landNumberMain = String(Math.floor(Math.random() * 999) + 1).padStart(4, '0')
+  landForm.landNumberSub = String(Math.floor(Math.random() * 99)).padStart(4, '0')
+  landForm.landArea = Math.floor(Math.random() * 500) + 100
 
   $swal.fire({
     title: '測試地號已填入',
     text: '地號表單已自動填入測試資料',
     icon: 'success',
-    confirmButtonText: '確定',
-    confirmButtonColor: '#10b981',
-    timer: 2000
+    timer: 1500,
+    timerProgressBar: true,
+    showConfirmButton: false
   })
 }
 
@@ -753,7 +864,8 @@ watch(() => renewalData.name, updatePageTitle)
 onMounted(async () => {
   await Promise.all([
     fetchCounties(),
-    fetchRenewalData()
+    fetchRenewalData(),
+    fetchLandPlots()
   ])
 })
 </script>
