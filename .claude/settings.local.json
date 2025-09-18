@@ -41,7 +41,8 @@
       "WebSearch",
       "Bash(php:*)",
       "Read(//d/**)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "ask": []

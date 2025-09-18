@@ -29,6 +29,7 @@ class ComposerStaticInit657ac079313fab046eb8c29fe1d6992b
         ),
         'F' => 
         array (
+            'Firebase\\JWT\\' => 13,
             'Faker\\' => 6,
         ),
         'D' => 
@@ -67,6 +68,10 @@ class ComposerStaticInit657ac079313fab046eb8c29fe1d6992b
         array (
             0 => __DIR__ . '/..' . '/laminas/laminas-escaper/src',
         ),
+        'Firebase\\JWT\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/firebase/php-jwt/src',
+        ),
         'Faker\\' => 
         array (
             0 => __DIR__ . '/..' . '/fakerphp/faker/src/Faker',
@@ -100,12 +105,41 @@ class ComposerStaticInit657ac079313fab046eb8c29fe1d6992b
     );
 
     public static $classMap = array (
+        'App\\Controllers\\Api\\AuthController' => __DIR__ . '/../..' . '/app/Controllers/Api/AuthController.php',
+        'App\\Controllers\\Api\\DocumentController' => __DIR__ . '/../..' . '/app/Controllers/Api/DocumentController.php',
         'App\\Controllers\\Api\\LandPlotController' => __DIR__ . '/../..' . '/app/Controllers/Api/LandPlotController.php',
+        'App\\Controllers\\Api\\LocationController' => __DIR__ . '/../..' . '/app/Controllers/Api/LocationController.php',
+        'App\\Controllers\\Api\\MeetingAttendanceController' => __DIR__ . '/../..' . '/app/Controllers/Api/MeetingAttendanceController.php',
+        'App\\Controllers\\Api\\MeetingController' => __DIR__ . '/../..' . '/app/Controllers/Api/MeetingController.php',
+        'App\\Controllers\\Api\\NotificationController' => __DIR__ . '/../..' . '/app/Controllers/Api/NotificationController.php',
+        'App\\Controllers\\Api\\PropertyOwnerController' => __DIR__ . '/../..' . '/app/Controllers/Api/PropertyOwnerController.php',
+        'App\\Controllers\\Api\\SystemSettingsController' => __DIR__ . '/../..' . '/app/Controllers/Api/SystemSettingsController.php',
         'App\\Controllers\\Api\\UrbanRenewalController' => __DIR__ . '/../..' . '/app/Controllers/Api/UrbanRenewalController.php',
+        'App\\Controllers\\Api\\UserController' => __DIR__ . '/../..' . '/app/Controllers/Api/UserController.php',
+        'App\\Controllers\\Api\\VotingController' => __DIR__ . '/../..' . '/app/Controllers/Api/VotingController.php',
+        'App\\Controllers\\Api\\VotingTopicController' => __DIR__ . '/../..' . '/app/Controllers/Api/VotingTopicController.php',
         'App\\Controllers\\BaseController' => __DIR__ . '/../..' . '/app/Controllers/BaseController.php',
         'App\\Controllers\\Home' => __DIR__ . '/../..' . '/app/Controllers/Home.php',
+        'App\\Database\\Seeds\\ExtendedLocationSeeder' => __DIR__ . '/../..' . '/app/Database/Seeds/ExtendedLocationSeeder.php',
+        'App\\Database\\Seeds\\LocationSeeder' => __DIR__ . '/../..' . '/app/Database/Seeds/LocationSeeder.php',
+        'App\\Database\\Seeds\\OfficialTaiwanLocationSeeder' => __DIR__ . '/../..' . '/app/Database/Seeds/OfficialTaiwanLocationSeeder.php',
+        'App\\Models\\BuildingModel' => __DIR__ . '/../..' . '/app/Models/BuildingModel.php',
+        'App\\Models\\CountyModel' => __DIR__ . '/../..' . '/app/Models/CountyModel.php',
+        'App\\Models\\DistrictModel' => __DIR__ . '/../..' . '/app/Models/DistrictModel.php',
         'App\\Models\\LandPlotModel' => __DIR__ . '/../..' . '/app/Models/LandPlotModel.php',
+        'App\\Models\\MeetingDocumentModel' => __DIR__ . '/../..' . '/app/Models/MeetingDocumentModel.php',
+        'App\\Models\\MeetingModel' => __DIR__ . '/../..' . '/app/Models/MeetingModel.php',
+        'App\\Models\\NotificationModel' => __DIR__ . '/../..' . '/app/Models/NotificationModel.php',
+        'App\\Models\\OwnerBuildingOwnershipModel' => __DIR__ . '/../..' . '/app/Models/OwnerBuildingOwnershipModel.php',
+        'App\\Models\\OwnerLandOwnershipModel' => __DIR__ . '/../..' . '/app/Models/OwnerLandOwnershipModel.php',
+        'App\\Models\\PropertyOwnerModel' => __DIR__ . '/../..' . '/app/Models/PropertyOwnerModel.php',
+        'App\\Models\\SectionModel' => __DIR__ . '/../..' . '/app/Models/SectionModel.php',
+        'App\\Models\\SystemSettingModel' => __DIR__ . '/../..' . '/app/Models/SystemSettingModel.php',
         'App\\Models\\UrbanRenewalModel' => __DIR__ . '/../..' . '/app/Models/UrbanRenewalModel.php',
+        'App\\Models\\UserModel' => __DIR__ . '/../..' . '/app/Models/UserModel.php',
+        'App\\Models\\UserSessionModel' => __DIR__ . '/../..' . '/app/Models/UserSessionModel.php',
+        'App\\Models\\VotingRecordModel' => __DIR__ . '/../..' . '/app/Models/VotingRecordModel.php',
+        'App\\Models\\VotingTopicModel' => __DIR__ . '/../..' . '/app/Models/VotingTopicModel.php',
         'CodeIgniter\\API\\ResponseTrait' => __DIR__ . '/..' . '/codeigniter4/framework/system/API/ResponseTrait.php',
         'CodeIgniter\\Autoloader\\Autoloader' => __DIR__ . '/..' . '/codeigniter4/framework/system/Autoloader/Autoloader.php',
         'CodeIgniter\\Autoloader\\FileLocator' => __DIR__ . '/..' . '/codeigniter4/framework/system/Autoloader/FileLocator.php',
@@ -531,6 +565,7 @@ class ComposerStaticInit657ac079313fab046eb8c29fe1d6992b
         'Config\\Generators' => __DIR__ . '/../..' . '/app/Config/Generators.php',
         'Config\\Honeypot' => __DIR__ . '/../..' . '/app/Config/Honeypot.php',
         'Config\\Images' => __DIR__ . '/../..' . '/app/Config/Images.php',
+        'Config\\JWT' => __DIR__ . '/../..' . '/app/Config/JWT.php',
         'Config\\Kint' => __DIR__ . '/../..' . '/app/Config/Kint.php',
         'Config\\Logger' => __DIR__ . '/../..' . '/app/Config/Logger.php',
         'Config\\Migrations' => __DIR__ . '/../..' . '/app/Config/Migrations.php',
@@ -1080,6 +1115,14 @@ class ComposerStaticInit657ac079313fab046eb8c29fe1d6992b
         'Faker\\Provider\\zh_TW\\Text' => __DIR__ . '/..' . '/fakerphp/faker/src/Faker/Provider/zh_TW/Text.php',
         'Faker\\UniqueGenerator' => __DIR__ . '/..' . '/fakerphp/faker/src/Faker/UniqueGenerator.php',
         'Faker\\ValidGenerator' => __DIR__ . '/..' . '/fakerphp/faker/src/Faker/ValidGenerator.php',
+        'Firebase\\JWT\\BeforeValidException' => __DIR__ . '/..' . '/firebase/php-jwt/src/BeforeValidException.php',
+        'Firebase\\JWT\\CachedKeySet' => __DIR__ . '/..' . '/firebase/php-jwt/src/CachedKeySet.php',
+        'Firebase\\JWT\\ExpiredException' => __DIR__ . '/..' . '/firebase/php-jwt/src/ExpiredException.php',
+        'Firebase\\JWT\\JWK' => __DIR__ . '/..' . '/firebase/php-jwt/src/JWK.php',
+        'Firebase\\JWT\\JWT' => __DIR__ . '/..' . '/firebase/php-jwt/src/JWT.php',
+        'Firebase\\JWT\\JWTExceptionWithPayloadInterface' => __DIR__ . '/..' . '/firebase/php-jwt/src/JWTExceptionWithPayloadInterface.php',
+        'Firebase\\JWT\\Key' => __DIR__ . '/..' . '/firebase/php-jwt/src/Key.php',
+        'Firebase\\JWT\\SignatureInvalidException' => __DIR__ . '/..' . '/firebase/php-jwt/src/SignatureInvalidException.php',
         'Laminas\\Escaper\\Escaper' => __DIR__ . '/..' . '/laminas/laminas-escaper/src/Escaper.php',
         'Laminas\\Escaper\\EscaperInterface' => __DIR__ . '/..' . '/laminas/laminas-escaper/src/EscaperInterface.php',
         'Laminas\\Escaper\\Exception\\ExceptionInterface' => __DIR__ . '/..' . '/laminas/laminas-escaper/src/Exception/ExceptionInterface.php',

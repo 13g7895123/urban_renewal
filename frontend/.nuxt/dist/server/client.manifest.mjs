@@ -1,1 +1,1 @@
-export { default } from "file:///D:/Bonus/0814_web_45000/urban_renewal/frontend/node_modules/@nuxt/vite-builder/dist/runtime/client.manifest.mjs"
+export { default } from "file:///C:/Jarvis/15_bonus/urban_renewal/frontend/node_modules/@nuxt/vite-builder/dist/runtime/client.manifest.mjs"

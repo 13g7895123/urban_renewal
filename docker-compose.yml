@@ -2,13 +2,18 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     ports:
       - "${FRONTEND_PORT}:3000"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - HOST=0.0.0.0
       - PORT=3000
+      - BACKEND_API_URL=http://backend:80/api
+      - BACKEND_URL=http://backend:80
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     restart: unless-stopped
     networks:
       - urban_renewal_network
