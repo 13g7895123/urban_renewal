@@ -2,7 +2,24 @@
   <NuxtLayout name="main">
     <template #title>新增所有權人</template>
 
-    <div class="p-8">
+    <!-- Loading Overlay -->
+    <div v-if="isLoading" class="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-90">
+      <div class="text-center">
+        <div class="mb-4">
+          <div class="inline-block animate-spin rounded-full h-16 w-16 border-4 border-green-500 border-t-transparent"></div>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-700 mb-2">載入資料中...</h3>
+        <div class="w-64 bg-gray-200 rounded-full h-2">
+          <div
+            class="bg-green-500 h-2 rounded-full transition-all duration-300"
+            :style="{ width: `${loadingProgress}%` }"
+          ></div>
+        </div>
+        <p class="text-sm text-gray-500 mt-2">{{ loadingProgress }}%</p>
+      </div>
+    </div>
+
+    <div class="p-8" :class="{ 'opacity-50 pointer-events-none': isLoading }">
       <form @submit.prevent="onSubmit" class="max-w-6xl mx-auto">
         <!-- 基本資料 -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
@@ -263,14 +280,14 @@
           </button>
           <button
             type="submit"
-            :disabled="isSubmitting"
+            :disabled="isSubmitting || isLoading"
             class="px-6 py-2 text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
           >
             <svg v-if="isSubmitting" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            {{ isSubmitting ? '儲存中...' : '儲存' }}
+            {{ isSubmitting ? '儲存中...' : isLoading ? '載入中...' : '儲存' }}
           </button>
         </div>
       </form>
@@ -514,10 +531,12 @@ const runtimeConfig = useRuntimeConfig()
 const urbanRenewalId = computed(() => route.params.id)
 
 const isSubmitting = ref(false)
+const isLoading = ref(true)
 const urbanRenewalName = ref('')
 const showAddLandModal = ref(false)
 const showAddBuildingModal = ref(false)
 const availablePlots = ref([])
+const loadingProgress = ref(0)
 
 // Form data
 const formData = reactive({
@@ -566,11 +585,14 @@ const generateOwnerCode = () => {
 // Fetch urban renewal info
 const fetchUrbanRenewalInfo = async () => {
   try {
-    const response = await $fetch(`http://localhost:9228/api/urban-renewals/${urbanRenewalId.value}`, {
+    loadingProgress.value = 25
+    const response = await $fetch(`/api/urban-renewals/${urbanRenewalId.value}`, {
+      baseURL: runtimeConfig.public.apiBaseUrl
     })
 
     if (response.status === 'success') {
       urbanRenewalName.value = response.data.name
+      loadingProgress.value = 50
     }
   } catch (err) {
     console.error('Failed to fetch urban renewal info:', err)
@@ -580,11 +602,14 @@ const fetchUrbanRenewalInfo = async () => {
 // Fetch available land plots
 const fetchAvailablePlots = async () => {
   try {
-    const response = await $fetch(`http://localhost:9228/api/urban-renewals/${urbanRenewalId.value}/land-plots`, {
+    loadingProgress.value = 75
+    const response = await $fetch(`/api/urban-renewals/${urbanRenewalId.value}/land-plots`, {
+      baseURL: runtimeConfig.public.apiBaseUrl
     })
 
     if (response.status === 'success') {
       availablePlots.value = response.data || []
+      loadingProgress.value = 100
     }
   } catch (err) {
     console.error('Failed to fetch land plots:', err)
@@ -664,7 +689,7 @@ const onSubmit = async () => {
   isSubmitting.value = true
 
   try {
-    const response = await $fetch('http://localhost:9228/api/property-owners', {
+    const response = await $fetch('/api/property-owners', {
       method: 'POST',
       baseURL: runtimeConfig.public.apiBaseUrl,
       headers: {
@@ -763,10 +788,31 @@ const goBack = () => {
   router.push(`/tables/urban-renewal/${urbanRenewalId.value}/property-owners`)
 }
 
+// Initialize data loading
+const initializeData = async () => {
+  try {
+    isLoading.value = true
+    loadingProgress.value = 0
+
+    generateOwnerCode()
+    loadingProgress.value = 10
+
+    await fetchUrbanRenewalInfo()
+    await fetchAvailablePlots()
+
+    // Add a small delay for smooth animation
+    setTimeout(() => {
+      isLoading.value = false
+    }, 500)
+
+  } catch (error) {
+    console.error('Error initializing data:', error)
+    isLoading.value = false
+  }
+}
+
 // Initialize
 onMounted(() => {
-  generateOwnerCode()
-  fetchUrbanRenewalInfo()
-  fetchAvailablePlots()
+  initializeData()
 })
 </script>

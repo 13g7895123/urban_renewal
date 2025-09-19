@@ -67,7 +67,7 @@
               </tr>
               <tr v-for="(owner, index) in propertyOwners" :key="owner.id || index" class="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150">
                 <td class="p-4 text-sm text-gray-900">{{ owner.owner_code }}</td>
-                <td class="p-4 text-sm text-gray-900">{{ owner.owner_name }}</td>
+                <td class="p-4 text-sm text-gray-900">{{ owner.name }}</td>
                 <td class="p-4 text-sm text-gray-900 text-center">{{ owner.total_land_area || '0.00' }}</td>
                 <td class="p-4 text-sm text-gray-900 text-center">{{ owner.total_building_area || '0.00' }}</td>
                 <td class="p-4 text-center">
@@ -150,7 +150,9 @@ const fetchPropertyOwners = async () => {
   loading.value = true
 
   try {
-    const response = await $fetch(`http://localhost:9228/api/urban-renewals/${urbanRenewalId.value}/property-owners`)
+    const response = await $fetch(`/api/urban-renewals/${urbanRenewalId.value}/property-owners`, {
+      baseURL: runtimeConfig.public.apiBaseUrl
+    })
 
     if (response.status === 'success') {
       propertyOwners.value = response.data || []
@@ -173,8 +175,9 @@ const fetchPropertyOwners = async () => {
 
 const deletePropertyOwner = async (id) => {
   try {
-    const response = await $fetch(`http://localhost:9228/api/property-owners/${id}`, {
-      method: 'DELETE'
+    const response = await $fetch(`/api/property-owners/${id}`, {
+      method: 'DELETE',
+      baseURL: runtimeConfig.public.apiBaseUrl
     })
 
     return response
