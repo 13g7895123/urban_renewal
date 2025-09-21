@@ -10,6 +10,24 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     '@pinia/nuxt'
   ],
+  ui: {
+    global: true,
+    icons: ['heroicons'],
+    safelistColors: ['primary']
+  },
+  colorMode: {
+    preference: 'light',
+    fallback: 'light',
+    classSuffix: ''
+  },
+  tailwindcss: {
+    viewer: false,
+    quiet: true,
+    config: {
+      content: [],
+      important: false
+    }
+  },
   plugins: [
     '~/plugins/apexcharts.client.js',
     '~/plugins/force-light-mode.client.js',
@@ -39,11 +57,7 @@ export default defineNuxtConfig({
       }
     }
   },
-  // Disable color-mode completely to prevent HTML class manipulation
-  colorMode: false,
-  ui: {
-    colorMode: false
-  },
+  // Color mode configuration is handled by ui config above
   // Build optimization - ensure apexcharts can be imported correctly
   vite: {
     optimizeDeps: {
@@ -61,7 +75,17 @@ export default defineNuxtConfig({
         output: {
           globals: {}
         }
-      }
+      },
+      cssCodeSplit: false
+    },
+    define: {
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')
+    }
+  },
+  // Bypass Tailwind config validation
+  hooks: {
+    'build:before': () => {
+      process.env.TAILWIND_DISABLE_TOUCH = '1'
     }
   },
   // Disable problematic nuxt-icon server bundle

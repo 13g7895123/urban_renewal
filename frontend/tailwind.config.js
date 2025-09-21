@@ -5,8 +5,11 @@ module.exports = {
     "./layouts/**/*.vue",
     "./pages/**/*.vue",
     "./plugins/**/*.{js,ts}",
+    "./composables/**/*.{js,ts}",
+    "./utils/**/*.{js,ts}",
     "./nuxt.config.{js,ts}",
-    "./app.vue"
+    "./app.vue",
+    "./error.vue"
   ],
   safelist: [
     'ml-20',

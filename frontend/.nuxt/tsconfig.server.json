@@ -110,6 +110,9 @@
       "#ui-colors": [
         "./ui.colors"
       ],
+      "#color-mode-options": [
+        "./color-mode-options.mjs"
+      ],
       "pinia": [
         "../node_modules/pinia/dist/pinia"
       ],
@@ -135,6 +138,7 @@
   "include": [
     "./types/nitro-nuxt.d.ts",
     "../node_modules/@nuxt/icon/runtime/server",
+    "../node_modules/@nuxtjs/color-mode/runtime/server",
     "../node_modules/@nuxtjs/tailwindcss/runtime/server",
     "../node_modules/@nuxt/ui/runtime/server",
     "../node_modules/@pinia/nuxt/runtime/server",
@@ -148,6 +152,7 @@
     "../../node_modules",
     "../node_modules/nuxt/node_modules",
     "../node_modules/@nuxt/icon/node_modules",
+    "../node_modules/@nuxtjs/color-mode/node_modules",
     "../node_modules/@nuxtjs/tailwindcss/node_modules",
     "../node_modules/@nuxt/ui/node_modules",
     "../node_modules/@pinia/nuxt/node_modules",
