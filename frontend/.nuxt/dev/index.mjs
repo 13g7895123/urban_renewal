@@ -871,10 +871,10 @@ const _inlineRuntimeConfig = {
     }
   },
   "public": {
-    "apiBaseUrl": "http://localhost:9228",
-    "backendUrl": "http://localhost:9228",
-    "backendHost": "localhost",
-    "backendPort": "9228"
+    "apiBaseUrl": "",
+    "backendUrl": "",
+    "backendHost": "",
+    "backendPort": ""
   },
   "icon": {
     "serverKnownCssClasses": []

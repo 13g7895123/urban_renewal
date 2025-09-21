@@ -23,10 +23,9 @@ export const useApi = () => {
       return fullApiUrl
     }
 
-    // Fallback - use localhost backend
-    const fallbackUrl = 'http://localhost:9228/api'
-    console.log('[API] Using fallback API URL:', fallbackUrl)
-    return fallbackUrl
+    // Fallback - this should not happen in production
+    console.error('[API] No API base URL configured! Check environment variables.')
+    throw new Error('API base URL not configured. Please set NUXT_PUBLIC_API_BASE_URL environment variable.')
   }
   
   const baseURL = getBaseURL()

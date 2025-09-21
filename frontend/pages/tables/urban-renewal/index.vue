@@ -271,6 +271,7 @@ definePageMeta({
 
 // Use SweetAlert2
 const { $swal } = useNuxtApp()
+const { get, post, delete: del } = useApi()
 
 const pageSize = ref(10)
 const showCreateModal = ref(false)
@@ -297,12 +298,12 @@ const fetchRenewals = async () => {
   error.value = ''
 
   try {
-    const response = await $fetch('http://localhost:9228/api/urban-renewals')
+    const response = await get('/urban-renewals')
 
-    if (response.status === 'success') {
-      renewals.value = response.data || []
+    if (response.success && response.data.status === 'success') {
+      renewals.value = response.data.data || []
     } else {
-      error.value = response.message || '獲取資料失敗'
+      error.value = response.error?.message || response.data?.message || '獲取資料失敗'
     }
   } catch (err) {
     console.error('Fetch error:', err)
@@ -314,18 +315,12 @@ const fetchRenewals = async () => {
 
 const createUrbanRenewal = async (data) => {
   try {
-    const response = await $fetch('http://localhost:9228/api/urban-renewals', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: {
-        name: data.name,
-        area: parseFloat(data.area),
-        memberCount: parseInt(data.memberCount),
-        chairmanName: data.chairmanName,
-        chairmanPhone: data.chairmanPhone
-      }
+    const response = await post('/urban-renewals', {
+      name: data.name,
+      area: parseFloat(data.area),
+      memberCount: parseInt(data.memberCount),
+      chairmanName: data.chairmanName,
+      chairmanPhone: data.chairmanPhone
     })
 
     return response
@@ -337,9 +332,7 @@ const createUrbanRenewal = async (data) => {
 
 const deleteUrbanRenewal = async (id) => {
   try {
-    const response = await $fetch(`http://localhost:9228/api/urban-renewals/${id}`, {
-      method: 'DELETE'
-    })
+    const response = await del(`/urban-renewals/${id}`)
 
     return response
   } catch (err) {

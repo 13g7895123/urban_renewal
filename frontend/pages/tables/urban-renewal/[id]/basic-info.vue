@@ -381,6 +381,7 @@ const route = useRoute()
 const router = useRouter()
 const runtimeConfig = useRuntimeConfig()
 const { $swal } = useNuxtApp()
+const { get, post, put } = useApi()
 
 // State
 const loading = ref(true)
@@ -469,9 +470,9 @@ const getChineseLandNumber = async (plot) => {
       districtName = locationMappings.value.districts.get(districtKey)
     } else {
       try {
-        const response = await $fetch(`http://localhost:9228/api/locations/districts/${plot.county}`)
-        if (response.status === 'success') {
-          const district = response.data.find(d => d.code === plot.district)
+        const response = await get(`/locations/districts/${plot.county}`)
+        if (response.success && response.data.status === 'success') {
+          const district = response.data.data.find(d => d.code === plot.district)
           if (district) {
             districtName = district.name
             locationMappings.value.districts.set(districtKey, district.name)
@@ -488,9 +489,9 @@ const getChineseLandNumber = async (plot) => {
       sectionName = locationMappings.value.sections.get(sectionKey)
     } else {
       try {
-        const response = await $fetch(`http://localhost:9228/api/locations/sections/${plot.county}/${plot.district}`)
-        if (response.status === 'success') {
-          const section = response.data.find(s => s.code === plot.section)
+        const response = await get(`/locations/sections/${plot.county}/${plot.district}`)
+        if (response.success && response.data.status === 'success') {
+          const section = response.data.data.find(s => s.code === plot.section)
           if (section) {
             sectionName = section.name
             locationMappings.value.sections.set(sectionKey, section.name)
@@ -509,9 +510,9 @@ const getChineseLandNumber = async (plot) => {
 
 const fetchCounties = async () => {
   try {
-    const response = await $fetch('http://localhost:9228/api/locations/counties')
-    if (response.status === 'success') {
-      counties.value = response.data
+    const response = await get('/locations/counties')
+    if (response.success && response.data.status === 'success') {
+      counties.value = response.data.data
     }
   } catch (err) {
     console.error('Failed to fetch counties:', err)
@@ -520,9 +521,9 @@ const fetchCounties = async () => {
 
 const fetchDistricts = async (countyCode) => {
   try {
-    const response = await $fetch(`http://localhost:9228/api/locations/districts/${countyCode}`)
-    if (response.status === 'success') {
-      districts.value = response.data
+    const response = await get(`/locations/districts/${countyCode}`)
+    if (response.success && response.data.status === 'success') {
+      districts.value = response.data.data
     }
   } catch (err) {
     console.error('Failed to fetch districts:', err)
@@ -532,9 +533,9 @@ const fetchDistricts = async (countyCode) => {
 
 const fetchSections = async (countyCode, districtCode) => {
   try {
-    const response = await $fetch(`http://localhost:9228/api/locations/sections/${countyCode}/${districtCode}`)
-    if (response.status === 'success') {
-      sections.value = response.data
+    const response = await get(`/locations/sections/${countyCode}/${districtCode}`)
+    if (response.success && response.data.status === 'success') {
+      sections.value = response.data.data
     }
   } catch (err) {
     console.error('Failed to fetch sections:', err)
@@ -545,7 +546,7 @@ const fetchSections = async (countyCode, districtCode) => {
 const fetchRenewalData = async () => {
   loading.value = true
   try {
-    const response = await $fetch(`http://localhost:9228/api/urban-renewals/${route.params.id}`, {
+    const response = await put(`/urban-renewals/${route.params.id}`, {
     })
 
     if (response.status === 'success') {
@@ -570,7 +571,7 @@ const fetchRenewalData = async () => {
 
 const fetchLandPlots = async () => {
   try {
-    const response = await $fetch(`http://localhost:9228/api/urban-renewals/${route.params.id}/land-plots`)
+    const response = await get(`/urban-renewals/${route.params.id}/land-plots`)
 
     if (response.status === 'success') {
       // 將地號轉換為中文格式
@@ -752,7 +753,7 @@ const saveChanges = async () => {
   isSaving.value = true
   try {
     // 1. 先儲存基本資料
-    const response = await $fetch(`http://localhost:9228/api/urban-renewals/${route.params.id}`, {
+    const response = await put(`/urban-renewals/${route.params.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -775,7 +776,7 @@ const saveChanges = async () => {
     // 2. 處理地號刪除
     for (const deletedId of deletedLandPlots.value) {
       try {
-        await $fetch(`http://localhost:9228/api/land-plots/${deletedId}`, {
+        await del(`/land-plots/${deletedId}`, {
           method: 'DELETE'
         })
       } catch (err) {
@@ -789,7 +790,7 @@ const saveChanges = async () => {
 
     for (const newPlot of newPlots) {
       try {
-        const plotResponse = await $fetch(`http://localhost:9228/api/urban-renewals/${route.params.id}/land-plots`, {
+        const plotResponse = await post(`/urban-renewals/${route.params.id}/land-plots`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -834,7 +835,7 @@ const saveChanges = async () => {
         original.isRepresentative !== plot.isRepresentative
       )) {
         try {
-          await $fetch(`http://localhost:9228/api/land-plots/${plot.id}`, {
+          await put(`/land-plots/${plot.id}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json'

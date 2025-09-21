@@ -1,10 +1,2 @@
-1. 請用zh-tw回覆，/tables/urban-renewal/1/property-owners，這一個頁面
-    - 這一頁的土地總面積，要顯示每筆資料的土地總面積加總
-    - 這一頁的建物總面積，要顯示每筆資料的建物總面積加總
-    - 請不要用本地php啟用，這是docker環境的專案
-2. 請用zh-tw回覆，/tables/urban-renewal/1/basic-info，這一個頁面
-    - 地號選單，請不要用代號，幫我轉成對應中文text顯示，包含縣市、行政區與段小段
-    - 請不要用本地php啟用，這是docker環境的專案
-3. 幫我調整docker-compose.yml或是後端的docker，每次啟用需要執行migration，為甚麼有"啟動 Apache"，我根本沒用這個阿，到底在搞闢，
-dependency failed to start: container urban_renewal-mariadb-1 is unhealthy
+1. 我目前部屬到正式環境，縣市、行政區、段小段的資料沒有正常建置，API的部分還有看到localhost，幫我view過全部的前端專案，我要確定都有正確套用到後端的API路徑
 
