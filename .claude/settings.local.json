@@ -42,7 +42,8 @@
       "Bash(php:*)",
       "Read(//d/**)",
       "Bash(cat:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(winpty docker exec urban_renewal-backend-1 tail -10 //var//log//apache2//error.log)"
     ],
     "deny": [],
     "ask": []

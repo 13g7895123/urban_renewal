@@ -100,7 +100,7 @@
                   required
                 >
                   <option value="">請選擇縣市</option>
-                  <option v-for="county in counties" :key="county.code" :value="county.code">
+                  <option v-for="county in counties" :key="county.code" :value="county.name">
                     {{ county.name }}
                   </option>
                 </select>
@@ -118,7 +118,7 @@
                   required
                 >
                   <option value="">請選擇行政區</option>
-                  <option v-for="district in districts" :key="district.code" :value="district.code">
+                  <option v-for="district in districts" :key="district.code" :value="district.name">
                     {{ district.name }}
                   </option>
                 </select>
@@ -135,7 +135,7 @@
                   required
                 >
                   <option value="">請選擇段小段</option>
-                  <option v-for="section in sections" :key="section.code" :value="section.code">
+                  <option v-for="section in sections" :key="section.code" :value="section.name">
                     {{ section.name }}
                   </option>
                 </select>
@@ -218,7 +218,7 @@
                   <tr v-for="(plot, index) in landPlots" :key="plot.id || index" class="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150">
                     <td class="p-4 text-sm text-gray-900">
                       <div class="flex items-center">
-                        <span>{{ plot.fullLandNumber }}</span>
+                        <span>{{ plot.chineseFullLandNumber || plot.fullLandNumber }}</span>
                         <span v-if="plot.isRepresentative" class="ml-2 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
                           代表號
                         </span>
@@ -423,6 +423,13 @@ const counties = ref([])
 const districts = ref([])
 const sections = ref([])
 
+// 地區映射緩存
+const locationMappings = ref({
+  counties: new Map(),
+  districts: new Map(),
+  sections: new Map()
+})
+
 // Computed
 const canAddLandPlot = computed(() => {
   return landForm.county &&
@@ -434,6 +441,72 @@ const canAddLandPlot = computed(() => {
 })
 
 // Methods
+const getChineseLandNumber = async (plot) => {
+  // 如果 fullLandNumber 已經是中文格式，直接使用
+  if (plot.fullLandNumber && !plot.fullLandNumber.match(/^[A-Z]{3,}/)) {
+    return plot.fullLandNumber
+  }
+
+  let countyName = plot.county
+  let districtName = plot.district
+  let sectionName = plot.section
+
+  try {
+    // 獲取縣市名稱
+    if (locationMappings.value.counties.has(plot.county)) {
+      countyName = locationMappings.value.counties.get(plot.county)
+    } else if (counties.value.length > 0) {
+      const county = counties.value.find(c => c.code === plot.county)
+      if (county) {
+        countyName = county.name
+        locationMappings.value.counties.set(plot.county, county.name)
+      }
+    }
+
+    // 獲取行政區名稱
+    const districtKey = `${plot.county}_${plot.district}`
+    if (locationMappings.value.districts.has(districtKey)) {
+      districtName = locationMappings.value.districts.get(districtKey)
+    } else {
+      try {
+        const response = await $fetch(`http://localhost:9228/api/locations/districts/${plot.county}`)
+        if (response.status === 'success') {
+          const district = response.data.find(d => d.code === plot.district)
+          if (district) {
+            districtName = district.name
+            locationMappings.value.districts.set(districtKey, district.name)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching district:', error)
+      }
+    }
+
+    // 獲取段小段名稱
+    const sectionKey = `${plot.county}_${plot.district}_${plot.section}`
+    if (locationMappings.value.sections.has(sectionKey)) {
+      sectionName = locationMappings.value.sections.get(sectionKey)
+    } else {
+      try {
+        const response = await $fetch(`http://localhost:9228/api/locations/sections/${plot.county}/${plot.district}`)
+        if (response.status === 'success') {
+          const section = response.data.find(s => s.code === plot.section)
+          if (section) {
+            sectionName = section.name
+            locationMappings.value.sections.set(sectionKey, section.name)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching section:', error)
+      }
+    }
+  } catch (error) {
+    console.error('Error in getChineseLandNumber:', error)
+  }
+
+  return `${countyName}${districtName}${sectionName}${plot.landNumber}`
+}
+
 const fetchCounties = async () => {
   try {
     const response = await $fetch('http://localhost:9228/api/locations/counties')
@@ -500,8 +573,19 @@ const fetchLandPlots = async () => {
     const response = await $fetch(`http://localhost:9228/api/urban-renewals/${route.params.id}/land-plots`)
 
     if (response.status === 'success') {
-      landPlots.value = response.data
-      originalLandPlots.value = JSON.parse(JSON.stringify(response.data)) // 深拷貝保存原始資料
+      // 將地號轉換為中文格式
+      const plotsWithChineseNames = await Promise.all(
+        response.data.map(async (plot) => {
+          const chineseFullLandNumber = await getChineseLandNumber(plot)
+          return {
+            ...plot,
+            chineseFullLandNumber
+          }
+        })
+      )
+
+      landPlots.value = plotsWithChineseNames
+      originalLandPlots.value = JSON.parse(JSON.stringify(plotsWithChineseNames)) // 深拷貝保存原始資料
     }
   } catch (err) {
     console.error('Fetch land plots error:', err)
@@ -521,7 +605,11 @@ const onCountyChange = async () => {
   sections.value = []
 
   if (landForm.county) {
-    await fetchDistricts(landForm.county)
+    // 根據中文名稱找到對應的縣市代號
+    const selectedCounty = counties.value.find(c => c.name === landForm.county)
+    if (selectedCounty) {
+      await fetchDistricts(selectedCounty.code)
+    }
   } else {
     districts.value = []
   }
@@ -531,7 +619,12 @@ const onDistrictChange = async () => {
   landForm.section = ''
 
   if (landForm.county && landForm.district) {
-    await fetchSections(landForm.county, landForm.district)
+    // 根據中文名稱找到對應的縣市和行政區代號
+    const selectedCounty = counties.value.find(c => c.name === landForm.county)
+    const selectedDistrict = districts.value.find(d => d.name === landForm.district)
+    if (selectedCounty && selectedDistrict) {
+      await fetchSections(selectedCounty.code, selectedDistrict.code)
+    }
   } else {
     sections.value = []
   }
@@ -551,9 +644,15 @@ const validateLandNumber = (type) => {
 const addLandPlot = () => {
   if (!canAddLandPlot.value) return
 
-  const countyName = counties.value.find(c => c.code === landForm.county)?.name
-  const districtName = districts.value.find(d => d.code === landForm.district)?.name
-  const sectionName = sections.value.find(s => s.code === landForm.section)?.name
+  // 直接使用表單中的中文名稱
+  const countyName = landForm.county
+  const districtName = landForm.district
+  const sectionName = landForm.section
+
+  // 找到對應的代號用於API調用
+  const selectedCounty = counties.value.find(c => c.name === landForm.county)
+  const selectedDistrict = districts.value.find(d => d.name === landForm.district)
+  const selectedSection = sections.value.find(s => s.name === landForm.section)
 
   const landNumber = landForm.landNumberSub
     ? `${landForm.landNumberMain}-${landForm.landNumberSub}`
@@ -563,9 +662,9 @@ const addLandPlot = () => {
 
   const newPlot = {
     id: `temp_${Date.now()}`, // Temporary ID for new plots
-    county: landForm.county,
-    district: landForm.district,
-    section: landForm.section,
+    county: selectedCounty?.code || landForm.county,
+    district: selectedDistrict?.code || landForm.district,
+    section: selectedSection?.code || landForm.section,
     landNumberMain: landForm.landNumberMain,
     landNumberSub: landForm.landNumberSub,
     landNumber: landNumber,

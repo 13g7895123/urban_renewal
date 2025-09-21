@@ -55,9 +55,12 @@ writable/cache/
 writable/logs/
 writable/session/
 writable/uploads/
+writable/debugbar/
 
 # Composer
 composer.phar
 
 # Docker
 .docker/
+
+frontend/.nuxt/
