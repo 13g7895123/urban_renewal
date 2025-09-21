@@ -3,3 +3,4 @@
 3. 幫我檢查一下docker-compose.yml，目前這樣的配置前後端在vps上面是可以正常跑的嗎，還是要再配一個nginx才能正常讓後端執行，但我現在的配置
 4. 幫我調整後端的App.php，讓他可以吃到.env的設定
 5. 為甚麼frontend的.nuxt一直被git紀錄，我不是已經加入.gitignore了嗎
+6. 幫我加入nginx的服務吧，我還是搞不好

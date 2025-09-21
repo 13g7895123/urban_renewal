@@ -63,6 +63,11 @@ composer.phar
 # Docker
 .docker/
 
+# SSL Certificates
+nginx/ssl/*.crt
+nginx/ssl/*.key
+nginx/ssl/*.pem
+
 frontend/node_modules/
 
 .env
