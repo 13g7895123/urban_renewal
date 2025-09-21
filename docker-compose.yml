@@ -35,8 +35,7 @@ services:
     volumes:
       - ./backend:/var/www/html
     depends_on:
-      mariadb:
-        condition: service_healthy
+      - mariadb
     restart: unless-stopped
     networks:
       - urban_renewal_network
@@ -51,11 +50,11 @@ services:
     volumes:
       - mariadb_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
-      timeout: 20s
-      retries: 10
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
+      timeout: 10s
+      retries: 5
       interval: 10s
-      start_period: 40s
+      start_period: 60s
     restart: unless-stopped
     networks:
       - urban_renewal_network
