@@ -23,7 +23,9 @@ class PropertyOwnerModel extends Model
         'contact_address',
         'household_address',
         'exclusion_type',
-        'notes'
+        'notes',
+        'total_land_area',
+        'total_building_area'
     ];
 
     protected $useTimestamps = true;
@@ -160,12 +162,18 @@ class PropertyOwnerModel extends Model
                 $land['ownership_numerator'] = $ownership['ownership_numerator'];
                 $land['ownership_denominator'] = $ownership['ownership_denominator'];
                 $land['plot_number'] = $land['land_number_main'] . '-' . $land['land_number_sub'];
+                $land['total_area'] = $land['land_area']; // 為前端相容性添加 total_area 別名
                 $lands[] = $land;
             }
         }
 
         $record['buildings'] = $buildings;
         $record['lands'] = $lands;
+
+        // Calculate and add total areas for display in the list
+        $totalAreas = $this->calculateTotalAreas($record['id']);
+        $record['total_land_area'] = $totalAreas['total_land_area'];
+        $record['total_building_area'] = $totalAreas['total_building_area'];
 
         return $record;
     }
@@ -226,9 +234,9 @@ class PropertyOwnerModel extends Model
         $totalLandArea = 0;
         foreach ($landOwnerships as $ownership) {
             $land = $landPlotModel->find($ownership['land_plot_id']);
-            if ($land && $land['total_area']) {
+            if ($land && isset($land['land_area']) && $land['land_area']) {
                 $ownershipRatio = $ownership['ownership_numerator'] / $ownership['ownership_denominator'];
-                $totalLandArea += $land['total_area'] * $ownershipRatio;
+                $totalLandArea += $land['land_area'] * $ownershipRatio;
             }
         }
 
@@ -243,11 +251,47 @@ class PropertyOwnerModel extends Model
      */
     public function updateTotalAreas(int $ownerId): bool
     {
-        $totals = $this->calculateTotalAreas($ownerId);
+        try {
+            $totals = $this->calculateTotalAreas($ownerId);
 
-        return $this->update($ownerId, [
-            'total_land_area' => $totals['total_land_area'],
-            'total_building_area' => $totals['total_building_area']
-        ]);
+            log_message('info', 'Calculated totals for owner ' . $ownerId . ': ' . json_encode($totals, JSON_UNESCAPED_UNICODE));
+
+            // Check if the property owner exists
+            $owner = $this->find($ownerId);
+            if (!$owner) {
+                log_message('warning', 'Property owner not found for ID: ' . $ownerId);
+                return false;
+            }
+
+            // Only update if we have meaningful totals to update
+            $updateData = [];
+            if (isset($totals['total_land_area']) && $totals['total_land_area'] >= 0) {
+                $updateData['total_land_area'] = $totals['total_land_area'];
+            }
+            if (isset($totals['total_building_area']) && $totals['total_building_area'] >= 0) {
+                $updateData['total_building_area'] = $totals['total_building_area'];
+            }
+
+            // If no data to update, consider it successful (no change needed)
+            if (empty($updateData)) {
+                log_message('info', 'No total area updates needed for owner: ' . $ownerId);
+                return true;
+            }
+
+            log_message('info', 'Updating owner ' . $ownerId . ' with data: ' . json_encode($updateData, JSON_UNESCAPED_UNICODE));
+
+            $result = $this->update($ownerId, $updateData);
+
+            if (!$result) {
+                $errors = $this->errors();
+                log_message('error', 'Failed to update total areas for owner ' . $ownerId . ': ' . json_encode($errors, JSON_UNESCAPED_UNICODE));
+            }
+
+            return $result;
+
+        } catch (\Exception $e) {
+            log_message('error', 'Exception in updateTotalAreas for owner ' . $ownerId . ': ' . $e->getMessage());
+            return false; // Don't let this break the main operation
+        }
     }
 }

@@ -4,6 +4,7 @@ namespace App\Controllers\Api;
 
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\HTTP\ResponseInterface;
+use JsonException;
 
 class PropertyOwnerController extends ResourceController
 {
@@ -118,12 +119,33 @@ class PropertyOwnerController extends ResourceController
     public function create(): ResponseInterface
     {
         try {
-            $data = $this->request->getJSON(true);
+            // Ensure proper UTF-8 handling
+            $this->response->setHeader('Content-Type', 'application/json; charset=utf-8');
 
-            if (!$data) {
+            // Get raw JSON input and decode with proper UTF-8 handling
+            $rawInput = $this->request->getBody();
+
+            if (empty($rawInput)) {
                 return $this->respond([
                     'status' => 'error',
                     'message' => 'No data provided'
+                ], 400);
+            }
+
+            try {
+                $data = json_decode($rawInput, true, 512, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+            } catch (JsonException $e) {
+                log_message('error', 'JSON decode error: ' . $e->getMessage() . ' - Raw input: ' . $rawInput);
+                return $this->respond([
+                    'status' => 'error',
+                    'message' => 'Invalid JSON format: ' . $e->getMessage()
+                ], 400);
+            }
+
+            if (!$data || !is_array($data)) {
+                return $this->respond([
+                    'status' => 'error',
+                    'message' => 'Invalid data format'
                 ], 400);
             }
 
@@ -196,19 +218,64 @@ class PropertyOwnerController extends ResourceController
             // Handle lands
             if (!empty($data['lands']) && is_array($data['lands'])) {
                 foreach ($data['lands'] as $landData) {
-                    // Find land plot by plot number
-                    $landPlot = $this->landPlotModel->where('land_number_main', $landData['plot_number'])
-                                                   ->where('urban_renewal_id', $data['urban_renewal_id'])
-                                                   ->first();
+                    // Log land data for debugging
+                    log_message('info', 'Processing land data: ' . json_encode($landData, JSON_UNESCAPED_UNICODE));
+
+                    // Find land plot by plot number - try multiple search methods
+                    $landPlot = null;
+
+                    // Method 1: Search by land_number_main directly
+                    if (!empty($landData['plot_number'])) {
+                        $landPlot = $this->landPlotModel->where('land_number_main', $landData['plot_number'])
+                                                       ->where('urban_renewal_id', $data['urban_renewal_id'])
+                                                       ->first();
+                    }
+
+                    // Method 2: If not found, try searching by combined land number
+                    if (!$landPlot && !empty($landData['plot_number'])) {
+                        $landPlot = $this->landPlotModel->where("CONCAT(land_number_main, '-', land_number_sub)", $landData['plot_number'])
+                                                       ->where('urban_renewal_id', $data['urban_renewal_id'])
+                                                       ->first();
+                    }
+
+                    // Method 3: Search by landNumber field if it exists
+                    if (!$landPlot && !empty($landData['plot_number'])) {
+                        $landPlot = $this->landPlotModel->where('landNumber', $landData['plot_number'])
+                                                       ->where('urban_renewal_id', $data['urban_renewal_id'])
+                                                       ->first();
+                    }
 
                     if ($landPlot) {
+                        log_message('info', 'Found land plot: ' . json_encode($landPlot, JSON_UNESCAPED_UNICODE));
+
                         // Create ownership relationship
-                        $this->ownerLandModel->createOrUpdate([
-                            'property_owner_id' => $ownerId,
-                            'land_plot_id' => $landPlot['id'],
-                            'ownership_numerator' => $landData['ownership_numerator'],
-                            'ownership_denominator' => $landData['ownership_denominator']
-                        ]);
+                        try {
+                            $ownershipData = [
+                                'property_owner_id' => (int)$ownerId,
+                                'land_plot_id' => (int)$landPlot['id'],
+                                'ownership_numerator' => (int)$landData['ownership_numerator'],
+                                'ownership_denominator' => (int)$landData['ownership_denominator']
+                            ];
+
+                            log_message('info', 'Ownership data with type conversion: ' . json_encode($ownershipData, JSON_UNESCAPED_UNICODE));
+
+                            $ownershipResult = $this->ownerLandModel->createOrUpdate($ownershipData);
+
+                            if (!$ownershipResult) {
+                                log_message('error', 'Failed to create land ownership relationship');
+                                $errors = $this->ownerLandModel->errors();
+                                if (!empty($errors)) {
+                                    log_message('error', 'Land ownership validation errors: ' . json_encode($errors, JSON_UNESCAPED_UNICODE));
+                                }
+                            } else {
+                                log_message('info', 'Successfully created land ownership relationship');
+                            }
+                        } catch (\Exception $e) {
+                            log_message('error', 'Exception in land ownership creation: ' . $e->getMessage());
+                            throw $e; // Re-throw to be caught by outer try-catch
+                        }
+                    } else {
+                        log_message('warning', 'Land plot not found for plot_number: ' . $landData['plot_number']);
                     }
                 }
             }

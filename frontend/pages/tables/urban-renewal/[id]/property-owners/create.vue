@@ -25,14 +25,24 @@
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
           <div class="flex justify-between items-center mb-6">
             <h2 class="text-xl font-semibold text-gray-900">基本資料</h2>
-            <button
-              type="button"
-              @click="fillTestData"
-              class="px-3 py-1 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-md transition-colors duration-200"
-            >
-              <Icon name="heroicons:beaker" class="w-4 h-4 mr-1 inline" />
-              填入測試資料
-            </button>
+            <div class="flex gap-2">
+              <button
+                type="button"
+                @click="fillTestData"
+                class="px-3 py-1 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-md transition-colors duration-200"
+              >
+                <Icon name="heroicons:beaker" class="w-4 h-4 mr-1 inline" />
+                填入測試資料
+              </button>
+              <button
+                type="button"
+                @click="previewSubmitData"
+                class="px-3 py-1 text-sm font-medium text-white bg-purple-500 hover:bg-purple-600 rounded-md transition-colors duration-200"
+              >
+                <Icon name="heroicons:eye" class="w-4 h-4 mr-1 inline" />
+                預覽提交資料
+              </button>
+            </div>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -240,7 +250,7 @@
               </thead>
               <tbody>
                 <tr v-for="(land, index) in formData.lands" :key="index" class="border-b border-gray-100">
-                  <td class="p-3 text-sm">{{ land.plot_number }}</td>
+                  <td class="p-3 text-sm">{{ land.plot_number_display || land.plot_number }}</td>
                   <td class="p-3 text-sm">{{ land.total_area }}</td>
                   <td class="p-3 text-sm">{{ land.ownership_numerator }}/{{ land.ownership_denominator }}</td>
                   <td class="p-3 text-center">
@@ -312,8 +322,9 @@
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   >
                     <option value="">請選擇地號</option>
-                    <option v-for="plot in availablePlots" :key="plot.id" :value="plot.plot_number">
-                      {{ plot.plot_number }}
+                    <option v-for="plot in availablePlots" :key="plot.id" :value="plot.landNumber || plot.plot_number">
+                      {{ plot.chineseFullLandNumber || plot.fullLandNumber || plot.plot_number }}
+                      <span v-if="plot.isRepresentative" class="text-blue-600 font-medium"> (代表號)</span>
                     </option>
                   </select>
                 </div>
@@ -538,6 +549,16 @@ const showAddBuildingModal = ref(false)
 const availablePlots = ref([])
 const loadingProgress = ref(0)
 
+// 地區映射緩存
+const locationMappings = ref({
+  counties: new Map(),
+  districts: new Map(),
+  sections: new Map()
+})
+
+// 縣市資料
+const counties = ref([])
+
 // Form data
 const formData = reactive({
   urban_renewal_id: urbanRenewalId.value,
@@ -575,6 +596,91 @@ const buildingForm = reactive({
   building_address: ''
 })
 
+// 將地號代號轉換為中文顯示
+const getChineseLandNumber = async (plot) => {
+  // 如果 fullLandNumber 已經是中文格式，直接使用
+  if (plot.fullLandNumber && !plot.fullLandNumber.match(/^[A-Z]{3,}/)) {
+    return plot.fullLandNumber
+  }
+
+  let countyName = plot.county
+  let districtName = plot.district
+  let sectionName = plot.section
+
+  try {
+    // 獲取縣市名稱
+    if (locationMappings.value.counties.has(plot.county)) {
+      countyName = locationMappings.value.counties.get(plot.county)
+    } else if (counties.value.length > 0) {
+      const county = counties.value.find(c => c.code === plot.county)
+      if (county) {
+        countyName = county.name
+        locationMappings.value.counties.set(plot.county, county.name)
+      }
+    }
+
+    // 獲取行政區名稱
+    const districtKey = `${plot.county}_${plot.district}`
+    if (locationMappings.value.districts.has(districtKey)) {
+      districtName = locationMappings.value.districts.get(districtKey)
+    } else {
+      try {
+        const response = await $fetch(`/api/locations/districts/${plot.county}`, {
+          baseURL: runtimeConfig.public.apiBaseUrl
+        })
+        if (response.status === 'success') {
+          const district = response.data.find(d => d.code === plot.district)
+          if (district) {
+            districtName = district.name
+            locationMappings.value.districts.set(districtKey, district.name)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching district:', error)
+      }
+    }
+
+    // 獲取段小段名稱
+    const sectionKey = `${plot.county}_${plot.district}_${plot.section}`
+    if (locationMappings.value.sections.has(sectionKey)) {
+      sectionName = locationMappings.value.sections.get(sectionKey)
+    } else {
+      try {
+        const response = await $fetch(`/api/locations/sections/${plot.county}/${plot.district}`, {
+          baseURL: runtimeConfig.public.apiBaseUrl
+        })
+        if (response.status === 'success') {
+          const section = response.data.find(s => s.code === plot.section)
+          if (section) {
+            sectionName = section.name
+            locationMappings.value.sections.set(sectionKey, section.name)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching section:', error)
+      }
+    }
+  } catch (error) {
+    console.error('Error in getChineseLandNumber:', error)
+  }
+
+  return `${countyName}${districtName}${sectionName}${plot.landNumber}`
+}
+
+// 獲取縣市資料
+const fetchCounties = async () => {
+  try {
+    const response = await $fetch('/api/locations/counties', {
+      baseURL: runtimeConfig.public.apiBaseUrl
+    })
+    if (response.status === 'success') {
+      counties.value = response.data
+    }
+  } catch (err) {
+    console.error('Failed to fetch counties:', err)
+  }
+}
+
 // Generate owner code
 const generateOwnerCode = () => {
   const timestamp = Date.now()
@@ -608,7 +714,18 @@ const fetchAvailablePlots = async () => {
     })
 
     if (response.status === 'success') {
-      availablePlots.value = response.data || []
+      // 將地號轉換為中文格式
+      const plotsWithChineseNames = await Promise.all(
+        (response.data || []).map(async (plot) => {
+          const chineseFullLandNumber = await getChineseLandNumber(plot)
+          return {
+            ...plot,
+            chineseFullLandNumber
+          }
+        })
+      )
+
+      availablePlots.value = plotsWithChineseNames
       loadingProgress.value = 100
     }
   } catch (err) {
@@ -618,8 +735,14 @@ const fetchAvailablePlots = async () => {
 
 // Add land to form
 const addLand = () => {
+  // 從可用地號列表中找到對應的地號資訊
+  const selectedPlot = availablePlots.value.find(plot =>
+    (plot.landNumber || plot.plot_number) === landForm.plot_number
+  )
+
   formData.lands.push({
     plot_number: landForm.plot_number,
+    plot_number_display: selectedPlot?.chineseFullLandNumber || selectedPlot?.fullLandNumber || landForm.plot_number,
     total_area: landForm.total_area,
     ownership_numerator: landForm.ownership_numerator,
     ownership_denominator: landForm.ownership_denominator
@@ -688,14 +811,45 @@ const onSubmit = async () => {
 
   isSubmitting.value = true
 
+  // 轉換欄位名稱以符合後端API格式
+  const submitData = {
+    urban_renewal_id: formData.urban_renewal_id,
+    owner_name: formData.owner_name,  // 使用 owner_name，讓後端處理映射
+    identity_number: formData.identity_number,  // 使用 identity_number，讓後端處理映射
+    // owner_code 由後端自動生成，不發送
+    phone1: formData.phone1,
+    phone2: formData.phone2,
+    contact_address: formData.contact_address,
+    registered_address: formData.registered_address,  // 使用 registered_address，讓後端處理映射
+    exclusion_type: formData.exclusion_type,
+    lands: formData.lands.map(land => {
+      // 從可用地號列表中找到對應的地號資訊
+      const selectedPlot = availablePlots.value.find(plot =>
+        (plot.landNumber || plot.plot_number) === land.plot_number
+      )
+
+      return {
+        plot_number: selectedPlot?.landNumberMain || land.plot_number.split('-')[0] || land.plot_number,
+        total_area: parseFloat(land.total_area) || 0,
+        ownership_numerator: parseInt(land.ownership_numerator) || 1,
+        ownership_denominator: parseInt(land.ownership_denominator) || 1
+      }
+    }),
+    buildings: formData.buildings,
+    notes: formData.notes
+  }
+
   try {
+
     const response = await $fetch('/api/property-owners', {
       method: 'POST',
       baseURL: runtimeConfig.public.apiBaseUrl,
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json; charset=utf-8',
+        'Accept': 'application/json',
+        'Accept-Charset': 'utf-8'
       },
-      body: formData
+      body: JSON.stringify(submitData)
     })
 
     if (response.status === 'success') {
@@ -719,9 +873,29 @@ const onSubmit = async () => {
     }
   } catch (err) {
     console.error('Submit error:', err)
+
+    // 提供更詳細的錯誤信息
+    let errorMessage = '新增失敗，請稍後再試'
+    if (err.data && err.data.message) {
+      errorMessage = err.data.message
+    } else if (err.message) {
+      errorMessage = err.message
+    }
+
+    // 如果是後端API問題，提供調試信息
+    if (err.status === 500 || err.statusCode === 500) {
+      errorMessage += '\n\n調試信息：'
+      errorMessage += '\n- 請檢查所有權人名稱是否填寫'
+      errorMessage += '\n- 請檢查地號是否正確選擇'
+      errorMessage += '\n- 如果問題持續，請聯繫系統管理員'
+
+      // 在控制台輸出提交的數據以便調試
+      console.log('提交的數據：', submitData)
+    }
+
     $swal.fire({
       title: '新增失敗',
-      text: '新增失敗，請稍後再試',
+      text: errorMessage,
       icon: 'error',
       confirmButtonText: '確定',
       confirmButtonColor: '#ef4444'
@@ -729,6 +903,57 @@ const onSubmit = async () => {
   } finally {
     isSubmitting.value = false
   }
+}
+
+// 預覽提交資料
+const previewSubmitData = () => {
+  const submitData = {
+    urban_renewal_id: formData.urban_renewal_id,
+    owner_name: formData.owner_name,
+    identity_number: formData.identity_number,
+    phone1: formData.phone1,
+    phone2: formData.phone2,
+    contact_address: formData.contact_address,
+    registered_address: formData.registered_address,
+    exclusion_type: formData.exclusion_type,
+    lands: formData.lands.map(land => {
+      const selectedPlot = availablePlots.value.find(plot =>
+        (plot.landNumber || plot.plot_number) === land.plot_number
+      )
+
+      return {
+        plot_number: selectedPlot?.landNumberMain || land.plot_number.split('-')[0] || land.plot_number,
+        plot_display: land.plot_number_display || land.plot_number,
+        total_area: land.total_area,
+        ownership_numerator: land.ownership_numerator,
+        ownership_denominator: land.ownership_denominator
+      }
+    }),
+    buildings: formData.buildings,
+    notes: formData.notes
+  }
+
+  $swal.fire({
+    title: '預覽提交資料',
+    html: `
+      <div class="text-left">
+        <p><strong>所有權人名稱：</strong>${submitData.owner_name || '(未填寫)'}</p>
+        <p><strong>身分證字號：</strong>${submitData.identity_number || '(未填寫)'}</p>
+        <p><strong>電話：</strong>${submitData.phone1 || '(未填寫)'}</p>
+        <p><strong>地址：</strong>${submitData.contact_address || '(未填寫)'}</p>
+        <p><strong>地號數量：</strong>${submitData.lands.length}筆</p>
+        ${submitData.lands.length > 0 ? '<p><strong>地號列表：</strong></p><ul>' + submitData.lands.map(land =>
+          `<li>- ${land.plot_display} (${land.ownership_numerator}/${land.ownership_denominator})</li>`
+        ).join('') + '</ul>' : ''}
+        <p><strong>建號數量：</strong>${submitData.buildings.length}筆</p>
+      </div>
+    `,
+    icon: 'info',
+    confirmButtonText: '確定',
+    confirmButtonColor: '#10b981'
+  })
+
+  console.log('預覽提交資料：', submitData)
 }
 
 // Fill test data
@@ -797,7 +1022,13 @@ const initializeData = async () => {
     generateOwnerCode()
     loadingProgress.value = 10
 
-    await fetchUrbanRenewalInfo()
+    // 並行獲取資料
+    await Promise.all([
+      fetchCounties(),
+      fetchUrbanRenewalInfo()
+    ])
+    loadingProgress.value = 50
+
     await fetchAvailablePlots()
 
     // Add a small delay for smooth animation

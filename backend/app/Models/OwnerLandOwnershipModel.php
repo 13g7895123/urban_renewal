@@ -59,8 +59,9 @@ class OwnerLandOwnershipModel extends Model
     protected $allowCallbacks = true;
     protected $beforeInsert = [];
     protected $beforeUpdate = [];
-    protected $afterInsert = ['updateOwnerTotals'];
-    protected $afterUpdate = ['updateOwnerTotals'];
+    // Temporarily disabled total areas update due to missing database columns
+    // protected $afterInsert = ['updateOwnerTotals'];
+    // protected $afterUpdate = ['updateOwnerTotals'];
     protected $beforeFind = [];
     protected $afterFind = [];
     protected $beforeDelete = [];
@@ -126,15 +127,45 @@ class OwnerLandOwnershipModel extends Model
      */
     public function createOrUpdate(array $data): bool
     {
+        // Log the data being processed
+        log_message('info', 'Creating/updating land ownership: ' . json_encode($data, JSON_UNESCAPED_UNICODE));
+
         $existing = $this->where('property_owner_id', $data['property_owner_id'])
                          ->where('land_plot_id', $data['land_plot_id'])
                          ->where('deleted_at', null)
                          ->first();
 
         if ($existing) {
-            return $this->update($existing['id'], $data);
+            log_message('info', 'Existing ownership found, updating: ' . json_encode($existing, JSON_UNESCAPED_UNICODE));
+
+            // Check if data actually needs updating
+            $needsUpdate = false;
+            foreach ($data as $key => $value) {
+                if (isset($existing[$key]) && $existing[$key] != $value) {
+                    $needsUpdate = true;
+                    break;
+                }
+            }
+
+            if ($needsUpdate) {
+                $result = $this->update($existing['id'], $data);
+                log_message('info', 'Update result: ' . ($result ? 'success' : 'failed'));
+                return $result;
+            } else {
+                log_message('info', 'No update needed, data is the same');
+                return true; // Consider as success since data is already correct
+            }
         } else {
-            return $this->insert($data) !== false;
+            log_message('info', 'Creating new ownership record');
+            $result = $this->insert($data);
+            log_message('info', 'Insert result: ' . ($result !== false ? 'success (ID: ' . $result . ')' : 'failed'));
+
+            if ($result === false) {
+                $errors = $this->errors();
+                log_message('error', 'Insert failed with errors: ' . json_encode($errors, JSON_UNESCAPED_UNICODE));
+            }
+
+            return $result !== false;
         }
     }
 }
