@@ -16,7 +16,24 @@ class App extends BaseConfig
      *
      * E.g., http://example.com/
      */
-    public string $baseURL = 'http://localhost:8080/';
+    public string $baseURL = '';
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        // Load base URL from environment variable
+        $this->baseURL = env('APP_BASE_URL', 'http://localhost:8080/');
+
+        // Ensure trailing slash
+        if (!empty($this->baseURL) && substr($this->baseURL, -1) !== '/') {
+            $this->baseURL .= '/';
+        }
+
+        // Load other environment settings
+        $this->forceGlobalSecureRequests = env('APP_FORCE_HTTPS', false);
+        $this->appTimezone = env('APP_TIMEZONE', 'UTC');
+    }
 
     /**
      * Allowed Hostnames in the Site URL other than the hostname in the baseURL.
