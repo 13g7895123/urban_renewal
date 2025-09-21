@@ -63,6 +63,7 @@ composer.phar
 # Docker
 .docker/
 
-frontend/.nuxt/*
+./frontend/.nuxt/*
+./frontend/node_modules/*
 
 .env
