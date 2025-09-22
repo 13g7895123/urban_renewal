@@ -4,3 +4,6 @@
 4. 幫我調整後端的App.php，讓他可以吃到.env的設定
 5. 為甚麼frontend的.nuxt一直被git紀錄，我不是已經加入.gitignore了嗎
 6. 幫我移除nginx的服務
+7. 請幫我重寫後端的Dockerfile，我不要用script的方始啟用，這也太奇怪了
+8. 幫我移除cmd那一段好了，migration我自己想辦法
+9. 幫我改用8.2-fpm-alpine
