@@ -1,17 +1,17 @@
-FROM php:8.2-fpm-alpine
+FROM php:8.2-cli
 
 # Install system dependencies
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y \
     git \
     curl \
     libpng-dev \
-    oniguruma-dev \
+    libonig-dev \
     libxml2-dev \
     zip \
     unzip \
-    icu-dev \
-    mysql-client \
-    bash
+    libicu-dev \
+    default-mysql-client \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mysqli mbstring exif pcntl bcmath gd intl
@@ -38,4 +38,5 @@ RUN mkdir -p /var/www/html/writable && \
 
 EXPOSE 8000
 
-CMD ["php-fpm"]
+# Start CodeIgniter development server
+CMD ["php", "spark", "serve", "--host", "0.0.0.0", "--port", "8000"]
