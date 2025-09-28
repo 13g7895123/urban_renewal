@@ -1,0 +1,85 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "${FRONTEND_PORT:-3001}:3000"
+    environment:
+      - NODE_ENV=development
+      - HOST=0.0.0.0
+      - PORT=3000
+      - NUXT_PUBLIC_API_BASE_URL=${BACKEND_API_URL:-http://localhost:3002/api}
+      - NUXT_PUBLIC_BACKEND_URL=${BACKEND_URL:-http://localhost:3002}
+      - NUXT_PUBLIC_BACKEND_HOST=backend
+      - NUXT_PUBLIC_BACKEND_PORT=443
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - urban_renewal_dev_network
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "${BACKEND_PORT:-3002}:8000"
+    environment:
+      - CI_ENVIRONMENT=development
+      - APP_BASE_URL=${BACKEND_URL:-http://localhost:3002}
+      - DB_HOST=${DB_HOST:-mariadb_dev}
+      - DB_DATABASE=${DB_DATABASE:-urban_renewal_dev}
+      - DB_USERNAME=${DB_USERNAME:-root}
+      - DB_PASSWORD=${DB_PASSWORD:-local_dev_pass}
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - mariadb_dev
+    restart: unless-stopped
+    networks:
+      - urban_renewal_dev_network
+
+  mariadb_dev:
+    image: mariadb:11.4
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-local_dev_pass}
+      - MYSQL_DATABASE=${DB_DATABASE:-urban_renewal_dev}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mariadb_dev_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
+      timeout: 10s
+      retries: 5
+      interval: 10s
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - urban_renewal_dev_network
+
+  phpmyadmin_dev:
+    image: phpmyadmin:5.2
+    environment:
+      - PMA_HOST=mariadb_dev
+      - PMA_PORT=3306
+      - PMA_USER=${DB_USERNAME:-root}
+      - PMA_PASSWORD=${DB_PASSWORD:-local_dev_pass}
+    ports:
+      - "${PHPMYADMIN_PORT:-3003}:80"
+    depends_on:
+      - mariadb_dev
+    restart: unless-stopped
+    networks:
+      - urban_renewal_dev_network
+
+volumes:
+  mariadb_dev_data:
+
+networks:
+  urban_renewal_dev_network:
+    driver: bridge
