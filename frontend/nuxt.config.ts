@@ -88,10 +88,8 @@ export default defineNuxtConfig({
       process.env.TAILWIND_DISABLE_TOUCH = '1'
     }
   },
-  // Disable problematic nuxt-icon server bundle
+  // Enable icon server bundle to fix 404 API errors
   icon: {
-    serverBundle: false
-  },
-  // Alternative: disable icon module entirely if still causing issues
-  // icon: false
+    serverBundle: true
+  }
 })
