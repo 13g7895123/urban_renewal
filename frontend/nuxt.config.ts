@@ -88,8 +88,10 @@ export default defineNuxtConfig({
       process.env.TAILWIND_DISABLE_TOUCH = '1'
     }
   },
-  // Enable icon server bundle to fix 404 API errors
+  // Configure icon server bundle to fix 404 API errors
   icon: {
-    serverBundle: true
+    serverBundle: {
+      collections: ['heroicons']
+    }
   }
 })
