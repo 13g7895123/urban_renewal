@@ -31,7 +31,15 @@ echo "   phpMyAdmin: http://localhost:${PHPMYADMIN_PORT:-3003}"
 echo ""
 
 # Start the development environment
-docker-compose -f docker-compose.local.yml --env-file .env.local up --build
+# Try docker compose first (newer version), fallback to docker-compose (older version)
+if command -v docker &> /dev/null && docker compose version &> /dev/null; then
+    docker compose -f docker-compose.local.yml --env-file .env.local up --build
+elif command -v docker-compose &> /dev/null; then
+    docker-compose -f docker-compose.local.yml --env-file .env.local up --build
+else
+    echo "❌ Neither 'docker compose' nor 'docker-compose' is available. Please install Docker Compose."
+    exit 1
+fi
 
 echo ""
 echo "🛑 Development environment stopped."
