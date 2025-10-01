@@ -12,56 +12,56 @@ export const useAuth = () => {
       username: credentials.username || credentials.email,
       password: credentials.password
     }
-    return await post('/api/auth/login', loginData)
+    return await post('/auth/login', loginData)
   }
 
   /**
    * Logout current user
    */
   const logout = async () => {
-    return await post('/api/auth/logout')
+    return await post('/auth/logout')
   }
 
   /**
    * Get current authenticated user data
    */
   const getCurrentUser = async () => {
-    return await get('/api/auth/me')
+    return await get('/auth/me')
   }
 
   /**
    * Refresh authentication token
    */
   const refreshToken = async () => {
-    return await post('/api/auth/refresh')
+    return await post('/auth/refresh')
   }
 
   /**
    * Request password reset
    */
   const requestPasswordReset = async (email) => {
-    return await post('/api/auth/forgot-password', { email })
+    return await post('/auth/forgot-password', { email })
   }
 
   /**
    * Reset password with token
    */
   const resetPassword = async (resetData) => {
-    return await post('/api/auth/reset-password', resetData)
+    return await post('/auth/reset-password', resetData)
   }
 
   /**
    * Change password (through users endpoint)
    */
   const changePassword = async (passwordData) => {
-    return await post('/api/users/change-password', passwordData)
+    return await post('/users/change-password', passwordData)
   }
 
   /**
    * Update user profile (through users endpoint)
    */
   const updateProfile = async (profileData) => {
-    return await get('/api/users/profile')
+    return await get('/users/profile')
   }
 
   /**

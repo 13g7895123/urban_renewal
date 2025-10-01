@@ -546,8 +546,7 @@ const fetchSections = async (countyCode, districtCode) => {
 const fetchRenewalData = async () => {
   loading.value = true
   try {
-    const response = await put(`/urban-renewals/${route.params.id}`, {
-    })
+    const response = await get(`/urban-renewals/${route.params.id}`)
 
     if (response.status === 'success') {
       Object.assign(renewalData, response.data)

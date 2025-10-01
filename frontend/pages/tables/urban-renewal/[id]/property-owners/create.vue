@@ -538,6 +538,13 @@ const route = useRoute()
 const router = useRouter()
 const runtimeConfig = useRuntimeConfig()
 
+// Get API base URL for development vs production
+const getApiBaseUrl = () => {
+  const isDev = process.dev || process.env.NODE_ENV === 'development'
+  return isDev ? 'http://localhost:9228' : (runtimeConfig.public.apiBaseUrl || '')
+}
+const apiBaseUrl = getApiBaseUrl()
+
 // Get urban renewal ID from route (reactive)
 const urbanRenewalId = computed(() => route.params.id)
 
@@ -626,7 +633,7 @@ const getChineseLandNumber = async (plot) => {
     } else {
       try {
         const response = await $fetch(`/api/locations/districts/${plot.county}`, {
-          baseURL: runtimeConfig.public.apiBaseUrl
+          baseURL: apiBaseUrl
         })
         if (response.status === 'success') {
           const district = response.data.find(d => d.code === plot.district)
@@ -647,7 +654,7 @@ const getChineseLandNumber = async (plot) => {
     } else {
       try {
         const response = await $fetch(`/api/locations/sections/${plot.county}/${plot.district}`, {
-          baseURL: runtimeConfig.public.apiBaseUrl
+          baseURL: apiBaseUrl
         })
         if (response.status === 'success') {
           const section = response.data.find(s => s.code === plot.section)
@@ -670,8 +677,8 @@ const getChineseLandNumber = async (plot) => {
 // 獲取縣市資料
 const fetchCounties = async () => {
   try {
-    const response = await $fetch('/api/locations/counties', {
-      baseURL: runtimeConfig.public.apiBaseUrl
+    const response = await $fetch('/locations/counties', {
+      baseURL: apiBaseUrl
     })
     if (response.status === 'success') {
       counties.value = response.data
@@ -693,7 +700,7 @@ const fetchUrbanRenewalInfo = async () => {
   try {
     loadingProgress.value = 25
     const response = await $fetch(`/api/urban-renewals/${urbanRenewalId.value}`, {
-      baseURL: runtimeConfig.public.apiBaseUrl
+      baseURL: apiBaseUrl
     })
 
     if (response.status === 'success') {
@@ -710,7 +717,7 @@ const fetchAvailablePlots = async () => {
   try {
     loadingProgress.value = 75
     const response = await $fetch(`/api/urban-renewals/${urbanRenewalId.value}/land-plots`, {
-      baseURL: runtimeConfig.public.apiBaseUrl
+      baseURL: apiBaseUrl
     })
 
     if (response.status === 'success') {
@@ -841,9 +848,9 @@ const onSubmit = async () => {
 
   try {
 
-    const response = await $fetch('/api/property-owners', {
+    const response = await $fetch('/property-owners', {
       method: 'POST',
-      baseURL: runtimeConfig.public.apiBaseUrl,
+      baseURL: apiBaseUrl,
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
         'Accept': 'application/json',
@@ -1019,14 +1026,25 @@ const initializeData = async () => {
     isLoading.value = true
     loadingProgress.value = 0
 
+    console.log('[Property Owner Create] Starting initialization...')
+    console.log('[Property Owner Create] API Base URL:', apiBaseUrl)
+
     generateOwnerCode()
     loadingProgress.value = 10
 
-    // 並行獲取資料
-    await Promise.all([
-      fetchCounties(),
-      fetchUrbanRenewalInfo()
+    // 並行獲取資料 with timeout
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Initialization timeout')), 10000)
+    )
+
+    await Promise.race([
+      Promise.all([
+        fetchCounties(),
+        fetchUrbanRenewalInfo()
+      ]),
+      timeout
     ])
+
     loadingProgress.value = 50
 
     await fetchAvailablePlots()
@@ -1034,11 +1052,24 @@ const initializeData = async () => {
     // Add a small delay for smooth animation
     setTimeout(() => {
       isLoading.value = false
+      console.log('[Property Owner Create] Initialization complete')
     }, 500)
 
   } catch (error) {
-    console.error('Error initializing data:', error)
+    console.error('[Property Owner Create] Error initializing data:', error)
+
+    // Show user-friendly error message
+    $swal.fire({
+      title: '載入失敗',
+      text: '無法載入必要資料，請重新整理頁面或稍後再試',
+      icon: 'error',
+      confirmButtonText: '確定',
+      confirmButtonColor: '#ef4444'
+    })
+
+    // Stop loading state on error
     isLoading.value = false
+    loadingProgress.value = 0
   }
 }
 

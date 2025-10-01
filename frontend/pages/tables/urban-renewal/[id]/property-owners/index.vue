@@ -107,7 +107,7 @@
           <div class="text-sm text-gray-500">
             {{ propertyOwners.length > 0 ? `1-${propertyOwners.length} 共 ${propertyOwners.length}` : '0-0 共 0' }}
           </div>
-          <div class="flex gap-1">
+          <div class="flex gap-1 items-center">
             <button
               disabled
               class="p-2 text-gray-400 bg-gray-100 rounded cursor-not-allowed"
@@ -120,6 +120,16 @@
               class="p-2 text-gray-400 bg-gray-100 rounded cursor-not-allowed"
             >
               <Icon name="heroicons:chevron-right" class="w-4 h-4" />
+            </button>
+
+            <!-- Refresh Button -->
+            <button
+              @click="refreshData"
+              :disabled="loading"
+              class="ml-2 p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="重新整理"
+            >
+              <Icon name="heroicons:arrow-path" :class="['w-4 h-4', { 'animate-spin': loading }]" />
             </button>
           </div>
         </div>
@@ -150,34 +160,56 @@ const fetchPropertyOwners = async () => {
   loading.value = true
 
   try {
+    // Use direct URL for development - check multiple conditions
+    const isDev = process.dev || process.env.NODE_ENV === 'development'
+    const baseURL = isDev ? 'http://localhost:9228' : (runtimeConfig.public.apiBaseUrl || '')
+
+    console.log('[Property Owners] Fetching from:', `${baseURL}/api/urban-renewals/${urbanRenewalId.value}/property-owners`)
+
     const response = await $fetch(`/api/urban-renewals/${urbanRenewalId.value}/property-owners`, {
-      baseURL: runtimeConfig.public.apiBaseUrl
+      baseURL
     })
 
     if (response.status === 'success') {
       propertyOwners.value = response.data || []
+      console.log('[Property Owners] Data loaded:', propertyOwners.value.length, 'records')
     } else {
       console.error('Failed to fetch property owners:', response.message)
+      propertyOwners.value = []
     }
   } catch (err) {
-    console.error('Fetch error:', err)
+    console.error('[Property Owners] Fetch error:', err)
+    console.error('[Property Owners] Error details:', err.data || err.message)
+
+    // Show more detailed error message
+    const errorMessage = err.data?.message || err.message || '無法載入所有權人資料'
     $swal.fire({
       title: '載入失敗',
-      text: '無法載入所有權人資料',
+      text: errorMessage,
       icon: 'error',
       confirmButtonText: '確定',
       confirmButtonColor: '#ef4444'
     })
+    propertyOwners.value = []
   } finally {
     loading.value = false
   }
 }
 
+// Refresh data function
+const refreshData = async () => {
+  await fetchPropertyOwners()
+}
+
 const deletePropertyOwner = async (id) => {
   try {
+    // Use direct URL for development - check multiple conditions
+    const isDev = process.dev || process.env.NODE_ENV === 'development'
+    const baseURL = isDev ? 'http://localhost:9228' : (runtimeConfig.public.apiBaseUrl || '')
+
     const response = await $fetch(`/api/property-owners/${id}`, {
       method: 'DELETE',
-      baseURL: runtimeConfig.public.apiBaseUrl
+      baseURL
     })
 
     return response
@@ -221,6 +253,21 @@ const createOwner = () => {
 }
 
 const viewOwnerDetails = (owner) => {
+  console.log('[Property Owners] View owner details clicked:', owner)
+
+  if (!owner || !owner.id) {
+    console.error('[Property Owners] Owner or owner.id is missing:', owner)
+    $swal.fire({
+      title: '錯誤',
+      text: '無法取得所有權人資料',
+      icon: 'error',
+      confirmButtonText: '確定',
+      confirmButtonColor: '#ef4444'
+    })
+    return
+  }
+
+  console.log('[Property Owners] Navigating to:', `/tables/urban-renewal/${urbanRenewalId.value}/property-owners/${owner.id}/edit`)
   router.push(`/tables/urban-renewal/${urbanRenewalId.value}/property-owners/${owner.id}/edit`)
 }
 
@@ -273,17 +320,17 @@ const deleteOwner = async (owner) => {
   }
 }
 
-// Load data when component mounts
+// Load data when component mounts or route changes
 onMounted(() => {
   console.log('Property owners page mounted, urbanRenewalId:', urbanRenewalId.value)
   fetchPropertyOwners()
 })
 
-// Watch for route changes to reload data
+// Watch for route changes to reload data (only when route actually changes)
 watch(() => route.params.id, (newId, oldId) => {
-  if (newId && newId !== oldId) {
+  if (newId && oldId && newId !== oldId) {
     console.log('Route changed, new ID:', newId, 'old ID:', oldId)
     fetchPropertyOwners()
   }
-}, { immediate: true })
+})
 </script>

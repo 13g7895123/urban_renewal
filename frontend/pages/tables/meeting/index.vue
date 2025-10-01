@@ -118,13 +118,25 @@
           <div class="text-sm text-gray-500">
             1-2 共 2
           </div>
-          <div class="flex gap-2">
+          <div class="flex gap-2 items-center">
             <UButton variant="ghost" size="sm" disabled>
               <Icon name="heroicons:chevron-left" class="w-4 h-4" />
             </UButton>
             <UButton variant="ghost" size="sm" class="bg-blue-500 text-white">1</UButton>
             <UButton variant="ghost" size="sm" disabled>
               <Icon name="heroicons:chevron-right" class="w-4 h-4" />
+            </UButton>
+
+            <!-- Refresh Button -->
+            <UButton
+              @click="refreshData"
+              :loading="loading"
+              variant="ghost"
+              size="sm"
+              class="ml-2 text-gray-600 hover:text-green-600 hover:bg-green-50"
+              title="重新整理"
+            >
+              <Icon name="heroicons:arrow-path" class="w-4 h-4" />
             </UButton>
           </div>
         </div>
@@ -241,6 +253,7 @@ definePageMeta({
 const selectAll = ref(false)
 const selectedMeetings = ref([])
 const pageSize = ref(10)
+const loading = ref(false)
 
 // Modal state
 const showVotingTopicsModal = ref(false)
@@ -302,6 +315,19 @@ const toggleSelectAll = () => {
 const addMeeting = () => {
   console.log('Adding new meeting')
   navigateTo('/tables/meeting/new/basic-info')
+}
+
+// Refresh data function
+const refreshData = async () => {
+  loading.value = true
+  try {
+    // TODO: Replace with actual API call when backend is ready
+    // For now, just simulate a loading state
+    await new Promise(resolve => setTimeout(resolve, 500))
+    console.log('Meetings data refreshed')
+  } finally {
+    loading.value = false
+  }
 }
 
 const deleteMeetings = () => {

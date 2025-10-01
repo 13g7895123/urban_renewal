@@ -6,24 +6,28 @@ export const useApi = () => {
   
   // Get base URL from environment - handle development vs production
   const getBaseURL = () => {
-    // Check if we're in development mode
-    const isDev = process.dev || process.env.NODE_ENV === 'development'
-
-    if (isDev) {
-      // In development, use proxy - return empty string since endpoints already include /api
-      console.log('[API] Using development proxy: (empty baseURL)')
-      return ''
+    // Check if environment variable is set (for Docker or configured dev environment)
+    if (config.public.apiBaseUrl) {
+      console.log('[API] Using configured API URL:', config.public.apiBaseUrl)
+      return config.public.apiBaseUrl
     }
 
-    // In production, always use the full API URL with /api path
-    const apiBaseUrl = config.public.apiBaseUrl || config.public.backendUrl
-    if (apiBaseUrl) {
-      const fullApiUrl = `${apiBaseUrl}/api`
-      console.log('[API] Using production API URL:', fullApiUrl)
+    // Check if we're in development mode and use local backend URL
+    const isDev = process.dev || process.env.NODE_ENV === 'development'
+    if (isDev) {
+      // In development without Docker, connect directly to backend with /api prefix
+      console.log('[API] Using development direct connection: http://localhost:9228/api')
+      return 'http://localhost:9228/api'
+    }
+
+    // In production, try to use backend URL with /api path
+    if (config.public.backendUrl) {
+      const fullApiUrl = `${config.public.backendUrl}/api`
+      console.log('[API] Using backend URL with /api:', fullApiUrl)
       return fullApiUrl
     }
 
-    // Fallback - this should not happen in production
+    // Fallback - this should not happen
     console.error('[API] No API base URL configured! Check environment variables.')
     throw new Error('API base URL not configured. Please set NUXT_PUBLIC_API_BASE_URL environment variable.')
   }

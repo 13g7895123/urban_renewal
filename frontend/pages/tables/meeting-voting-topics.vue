@@ -106,13 +106,25 @@
           <div class="text-sm text-gray-500">
             1-{{ votingTopics.length }} 共 {{ votingTopics.length }}
           </div>
-          <div class="flex gap-2">
+          <div class="flex gap-2 items-center">
             <UButton variant="ghost" size="sm" disabled>
               <Icon name="heroicons:chevron-left" class="w-4 h-4" />
             </UButton>
             <UButton variant="ghost" size="sm" class="bg-blue-500 text-white">1</UButton>
             <UButton variant="ghost" size="sm" disabled>
               <Icon name="heroicons:chevron-right" class="w-4 h-4" />
+            </UButton>
+
+            <!-- Refresh Button -->
+            <UButton
+              @click="refreshData"
+              :loading="loading"
+              variant="ghost"
+              size="sm"
+              class="ml-2 text-gray-600 hover:text-green-600 hover:bg-green-50"
+              title="重新整理"
+            >
+              <Icon name="heroicons:arrow-path" class="w-4 h-4" />
             </UButton>
           </div>
         </div>
@@ -169,6 +181,7 @@ const router = useRouter()
 
 const meetingId = route.query.meetingId || '1'
 const pageSize = ref(10)
+const loading = ref(false)
 const showOtherModal = ref(false)
 const selectedTopic = ref(null)
 
@@ -233,6 +246,19 @@ const deleteTopic = () => {
   console.log('Deleting topic:', selectedTopic.value)
   // TODO: Implement delete functionality with confirmation
   showOtherModal.value = false
+}
+
+// Refresh data function
+const refreshData = async () => {
+  loading.value = true
+  try {
+    // TODO: Replace with actual API call when backend is ready
+    // For now, just simulate a loading state
+    await new Promise(resolve => setTimeout(resolve, 500))
+    console.log('Voting topics data refreshed for meeting:', meetingId)
+  } finally {
+    loading.value = false
+  }
 }
 
 onMounted(() => {

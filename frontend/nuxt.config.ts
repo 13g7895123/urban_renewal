@@ -2,7 +2,7 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
   // Development server configuration
   devServer: {
-    port: 3303,
+    port: parseInt(process.env.FRONTEND_PORT || '7357'),
     host: '0.0.0.0'
   },
   ssr: true,
@@ -51,7 +51,7 @@ export default defineNuxtConfig({
   nitro: {
     devProxy: {
       '/api': {
-        target: 'http://localhost:9228',
+        target: 'http://urban_renewal-backend-1:8000',
         changeOrigin: true,
         prependPath: true,
       }

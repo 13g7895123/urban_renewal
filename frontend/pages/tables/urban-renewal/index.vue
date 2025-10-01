@@ -241,7 +241,7 @@
           <div class="text-sm text-gray-500">
             {{ renewals.length > 0 ? `1-${renewals.length} 共 ${renewals.length}` : '0-0 共 0' }}
           </div>
-          <div class="flex gap-1">
+          <div class="flex gap-1 items-center">
             <button
               disabled
               class="p-2 text-gray-400 bg-gray-100 rounded cursor-not-allowed"
@@ -254,6 +254,15 @@
               class="p-2 text-gray-400 bg-gray-100 rounded cursor-not-allowed"
             >
               <Icon name="heroicons:chevron-right" class="w-4 h-4" />
+            </button>
+            <!-- Refresh Button -->
+            <button
+              @click="refreshData"
+              :disabled="loading"
+              class="ml-2 p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="重新整理"
+            >
+              <Icon name="heroicons:arrow-path" :class="['w-4 h-4', { 'animate-spin': loading }]" />
             </button>
           </div>
         </div>
@@ -513,6 +522,11 @@ const deleteRenewal = async (renewal) => {
       confirmButtonColor: '#ef4444'
     })
   }
+}
+
+// Refresh data function
+const refreshData = async () => {
+  await fetchRenewals()
 }
 
 // Load data when component mounts

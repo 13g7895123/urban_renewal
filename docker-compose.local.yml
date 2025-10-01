@@ -4,15 +4,15 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "${FRONTEND_PORT:-3001}:3000"
+      - "${FRONTEND_PORT:-7357}:${FRONTEND_PORT:-7357}"
     environment:
       - NODE_ENV=development
       - HOST=0.0.0.0
-      - PORT=3000
-      - NUXT_PUBLIC_API_BASE_URL=${BACKEND_API_URL:-http://localhost:3002/api}
-      - NUXT_PUBLIC_BACKEND_URL=${BACKEND_URL:-http://localhost:3002}
+      - FRONTEND_PORT=${FRONTEND_PORT:-7357}
+      - NUXT_PUBLIC_API_BASE_URL=http://backend:8000/api
+      - NUXT_PUBLIC_BACKEND_URL=http://backend:8000
       - NUXT_PUBLIC_BACKEND_HOST=backend
-      - NUXT_PUBLIC_BACKEND_PORT=443
+      - NUXT_PUBLIC_BACKEND_PORT=8000
     depends_on:
       - backend
     restart: unless-stopped
@@ -27,10 +27,10 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "${BACKEND_PORT:-3002}:8000"
+      - "${BACKEND_PORT:-9228}:8000"
     environment:
       - CI_ENVIRONMENT=development
-      - APP_BASE_URL=${BACKEND_URL:-http://localhost:3002}
+      - APP_BASE_URL=${BACKEND_URL:-http://localhost:9228}
       - DB_HOST=${DB_HOST:-mariadb_dev}
       - DB_DATABASE=${DB_DATABASE:-urban_renewal_dev}
       - DB_USERNAME=${DB_USERNAME:-root}

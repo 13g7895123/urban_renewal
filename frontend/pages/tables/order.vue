@@ -55,13 +55,25 @@
           <div class="text-sm text-gray-500">
             - -
           </div>
-          <div class="flex gap-2">
+          <div class="flex gap-2 items-center">
             <UButton variant="ghost" size="sm" disabled>
               <Icon name="heroicons:chevron-left" class="w-4 h-4" />
             </UButton>
             <UButton variant="ghost" size="sm" class="bg-blue-500 text-white">1</UButton>
             <UButton variant="ghost" size="sm" disabled>
               <Icon name="heroicons:chevron-right" class="w-4 h-4" />
+            </UButton>
+
+            <!-- Refresh Button -->
+            <UButton
+              @click="refreshData"
+              :loading="loading"
+              variant="ghost"
+              size="sm"
+              class="ml-2 text-gray-600 hover:text-green-600 hover:bg-green-50"
+              title="重新整理"
+            >
+              <Icon name="heroicons:arrow-path" class="w-4 h-4" />
             </UButton>
           </div>
         </div>
@@ -78,6 +90,7 @@ definePageMeta({
 })
 
 const pageSize = ref(10)
+const loading = ref(false)
 
 // Empty orders array to show "no data" state
 const orders = ref([
@@ -89,4 +102,17 @@ const orders = ref([
   //   orderDate: '2024-01-15 14:30:00'
   // }
 ])
+
+// Refresh data function
+const refreshData = async () => {
+  loading.value = true
+  try {
+    // TODO: Replace with actual API call when backend is ready
+    // For now, just simulate a loading state
+    await new Promise(resolve => setTimeout(resolve, 500))
+    console.log('Orders data refreshed')
+  } finally {
+    loading.value = false
+  }
+}
 </script>
