@@ -6,7 +6,17 @@
       <form @submit.prevent="onSubmit" class="max-w-6xl mx-auto">
         <!-- 基本資料 -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <h2 class="text-xl font-semibold text-gray-900 mb-6">基本資料</h2>
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-semibold text-gray-900">基本資料</h2>
+            <button
+              type="button"
+              @click="fillTestData"
+              class="px-3 py-1 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-md transition-colors duration-200"
+            >
+              <Icon name="heroicons:beaker" class="w-4 h-4 mr-1 inline" />
+              填入測試資料
+            </button>
+          </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- 所屬更新會 -->
@@ -272,8 +282,16 @@
           <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="showAddLandModal = false"></div>
 
           <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
-            <div class="mb-4">
+            <div class="flex justify-between items-center mb-4">
               <h3 class="text-lg font-semibold text-gray-900">新增地號</h3>
+              <button
+                type="button"
+                @click="fillLandTestData"
+                class="px-3 py-1 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-md transition-colors duration-200"
+              >
+                <Icon name="heroicons:beaker" class="w-4 h-4 mr-1 inline" />
+                填入測試資料
+              </button>
             </div>
 
             <form @submit.prevent="addLand">
@@ -286,8 +304,9 @@
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   >
                     <option value="">請選擇地號</option>
-                    <option v-for="plot in availablePlots" :key="plot.id" :value="plot.plot_number">
-                      {{ plot.plot_number }}
+                    <option v-for="plot in availablePlots" :key="plot.id" :value="plot.landNumber || plot.plot_number">
+                      {{ plot.chineseFullLandNumber || plot.fullLandNumber || plot.plot_number }}
+                      <span v-if="plot.isRepresentative" class="text-blue-600 font-medium"> (代表號)</span>
                     </option>
                   </select>
                 </div>
@@ -354,8 +373,16 @@
           <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="showAddBuildingModal = false"></div>
 
           <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full sm:p-6">
-            <div class="mb-4">
+            <div class="flex justify-between items-center mb-4">
               <h3 class="text-lg font-semibold text-gray-900">新增建號</h3>
+              <button
+                type="button"
+                @click="fillBuildingTestData"
+                class="px-3 py-1 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-md transition-colors duration-200"
+              >
+                <Icon name="heroicons:beaker" class="w-4 h-4 mr-1 inline" />
+                填入測試資料
+              </button>
             </div>
 
             <form @submit.prevent="addBuilding">
@@ -728,6 +755,89 @@ const onSubmit = async () => {
   } finally {
     isSubmitting.value = false
   }
+}
+
+// Fill test data for main form
+const fillTestData = () => {
+  const alert = useAlert()
+
+  const testNames = [
+    '張三丰', '李四海', '王五明', '陳六福', '林七星',
+    '黃八方', '劉九龍', '吳十全', '鄭一品', '謝二郎'
+  ]
+
+  const testExcludeReasons = [
+    '法院囑託查封', '假扣押', '假處分', '破產登記', '未經繼承'
+  ]
+
+  const randomName = testNames[Math.floor(Math.random() * testNames.length)]
+
+  // Generate random ID
+  const idPrefixes = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D1', 'D2', 'E1', 'E2']
+  const randomPrefix = idPrefixes[Math.floor(Math.random() * idPrefixes.length)]
+  const randomNumbers = Math.floor(Math.random() * 100000000).toString().padStart(8, '0')
+
+  // Fill form data
+  formData.owner_name = randomName
+  formData.identity_number = randomPrefix + randomNumbers
+  formData.phone1 = `09${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`
+  formData.phone2 = `02-${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`
+  formData.contact_address = `台北市${['大安區', '信義區', '中山區', '松山區', '萬華區'][Math.floor(Math.random() * 5)]}${randomName}路${Math.floor(Math.random() * 999) + 1}號`
+  formData.registered_address = `台北市${['中正區', '大同區', '中山區', '松山區', '大安區'][Math.floor(Math.random() * 5)]}${randomName}街${Math.floor(Math.random() * 999) + 1}號`
+  formData.exclusion_type = testExcludeReasons[Math.floor(Math.random() * testExcludeReasons.length)]
+  formData.notes = `${randomName}的測試資料，更新於${new Date().toLocaleString()}`
+
+  alert.success('測試資料已填入', '所有表單欄位已自動填入測試資料')
+}
+
+// Fill test data for land form
+const fillLandTestData = () => {
+  const alert = useAlert()
+
+  if (availablePlots.value.length === 0) {
+    alert.warning('無可用地號', '請先新增地號到更新會')
+    return
+  }
+
+  // Select random plot - use landNumber or plot_number to match the select value
+  const randomPlot = availablePlots.value[Math.floor(Math.random() * availablePlots.value.length)]
+  landForm.plot_number = randomPlot.landNumber || randomPlot.plot_number
+
+  // Random area and ownership
+  landForm.total_area = (Math.random() * 500 + 100).toFixed(2)
+  landForm.ownership_numerator = Math.floor(Math.random() * 10) + 1
+  landForm.ownership_denominator = Math.floor(Math.random() * 100) + 10
+
+  alert.success('測試地號已填入', '地號表單已自動填入測試資料')
+}
+
+// Fill test data for building form
+const fillBuildingTestData = () => {
+  const alert = useAlert()
+
+  // Use only the counties and districts that are available in the dropdown
+  const counties = ['台北市', '新北市']
+  const districts = {
+    '台北市': ['大安區', '信義區'],
+    '新北市': ['大安區', '信義區'] // Using same districts to match available options
+  }
+  const sections = ['大安段', '信義段']
+
+  const randomCounty = counties[Math.floor(Math.random() * counties.length)]
+  const randomDistrict = districts[randomCounty][Math.floor(Math.random() * districts[randomCounty].length)]
+  const randomSection = sections[Math.floor(Math.random() * sections.length)]
+
+  buildingForm.county = randomCounty
+  buildingForm.district = randomDistrict
+  buildingForm.section = randomSection
+  buildingForm.building_number_main = String(Math.floor(Math.random() * 9999) + 1).padStart(5, '0')
+  buildingForm.building_number_sub = String(Math.floor(Math.random() * 999)).padStart(3, '0')
+  buildingForm.building_area = (Math.random() * 200 + 50).toFixed(2)
+  buildingForm.ownership_numerator = Math.floor(Math.random() * 10) + 1
+  buildingForm.ownership_denominator = Math.floor(Math.random() * 100) + 10
+  buildingForm.building_address = `${randomCounty}${randomDistrict}測試路${Math.floor(Math.random() * 999) + 1}號`
+
+  alert.success('測試建號已填入', '建號表單已自動填入測試資料')
 }
 
 // Go back

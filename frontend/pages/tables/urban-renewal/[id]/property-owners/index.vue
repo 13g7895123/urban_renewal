@@ -224,28 +224,206 @@ const goBack = () => {
   router.push('/tables/urban-renewal')
 }
 
-const exportOwners = () => {
-  console.log('Exporting property owners')
-  // TODO: Implement export functionality
-  $swal.fire({
-    title: '功能開發中',
-    text: '匯出功能正在開發中',
-    icon: 'info',
-    confirmButtonText: '確定',
-    confirmButtonColor: '#6b7280'
-  })
+const exportOwners = async () => {
+  try {
+    const isDev = process.dev || process.env.NODE_ENV === 'development'
+    const baseURL = isDev ? 'http://localhost:9228' : (runtimeConfig.public.apiBaseUrl || '')
+    const exportUrl = `${baseURL}/api/urban-renewals/${urbanRenewalId.value}/property-owners/export`
+
+    console.log('[Export] Downloading from:', exportUrl)
+
+    // Open in new window to trigger download
+    window.open(exportUrl, '_blank')
+
+    $swal.fire({
+      title: '匯出成功！',
+      text: 'Excel檔案下載中...',
+      icon: 'success',
+      timer: 2000,
+      timerProgressBar: true,
+      showConfirmButton: false
+    })
+  } catch (err) {
+    console.error('[Export] Error:', err)
+    $swal.fire({
+      title: '匯出失敗',
+      text: err.message || '匯出失敗，請稍後再試',
+      icon: 'error',
+      confirmButtonText: '確定',
+      confirmButtonColor: '#ef4444'
+    })
+  }
 }
 
-const importOwners = () => {
-  console.log('Importing property owners')
-  // TODO: Implement import functionality
-  $swal.fire({
-    title: '功能開發中',
-    text: '匯入功能正在開發中',
-    icon: 'info',
-    confirmButtonText: '確定',
-    confirmButtonColor: '#6b7280'
+const downloadTemplate = () => {
+  const isDev = process.dev || process.env.NODE_ENV === 'development'
+  const baseURL = isDev ? 'http://localhost:9228' : (runtimeConfig.public.apiBaseUrl || '')
+  const templateUrl = `${baseURL}/api/property-owners/template`
+
+  console.log('[Template] Downloading from:', templateUrl)
+
+  // Open in new window to trigger download
+  window.open(templateUrl, '_blank')
+}
+
+const importOwners = async () => {
+  // Show modal with instructions and template download
+  const result = await $swal.fire({
+    title: '匯入所有權人',
+    html: `
+      <div class="text-left space-y-4">
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h3 class="font-semibold text-blue-900 mb-2">📋 匯入步驟：</h3>
+          <ol class="list-decimal list-inside space-y-2 text-sm text-blue-800">
+            <li>下載Excel範本檔案</li>
+            <li>依據欄位填入所有權人資料</li>
+            <li>點選「選擇檔案」上傳填好的Excel檔案</li>
+          </ol>
+        </div>
+
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <h3 class="font-semibold text-yellow-900 mb-2">⚠️ 注意事項：</h3>
+          <ul class="list-disc list-inside space-y-1 text-sm text-yellow-800">
+            <li>所有權人名稱為必填欄位</li>
+            <li>所有權人編號不可重複</li>
+            <li>身分證字號不可重複</li>
+            <li>範例資料（灰色底）會自動略過，不會被匯入</li>
+            <li>請從第3列開始填寫真實資料</li>
+          </ul>
+        </div>
+
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <h3 class="font-semibold text-gray-900 mb-2">📊 Excel欄位說明：</h3>
+          <div class="text-sm text-gray-700 space-y-1">
+            <p><strong>A欄：</strong>所有權人編號</p>
+            <p><strong>B欄：</strong>所有權人名稱（必填）</p>
+            <p><strong>C欄：</strong>身分證字號</p>
+            <p><strong>D-E欄：</strong>電話1、電話2</p>
+            <p><strong>F-G欄：</strong>聯絡地址、戶籍地址</p>
+            <p><strong>H欄：</strong>排除類型</p>
+            <p><strong>I欄：</strong>備註</p>
+          </div>
+        </div>
+      </div>
+    `,
+    showCancelButton: true,
+    showDenyButton: true,
+    confirmButtonText: '選擇檔案匯入',
+    denyButtonText: '下載範本',
+    cancelButtonText: '取消',
+    confirmButtonColor: '#10b981',
+    denyButtonColor: '#3b82f6',
+    cancelButtonColor: '#6b7280',
+    width: '600px',
+    customClass: {
+      htmlContainer: 'text-left'
+    }
   })
+
+  if (result.isDenied) {
+    // Download template
+    downloadTemplate()
+    // Show the modal again
+    setTimeout(() => importOwners(), 500)
+    return
+  }
+
+  if (!result.isConfirmed) {
+    return
+  }
+
+  // Create file input element
+  const fileInput = document.createElement('input')
+  fileInput.type = 'file'
+  fileInput.accept = '.xlsx,.xls'
+
+  fileInput.onchange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    // Validate file type
+    const extension = file.name.split('.').pop().toLowerCase()
+    if (!['xlsx', 'xls'].includes(extension)) {
+      $swal.fire({
+        title: '檔案格式錯誤',
+        text: '僅支援 .xlsx 或 .xls 格式的檔案',
+        icon: 'error',
+        confirmButtonText: '確定',
+        confirmButtonColor: '#ef4444'
+      })
+      return
+    }
+
+    try {
+      // Show loading
+      $swal.fire({
+        title: '匯入中...',
+        text: '正在驗證並匯入資料，請稍候...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          $swal.showLoading()
+        }
+      })
+
+      const isDev = process.dev || process.env.NODE_ENV === 'development'
+      const baseURL = isDev ? 'http://localhost:9228' : (runtimeConfig.public.apiBaseUrl || '')
+
+      // Create form data
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await $fetch(`/api/urban-renewals/${urbanRenewalId.value}/property-owners/import`, {
+        method: 'POST',
+        baseURL,
+        body: formData
+      })
+
+      console.log('[Import] Response:', response)
+
+      if (response.status === 'success') {
+        let message = response.message || '匯入完成'
+
+        // Show errors if any
+        if (response.data?.errors && response.data.errors.length > 0) {
+          message += '<br><br><div class="text-left"><strong>錯誤訊息：</strong><br><ul class="list-disc list-inside mt-2">'
+          response.data.errors.slice(0, 10).forEach(error => {
+            message += `<li class="text-sm text-red-600">${error}</li>`
+          })
+          message += '</ul>'
+          if (response.data.errors.length > 10) {
+            message += `<p class="text-sm text-gray-600 mt-2">...以及其他 ${response.data.errors.length - 10} 個錯誤</p>`
+          }
+          message += '</div>'
+        }
+
+        await $swal.fire({
+          title: '匯入完成！',
+          html: message,
+          icon: response.data?.error_count > 0 ? 'warning' : 'success',
+          confirmButtonText: '確定',
+          confirmButtonColor: '#10b981',
+          width: '600px'
+        })
+
+        // Refresh the list
+        await fetchPropertyOwners()
+      } else {
+        throw new Error(response.message || '匯入失敗')
+      }
+    } catch (err) {
+      console.error('[Import] Error:', err)
+      $swal.fire({
+        title: '匯入失敗',
+        text: err.data?.message || err.message || '匯入失敗，請稍後再試',
+        icon: 'error',
+        confirmButtonText: '確定',
+        confirmButtonColor: '#ef4444'
+      })
+    }
+  }
+
+  // Trigger file picker
+  fileInput.click()
 }
 
 const createOwner = () => {

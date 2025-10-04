@@ -548,10 +548,10 @@ const fetchRenewalData = async () => {
   try {
     const response = await get(`/urban-renewals/${route.params.id}`)
 
-    if (response.status === 'success') {
-      Object.assign(renewalData, response.data)
+    if (response.success && response.data.status === 'success') {
+      Object.assign(renewalData, response.data.data)
     } else {
-      throw new Error(response.message || '獲取資料失敗')
+      throw new Error(response.error?.message || response.data?.message || '獲取資料失敗')
     }
   } catch (err) {
     console.error('Fetch error:', err)
@@ -572,10 +572,10 @@ const fetchLandPlots = async () => {
   try {
     const response = await get(`/urban-renewals/${route.params.id}/land-plots`)
 
-    if (response.status === 'success') {
+    if (response.success && response.data.status === 'success') {
       // 將地號轉換為中文格式
       const plotsWithChineseNames = await Promise.all(
-        response.data.map(async (plot) => {
+        response.data.data.map(async (plot) => {
           const chineseFullLandNumber = await getChineseLandNumber(plot)
           return {
             ...plot,
@@ -753,23 +753,17 @@ const saveChanges = async () => {
   try {
     // 1. 先儲存基本資料
     const response = await put(`/urban-renewals/${route.params.id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: {
-        name: renewalData.name,
-        area: parseFloat(renewalData.area),
-        member_count: parseInt(renewalData.member_count),
-        chairman_name: renewalData.chairman_name,
-        chairman_phone: renewalData.chairman_phone,
-        address: renewalData.address,
-        representative: renewalData.representative
-      }
+      name: renewalData.name,
+      area: parseFloat(renewalData.area),
+      member_count: parseInt(renewalData.member_count),
+      chairman_name: renewalData.chairman_name,
+      chairman_phone: renewalData.chairman_phone,
+      address: renewalData.address,
+      representative: renewalData.representative
     })
 
-    if (response.status !== 'success') {
-      throw new Error(response.message || '基本資料儲存失敗')
+    if (!response.success || response.data.status !== 'success') {
+      throw new Error(response.error?.message || response.data?.message || '基本資料儲存失敗')
     }
 
     // 2. 處理地號刪除
@@ -790,22 +784,16 @@ const saveChanges = async () => {
     for (const newPlot of newPlots) {
       try {
         const plotResponse = await post(`/urban-renewals/${route.params.id}/land-plots`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: {
-            county: newPlot.county,
-            district: newPlot.district,
-            section: newPlot.section,
-            landNumberMain: newPlot.landNumberMain,
-            landNumberSub: newPlot.landNumberSub,
-            landArea: parseFloat(newPlot.landArea) || null,
-            isRepresentative: newPlot.isRepresentative ? 1 : 0
-          }
+          county: newPlot.county,
+          district: newPlot.district,
+          section: newPlot.section,
+          landNumberMain: newPlot.landNumberMain,
+          landNumberSub: newPlot.landNumberSub,
+          landArea: parseFloat(newPlot.landArea) || null,
+          isRepresentative: newPlot.isRepresentative ? 1 : 0
         })
 
-        if (plotResponse.status !== 'success') {
+        if (!plotResponse.success || plotResponse.data.status !== 'success') {
           landPlotErrors.push(`地號 ${newPlot.fullLandNumber} 新增失敗`)
         }
       } catch (err) {
@@ -835,14 +823,8 @@ const saveChanges = async () => {
       )) {
         try {
           await put(`/land-plots/${plot.id}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: {
-              landArea: parseFloat(plot.landArea) || null,
-              isRepresentative: plot.isRepresentative ? 1 : 0
-            }
+            landArea: parseFloat(plot.landArea) || null,
+            isRepresentative: plot.isRepresentative ? 1 : 0
           })
         } catch (err) {
           console.error('Update land plot error:', err)
@@ -918,24 +900,21 @@ const fillBasicInfoTestData = () => {
 }
 
 // Fill land plot test data
-const fillLandPlotTestData = () => {
+const fillLandPlotTestData = async () => {
   // Set to Taipei City and 大安區
   landForm.county = '臺北市'
-  onCountyChange() // Trigger district update
+  await onCountyChange() // Wait for districts to load
 
-  // Wait for districts to load, then set
-  nextTick(() => {
-    if (districts.value.length > 0) {
-      landForm.district = '大安區'
-      onDistrictChange() // Trigger section update
+  // Set district after county data is loaded
+  if (districts.value.length > 0) {
+    landForm.district = '大安區'
+    await onDistrictChange() // Wait for sections to load
 
-      nextTick(() => {
-        if (sections.value.length > 0) {
-          landForm.section = sections.value[0]?.name || '大安段'
-        }
-      })
+    // Set section after district data is loaded
+    if (sections.value.length > 0) {
+      landForm.section = sections.value[0]?.name || '大安段'
     }
-  })
+  }
 
   // Generate random land plot numbers
   landForm.landNumberMain = String(Math.floor(Math.random() * 999) + 1).padStart(4, '0')

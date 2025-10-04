@@ -23,9 +23,7 @@ class PropertyOwnerModel extends Model
         'contact_address',
         'household_address',
         'exclusion_type',
-        'notes',
-        'total_land_area',
-        'total_building_area'
+        'notes'
     ];
 
     protected $useTimestamps = true;

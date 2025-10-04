@@ -278,9 +278,10 @@ definePageMeta({
   layout: false
 })
 
-// Use SweetAlert2
-const { $swal } = useNuxtApp()
+// Use composables
 const { get, post, delete: del } = useApi()
+const alert = useAlert()
+const { $swal } = useNuxtApp()
 
 const pageSize = ref(10)
 const showCreateModal = ref(false)
@@ -439,21 +440,15 @@ const onSubmit = async () => {
   try {
     const response = await createUrbanRenewal(formData)
 
-    if (response.status === 'success') {
+    if (response.success && response.data.status === 'success') {
       // Refresh the list to get updated data
       await fetchRenewals()
       closeModal()
 
-      // Show success message with SweetAlert2
-      $swal.fire({
-        title: '新增成功！',
-        text: '更新會已成功建立',
-        icon: 'success',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#10b981'
-      })
+      // Show success message
+      alert.success('新增成功！', '更新會已成功建立')
     } else {
-      error.value = response.message || '新增失敗'
+      error.value = response.data?.message || response.error?.message || '新增失敗'
     }
   } catch (err) {
     error.value = err.message || '新增失敗，請稍後再試'
@@ -476,16 +471,13 @@ const viewJointInfo = (renewal) => {
 }
 
 const deleteRenewal = async (renewal) => {
-  const result = await $swal.fire({
-    title: '確認刪除',
-    text: `確定要刪除「${renewal.name}」嗎？`,
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#ef4444',
-    cancelButtonColor: '#6b7280',
-    confirmButtonText: '確定刪除',
-    cancelButtonText: '取消'
-  })
+  const result = await alert.confirm(
+    '確認刪除',
+    `確定要刪除「${renewal.name}」嗎？`,
+    {
+      confirmButtonText: '確定刪除'
+    }
+  )
 
   if (!result.isConfirmed) {
     return
@@ -494,33 +486,15 @@ const deleteRenewal = async (renewal) => {
   try {
     const response = await deleteUrbanRenewal(renewal.id)
 
-    if (response.status === 'success') {
+    if (response.success && response.data.status === 'success') {
       // Refresh the list
       await fetchRenewals()
-      $swal.fire({
-        title: '刪除成功！',
-        text: '更新會已成功刪除',
-        icon: 'success',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#10b981'
-      })
+      alert.success('刪除成功！', '更新會已成功刪除')
     } else {
-      $swal.fire({
-        title: '刪除失敗',
-        text: response.message || '刪除失敗',
-        icon: 'error',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#ef4444'
-      })
+      alert.error('刪除失敗', response.data?.message || response.error?.message || '刪除失敗')
     }
   } catch (err) {
-    $swal.fire({
-      title: '刪除失敗',
-      text: err.message || '刪除失敗，請稍後再試',
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    alert.error('刪除失敗', err.message || '刪除失敗，請稍後再試')
   }
 }
 

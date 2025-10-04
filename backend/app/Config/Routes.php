@@ -56,7 +56,9 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         $routes->get('(:num)/land-plots', 'LandPlotController::index/$1');        // GET /api/urban-renewals/{id}/land-plots
         $routes->post('(:num)/land-plots', 'LandPlotController::create/$1');      // POST /api/urban-renewals/{id}/land-plots
 
-        // Property Owners nested routes
+        // Property Owners nested routes (specific routes must come before general routes)
+        $routes->get('(:num)/property-owners/export', 'PropertyOwnerController::export/$1'); // GET /api/urban-renewals/{id}/property-owners/export
+        $routes->post('(:num)/property-owners/import', 'PropertyOwnerController::import/$1'); // POST /api/urban-renewals/{id}/property-owners/import
         $routes->get('(:num)/property-owners', 'PropertyOwnerController::getByUrbanRenewal/$1'); // GET /api/urban-renewals/{id}/property-owners
 
         // Handle OPTIONS for specific routes
@@ -64,6 +66,8 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         $routes->options('(:num)', 'UrbanRenewalController::options');
         $routes->options('(:num)/land-plots', 'LandPlotController::options');
         $routes->options('(:num)/property-owners', 'PropertyOwnerController::options');
+        $routes->options('(:num)/property-owners/export', 'PropertyOwnerController::options');
+        $routes->options('(:num)/property-owners/import', 'PropertyOwnerController::options');
     });
 
     // Meetings API
@@ -199,6 +203,7 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
 
     // Property Owners API (individual operations)
     $routes->group('property-owners', function ($routes) {
+        $routes->get('template', 'PropertyOwnerController::downloadTemplate');   // GET /api/property-owners/template
         $routes->get('/', 'PropertyOwnerController::index');                     // GET /api/property-owners
         $routes->get('(:num)', 'PropertyOwnerController::show/$1');              // GET /api/property-owners/{id}
         $routes->post('/', 'PropertyOwnerController::create');                   // POST /api/property-owners
@@ -206,6 +211,7 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         $routes->delete('(:num)', 'PropertyOwnerController::delete/$1');         // DELETE /api/property-owners/{id}
 
         // Handle OPTIONS for specific routes
+        $routes->options('template', 'PropertyOwnerController::options');
         $routes->options('/', 'PropertyOwnerController::options');
         $routes->options('(:num)', 'PropertyOwnerController::options');
     });

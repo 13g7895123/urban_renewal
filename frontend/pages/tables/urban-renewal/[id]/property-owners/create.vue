@@ -677,7 +677,7 @@ const getChineseLandNumber = async (plot) => {
 // 獲取縣市資料
 const fetchCounties = async () => {
   try {
-    const response = await $fetch('/locations/counties', {
+    const response = await $fetch('/api/locations/counties', {
       baseURL: apiBaseUrl
     })
     if (response.status === 'success') {
@@ -848,7 +848,7 @@ const onSubmit = async () => {
 
   try {
 
-    const response = await $fetch('/property-owners', {
+    const response = await $fetch('/api/property-owners', {
       method: 'POST',
       baseURL: apiBaseUrl,
       headers: {
