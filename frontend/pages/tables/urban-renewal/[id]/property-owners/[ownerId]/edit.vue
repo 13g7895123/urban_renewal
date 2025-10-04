@@ -392,24 +392,29 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">縣市</label>
                     <select
                       v-model="buildingForm.county"
+                      @change="onBuildingCountyChange"
                       required
                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     >
                       <option value="">請選擇縣市</option>
-                      <option value="台北市">台北市</option>
-                      <option value="新北市">新北市</option>
+                      <option v-for="county in counties" :key="county.id" :value="county.code">
+                        {{ county.name }}
+                      </option>
                     </select>
                   </div>
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">行政區</label>
                     <select
                       v-model="buildingForm.district"
+                      @change="onBuildingDistrictChange"
                       required
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      :disabled="!buildingForm.county"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     >
                       <option value="">請選擇行政區</option>
-                      <option value="大安區">大安區</option>
-                      <option value="信義區">信義區</option>
+                      <option v-for="district in buildingDistricts" :key="district.id" :value="district.code">
+                        {{ district.name }}
+                      </option>
                     </select>
                   </div>
                   <div>
@@ -417,11 +422,13 @@
                     <select
                       v-model="buildingForm.section"
                       required
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      :disabled="!buildingForm.district"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     >
                       <option value="">請選擇段小段</option>
-                      <option value="大安段">大安段</option>
-                      <option value="信義段">信義段</option>
+                      <option v-for="section in buildingSections" :key="section.id" :value="section.code">
+                        {{ section.name }}
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -528,6 +535,13 @@ const route = useRoute()
 const router = useRouter()
 const runtimeConfig = useRuntimeConfig()
 
+// Get API base URL for development vs production
+const getApiBaseUrl = () => {
+  const isDev = process.dev || process.env.NODE_ENV === 'development'
+  return isDev ? 'http://localhost:9228' : (runtimeConfig.public.apiBaseUrl || '')
+}
+const apiBaseUrl = getApiBaseUrl()
+
 // Get IDs from route (reactive)
 const urbanRenewalId = computed(() => route.params.id)
 const ownerId = computed(() => route.params.ownerId)
@@ -538,6 +552,11 @@ const urbanRenewalName = ref('')
 const showAddLandModal = ref(false)
 const showAddBuildingModal = ref(false)
 const availablePlots = ref([])
+
+// Location data
+const counties = ref([])
+const buildingDistricts = ref([])
+const buildingSections = ref([])
 
 // Form data
 const formData = reactive({
@@ -615,10 +634,25 @@ const fetchPropertyOwner = async () => {
   }
 }
 
+// Fetch counties
+const fetchCounties = async () => {
+  try {
+    const response = await $fetch('/api/locations/counties', {
+      baseURL: apiBaseUrl
+    })
+    if (response.status === 'success') {
+      counties.value = response.data
+    }
+  } catch (err) {
+    console.error('Failed to fetch counties:', err)
+  }
+}
+
 // Fetch urban renewal info
 const fetchUrbanRenewalInfo = async () => {
   try {
-    const response = await $fetch(`http://localhost:9228/api/urban-renewals/${urbanRenewalId.value}`, {
+    const response = await $fetch(`/api/urban-renewals/${urbanRenewalId.value}`, {
+      baseURL: apiBaseUrl
     })
 
     if (response.status === 'success') {
@@ -632,7 +666,8 @@ const fetchUrbanRenewalInfo = async () => {
 // Fetch available land plots
 const fetchAvailablePlots = async () => {
   try {
-    const response = await $fetch(`http://localhost:9228/api/urban-renewals/${urbanRenewalId.value}/land-plots`, {
+    const response = await $fetch(`/api/urban-renewals/${urbanRenewalId.value}/land-plots`, {
+      baseURL: apiBaseUrl
     })
 
     if (response.status === 'success') {
@@ -661,13 +696,64 @@ const addLand = () => {
   showAddLandModal.value = false
 }
 
-// Add building to form (same logic as create page)
+// Handle building county change
+const onBuildingCountyChange = async () => {
+  // Reset district and section when county changes
+  buildingForm.district = ''
+  buildingForm.section = ''
+  buildingDistricts.value = []
+  buildingSections.value = []
+
+  if (!buildingForm.county) return
+
+  try {
+    const response = await $fetch(`/api/locations/districts/${buildingForm.county}`, {
+      baseURL: apiBaseUrl
+    })
+    if (response.status === 'success') {
+      buildingDistricts.value = response.data
+    }
+  } catch (error) {
+    console.error('Error fetching districts:', error)
+  }
+}
+
+// Handle building district change
+const onBuildingDistrictChange = async () => {
+  // Reset section when district changes
+  buildingForm.section = ''
+  buildingSections.value = []
+
+  if (!buildingForm.district) return
+
+  try {
+    const response = await $fetch(`/api/locations/sections/${buildingForm.county}/${buildingForm.district}`, {
+      baseURL: apiBaseUrl
+    })
+    if (response.status === 'success') {
+      buildingSections.value = response.data
+    }
+  } catch (error) {
+    console.error('Error fetching sections:', error)
+  }
+}
+
+// Add building to form
 const addBuilding = () => {
+  // Get the Chinese names for display
+  const countyObj = counties.value.find(c => c.code === buildingForm.county)
+  const districtObj = buildingDistricts.value.find(d => d.code === buildingForm.district)
+  const sectionObj = buildingSections.value.find(s => s.code === buildingForm.section)
+
+  const countyName = countyObj ? countyObj.name : buildingForm.county
+  const districtName = districtObj ? districtObj.name : buildingForm.district
+  const sectionName = sectionObj ? sectionObj.name : buildingForm.section
+
   formData.buildings.push({
     county: buildingForm.county,
     district: buildingForm.district,
     section: buildingForm.section,
-    location: `${buildingForm.county}/${buildingForm.district}/${buildingForm.section}`,
+    location: `${countyName}/${districtName}/${sectionName}`,
     building_number_main: buildingForm.building_number_main,
     building_number_sub: buildingForm.building_number_sub,
     building_area: buildingForm.building_area,
@@ -686,6 +772,10 @@ const addBuilding = () => {
   buildingForm.ownership_numerator = ''
   buildingForm.ownership_denominator = ''
   buildingForm.building_address = ''
+
+  // Reset cascading dropdowns
+  buildingDistricts.value = []
+  buildingSections.value = []
 
   showAddBuildingModal.value = false
 }
@@ -850,7 +940,8 @@ onMounted(async () => {
   await Promise.all([
     fetchPropertyOwner(),
     fetchUrbanRenewalInfo(),
-    fetchAvailablePlots()
+    fetchAvailablePlots(),
+    fetchCounties()
   ])
 })
 </script>
