@@ -38,7 +38,12 @@ RUN composer install --no-interaction --no-dev --optimize-autoloader
 RUN mkdir -p /var/www/html/writable && \
     chmod -R 777 /var/www/html/writable
 
+# Copy and set permissions for entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 EXPOSE 8000
 
-# Start CodeIgniter development server
+# Use entrypoint to run migrations and seeds before starting server
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["php", "spark", "serve", "--host", "0.0.0.0", "--port", "8000"]
