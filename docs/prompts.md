@@ -1,5 +1,1 @@
-1. /tables/urban-renewal/4/property-owners/2/edit幫我加入一顆填入測試資料的按鈕，下方的新增地號與新增建號也要，新增地號的下拉沒有正確顯示text
-2. 幫我建立production的docker-compose與.env，並寫三支sh讓我可以啟用production，包含啟用、停用、建立+啟用
-3. 幫我確認一下，為甚麼建置的時候沒有執行migration，並且縣市、行政區、段小段也沒有資料，請確認是否需要執行seed或是相關功能
-4. 確認一下，/tables/urban-renewal/1/property-owners/create這個頁面的顯示、行政區、段小段的資料是從哪裡來的，請用zh-tw回答
-5. /tables/urban-renewal/4/property-owners/2/edit這一頁的「新增建號」模態框的縣市、行政區、段小段下拉選單，請幫我改為從資料庫為資料源
+1. 幫我完整個看過專案，寫一支local開發的sh給我，要執行local端的npm run dev，並且port請幫我指定一個不常用的port，然後確認local開發的後端有加入cors的功能，為甚麼我看她顯示的是3001 PORT，幫我檢查一下，且不可與正式環境衝突， Unable to find an available port (tried 7357 on host "0.0.0.0"). Using alternative port 3001.，幫我執行前檢查，如果被占用請移除他，We recommend adding compatibilityDate: '2025-10-06' to your nuxt.config file. Using 2024-04-03 as fallback. More info at: https://nitro.build/deploy#compatibility-date，幫我同步消除這個警告，然後再深度解析一次整個專案，我現在啟用還是啟用3001 PORT，我目前執行了./start-local-npm.sh，還是一樣顯示3001 PORT，有確認過前端的package.json或是另一支lock檔案了嗎

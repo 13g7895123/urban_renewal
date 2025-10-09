@@ -16,8 +16,8 @@ export const useApi = () => {
     const isDev = process.dev || process.env.NODE_ENV === 'development'
     if (isDev) {
       // In development without Docker, connect directly to backend with /api prefix
-      console.log('[API] Using development direct connection: http://localhost:9228/api')
-      return 'http://localhost:9228/api'
+      console.log('[API] Using development direct connection: http://localhost:4002/api')
+      return 'http://localhost:4002/api'
     }
 
     // In production, try to use backend URL with /api path
