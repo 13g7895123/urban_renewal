@@ -35,9 +35,10 @@ class Cors extends BaseConfig
          *   - ['https://www.example.com']
          */
         'allowedOrigins' => [
-            'http://localhost:3303',  // Frontend Nuxt development server
+            'http://localhost:4357',  // Local npm dev server (start-local-npm.sh)
             'http://localhost:9128',  // Frontend Docker container
-            'http://localhost:3000'   // Alternative frontend port
+            'http://localhost:3000',  // Alternative frontend port
+            'http://localhost:3001'   // Production environment port
         ],
 
         /**
