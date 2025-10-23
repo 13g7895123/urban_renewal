@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Urban Renewal Development Environment Startup Script
+# Urban Renewal Backend Services Startup Script
 # This script starts only the backend services (backend, database, phpmyadmin)
-# Run the frontend separately using start-frontend.sh for faster development
+# Run the frontend separately using start-frontend.sh
 
 echo "🚀 Starting Urban Renewal Backend Services..."
 echo ""

@@ -4,15 +4,15 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "${FRONTEND_PORT:-7357}:${FRONTEND_PORT:-7357}"
+      - "${FRONTEND_PORT:-7357}:3000"
     environment:
       - NODE_ENV=development
       - HOST=0.0.0.0
-      - FRONTEND_PORT=${FRONTEND_PORT:-7357}
-      - NUXT_PUBLIC_API_BASE_URL=http://backend:8000/api
+      - PORT=3000
+      - NUXT_PUBLIC_API_BASE_URL=http://backend:8000
       - NUXT_PUBLIC_BACKEND_URL=http://backend:8000
       - NUXT_PUBLIC_BACKEND_HOST=backend
-      - NUXT_PUBLIC_BACKEND_PORT=8000
+      - NUXT_PUBLIC_BACKEND_PORT=${BACKEND_PORT:-9228}
     depends_on:
       - backend
     restart: unless-stopped
@@ -31,7 +31,7 @@ services:
     environment:
       - CI_ENVIRONMENT=development
       - APP_BASE_URL=${BACKEND_URL:-http://localhost:9228}
-      - DB_HOST=${DB_HOST:-mariadb_dev}
+      - DB_HOST=${DB_HOST:-mariadb}
       - DB_DATABASE=${DB_DATABASE:-urban_renewal_dev}
       - DB_USERNAME=${DB_USERNAME:-root}
       - DB_PASSWORD=${DB_PASSWORD:-local_dev_pass}
@@ -45,6 +45,7 @@ services:
 
   mariadb_dev:
     image: mariadb:11.4
+    container_name: mariadb
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-local_dev_pass}
       - MYSQL_DATABASE=${DB_DATABASE:-urban_renewal_dev}
@@ -53,7 +54,7 @@ services:
     volumes:
       - mariadb_dev_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-local_dev_pass}", "--silent"]
       timeout: 10s
       retries: 5
       interval: 10s
@@ -65,7 +66,7 @@ services:
   phpmyadmin_dev:
     image: phpmyadmin:5.2
     environment:
-      - PMA_HOST=mariadb_dev
+      - PMA_HOST=mariadb
       - PMA_PORT=3306
       - PMA_USER=${DB_USERNAME:-root}
       - PMA_PASSWORD=${DB_PASSWORD:-local_dev_pass}

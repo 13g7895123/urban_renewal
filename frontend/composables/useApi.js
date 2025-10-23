@@ -6,28 +6,49 @@ export const useApi = () => {
   
   // Get base URL from environment - handle development vs production
   const getBaseURL = () => {
-    // Check if environment variable is set (for Docker or configured dev environment)
-    if (config.public.apiBaseUrl) {
-      console.log('[API] Using configured API URL:', config.public.apiBaseUrl)
-      return config.public.apiBaseUrl
+    // Check if we're running on client-side (browser) or server-side (SSR)
+    const isClient = process.client
+
+    // On client side, we need to use the host-accessible URL (localhost or actual domain)
+    if (isClient) {
+      // Check if browser-specific URL is configured
+      if (typeof window !== 'undefined') {
+        // For local development in browser, use localhost with backend port
+        const isDev = config.public.backendHost === 'backend' || config.public.backendHost === 'localhost'
+        console.log('test');
+        if (isDev) {
+          const clientUrl = `http://localhost:${config.public.backendPort || 9228}/api`
+          console.log('[API] Client-side using localhost URL:', clientUrl)
+          return clientUrl
+        }
+      }
+
+      // For production or configured public URL
+      if (config.public.apiBaseUrl && !config.public.apiBaseUrl.includes('backend:')) {
+        const baseUrl = config.public.apiBaseUrl
+        const apiUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`
+        console.log('[API] Client-side using configured URL:', apiUrl)
+        return apiUrl
+      }
     }
 
-    // Check if we're in development mode and use local backend URL
+    // Server-side rendering: use internal Docker network URL
+    if (config.public.apiBaseUrl) {
+      const baseUrl = config.public.apiBaseUrl
+      const apiUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`
+      console.log('[API] Server-side using internal URL:', apiUrl)
+      return apiUrl
+    }
+
+    // Fallback for development
     const isDev = process.dev || process.env.NODE_ENV === 'development'
     if (isDev) {
-      // In development without Docker, connect directly to backend with /api prefix
-      console.log('[API] Using development direct connection: http://localhost:9228/api')
-      return 'http://localhost:9228/api'
+      const fallbackUrl = isClient ? 'http://localhost:9228/api' : 'http://backend:8000/api'
+      console.log('[API] Using fallback URL:', fallbackUrl)
+      return fallbackUrl
     }
 
-    // In production, try to use backend URL with /api path
-    if (config.public.backendUrl) {
-      const fullApiUrl = `${config.public.backendUrl}/api`
-      console.log('[API] Using backend URL with /api:', fullApiUrl)
-      return fullApiUrl
-    }
-
-    // Fallback - this should not happen
+    // Final fallback
     console.error('[API] No API base URL configured! Check environment variables.')
     throw new Error('API base URL not configured. Please set NUXT_PUBLIC_API_BASE_URL environment variable.')
   }
