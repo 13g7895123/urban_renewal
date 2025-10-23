@@ -101,12 +101,22 @@ const handleLogin = async () => {
       const toast = useToast()
       toast.add({
         title: '登入成功',
-        description: `歡迎回來，${response.data.user?.name || '用戶'}！`,
+        description: `歡迎回來，${response.data.user?.full_name || response.data.user?.username || '用戶'}！`,
         color: 'green'
       })
 
-      // Redirect to dashboard
-      await navigateTo('/tables/urban-renewal')
+      // Redirect based on user role
+      const userRole = response.data.user?.role
+      if (userRole === 'admin') {
+        // Admin goes to urban renewal management
+        await navigateTo('/tables/urban-renewal')
+      } else if (userRole === 'chairman' || userRole === 'member') {
+        // Chairman and members go to their assigned urban renewal or meeting list
+        await navigateTo('/tables/meeting')
+      } else {
+        // Default to home page
+        await navigateTo('/')
+      }
     } else {
       // Show error message
       const toast = useToast()

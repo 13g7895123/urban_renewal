@@ -443,11 +443,11 @@ components:
           type: string
           enum:
             - admin
-            - manager
-            - user
-            - viewer
+            - chairman
+            - member
+            - observer
           example: "admin"
-          description: 使用者角色
+          description: 使用者角色（admin:管理員, chairman:理事長, member:會員, observer:觀察員）
         urban_renewal_id:
           type: integer
           format: int64
