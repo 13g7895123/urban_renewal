@@ -24,14 +24,7 @@
       "Bash(docker inspect:*)",
       "Bash(docker run:*)",
       "Bash(docker volume rm:*)",
-      "Bash(chmod:*)",
-      "Bash(./stop-dev.sh:*)",
-      "Bash(docker ps:*)",
-      "Bash(lsof:*)",
-      "Bash(tee:*)",
-      "Bash(docker port:*)",
-      "Bash(cat:*)",
-      "Bash(./test-connection.sh:*)"
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "ask": []

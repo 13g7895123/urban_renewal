@@ -86,25 +86,20 @@ export const useAuth = () => {
   return {
     // Core authentication
     login,
-    register,
     logout,
-    logoutAll,
     getCurrentUser,
     checkAuth,
     validateToken,
-    
+
     // Profile management
     updateProfile,
     changePassword,
-    
+
     // Token management
     refreshToken,
-    
-    // Password reset (optional - depends on backend implementation)
+
+    // Password reset
     requestPasswordReset,
-    resetPassword,
-    
-    // Email verification (optional - depends on backend implementation)
-    verifyEmail
+    resetPassword
   }
 }

@@ -1,9 +1,10 @@
 export default defineNuxtConfig({
+  compatibilityDate: '2025-10-06',
   devtools: { enabled: false },
   // Development server configuration
   devServer: {
-    port: parseInt(process.env.FRONTEND_PORT || '7357'),
-    host: '0.0.0.0'
+    port: parseInt(process.env.FRONTEND_PORT || '4001'),
+    host: 'localhost'
   },
   ssr: true,
   modules: [
