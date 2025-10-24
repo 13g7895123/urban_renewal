@@ -82,7 +82,7 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error(response.error?.message || '登入失敗')
       }
       
-      const { user: userData, token: userToken, refresh_token, expires_in } = response.data.data
+      const { user: userData, token: userToken, refresh_token, expires_in } = response.data
 
       // 設定用戶資料和token
       user.value = userData
@@ -154,7 +154,7 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error('Failed to fetch user data')
       }
       
-      const userData = response.data.data.user
+      const userData = response.data
       user.value = userData
       
       // 更新 localStorage 中的用戶資料
@@ -214,7 +214,7 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error(response.error?.message || '更新失敗')
       }
       
-      const updatedUser = response.data.data.user
+      const updatedUser = response.data
       user.value = updatedUser
       
       // 更新 localStorage
@@ -262,7 +262,7 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error('Token refresh failed')
       }
 
-      const { token: newToken, refresh_token: newRefreshToken, expires_in } = response.data.data
+      const { token: newToken, refresh_token: newRefreshToken, expires_in } = response.data
       token.value = newToken
       refreshToken.value = newRefreshToken
 

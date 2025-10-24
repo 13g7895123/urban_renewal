@@ -7,7 +7,8 @@ let refreshPromise = null
 
 export const useApi = () => {
   const config = useRuntimeConfig()
-  const authStore = process.client ? useAuthStore() : null
+  // Avoid circular dependency - don't use authStore in useApi
+  // const authStore = process.client ? useAuthStore() : null
 
   // Get base URL from environment - handle development vs production
   const getBaseURL = () => {
@@ -113,51 +114,74 @@ export const useApi = () => {
       console.error('[API] Full URL:', `${baseURL}${endpoint}`)
       console.error('[API] Options:', defaultOptions)
       
-      // Handle 401 authentication errors with token refresh retry
-      if ((error.status === 401 || error.statusCode === 401) && process.client && authStore) {
+      // Handle 401 authentication errors
+      if ((error.status === 401 || error.statusCode === 401) && process.client) {
         // Skip retry for auth endpoints to avoid infinite loops
         const isAuthEndpoint = endpoint.includes('/auth/login') ||
                                endpoint.includes('/auth/refresh') ||
                                endpoint.includes('/auth/logout')
 
-        if (!isAuthEndpoint && authStore.refreshToken) {
-          console.log('[API] 401 error detected, attempting token refresh...')
+        if (!isAuthEndpoint) {
+          const refreshToken = localStorage.getItem('auth_refresh_token')
 
-          try {
-            // Wait for ongoing refresh or start new one
-            if (isRefreshing) {
-              console.log('[API] Token refresh already in progress, waiting...')
-              await refreshPromise
-            } else {
-              isRefreshing = true
-              refreshPromise = authStore.refreshAuthToken()
-                .finally(() => {
-                  isRefreshing = false
-                  refreshPromise = null
-                })
-              await refreshPromise
-            }
+          if (refreshToken) {
+            console.log('[API] 401 error detected, attempting token refresh...')
 
-            // Retry the original request with new token
-            console.log('[API] Token refreshed successfully, retrying original request...')
-            const retryOptions = {
-              ...defaultOptions,
-              headers: {
-                ...defaultOptions.headers,
-                ...getAuthHeaders() // Get updated token
+            try {
+              // Wait for ongoing refresh or start new one
+              if (isRefreshing) {
+                console.log('[API] Token refresh already in progress, waiting...')
+                await refreshPromise
+              } else {
+                isRefreshing = true
+                refreshPromise = (async () => {
+                  const response = await $fetch('/auth/refresh', {
+                    baseURL,
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Accept': 'application/json'
+                    },
+                    body: { refresh_token: refreshToken }
+                  })
+
+                  if (response?.data?.token) {
+                    localStorage.setItem('auth_token', response.data.token)
+                    localStorage.setItem('auth_refresh_token', response.data.refresh_token)
+                    const expiresAt = new Date(Date.now() + (response.data.expires_in * 1000))
+                    localStorage.setItem('auth_token_expires_at', expiresAt.toISOString())
+                  }
+
+                  return response
+                })()
+                  .finally(() => {
+                    isRefreshing = false
+                    refreshPromise = null
+                  })
+                await refreshPromise
               }
-            }
 
-            const retryResponse = await $fetch(endpoint, retryOptions)
-            console.log(`[API] Retry success: ${baseURL}${endpoint}`)
-            return {
-              success: true,
-              data: retryResponse,
-              error: null
+              // Retry the original request with new token
+              console.log('[API] Token refreshed successfully, retrying original request...')
+              const retryOptions = {
+                ...defaultOptions,
+                headers: {
+                  ...defaultOptions.headers,
+                  ...getAuthHeaders() // Get updated token
+                }
+              }
+
+              const retryResponse = await $fetch(endpoint, retryOptions)
+              console.log(`[API] Retry success: ${baseURL}${endpoint}`)
+              return {
+                success: true,
+                data: retryResponse,
+                error: null
+              }
+            } catch (refreshError) {
+              console.error('[API] Token refresh failed:', refreshError)
+              // Refresh failed, proceed with logout
             }
-          } catch (refreshError) {
-            console.error('[API] Token refresh failed:', refreshError)
-            // Refresh failed, proceed with logout
           }
         }
 
@@ -165,23 +189,19 @@ export const useApi = () => {
         console.warn('[API] Authentication error - clearing auth state')
 
         // Clear authentication data
-        if (authStore) {
-          await authStore.logout(true) // Skip API call during logout
-        } else {
-          localStorage.removeItem('auth_token')
-          localStorage.removeItem('auth_refresh_token')
-          localStorage.removeItem('auth_token_expires_at')
-          localStorage.removeItem('auth_user')
-        }
+        localStorage.removeItem('auth_token')
+        localStorage.removeItem('auth_refresh_token')
+        localStorage.removeItem('auth_token_expires_at')
+        localStorage.removeItem('auth_user')
 
         // Redirect to login page (only if not already on login page)
-        if (!window.location.pathname.includes('/auth/login')) {
+        if (!window.location.pathname.includes('/login')) {
           try {
-            await navigateTo('/auth/login')
+            await navigateTo('/login')
           } catch (navError) {
             // If Nuxt navigation fails, fall back to window.location
             console.warn('[API] Navigation failed, using window.location fallback:', navError)
-            window.location.href = '/auth/login'
+            window.location.href = '/login'
           }
         }
       }

@@ -30,6 +30,7 @@ export default defineNuxtConfig({
     }
   },
   plugins: [
+    '~/plugins/auth.client.js',
     '~/plugins/apexcharts.client.js',
     '~/plugins/force-light-mode.client.js',
     '~/plugins/sweetalert.client.js'
