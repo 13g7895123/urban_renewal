@@ -1,32 +1,43 @@
-1. 可否幫我調整一下啟用的sh，啟用前先確認容器是否有在運作，如果有運作則先關閉後再啟用，這樣只要留一支sh即可，develop與production都一樣
+1. 幫我調整一下develop的後端docker，我希望開發階段不要用COPY，用volumn的方式加速開發
 2. 目前登入頁出現這個錯誤error caught during app initialization ReferenceError: useAuthStore is not defined
 3.
 
 ## 問題修復 (2025-10-24)
 
-### 問題 1: 啟動腳本改善 ✅
+### 問題 1: 開發環境使用 Volume 加速開發 ✅
 
 **需求:**
-調整啟用的sh，啟用前先確認容器是否有在運作，如果有運作則先關閉後再啟用，這樣只要留一支sh即可，develop與production都一樣
+調整develop的後端docker，開發階段不要用COPY，用volume的方式加速開發
 
 **已修復:**
-1. ✅ 更新 `start-dev.sh` - 新增容器狀態檢查，如果發現開發環境容器正在運行會先自動停止
-2. ✅ 更新 `start-prod.sh` - 新增容器狀態檢查，如果發現正式環境容器正在運行會先自動停止
+1. ✅ 建立 `backend/Dockerfile.dev` - 專門用於開發環境的 Dockerfile
+2. ✅ 更新 `docker-compose.dev.yml` - 配置使用 Dockerfile.dev 和 volume 掛載
+3. ✅ 修復 `backend/app/Config/Cors.php` - 修正遺漏的逗號語法錯誤
 
 **改善內容:**
-- 腳本執行前會自動檢查是否有相同環境的容器正在運行
-- 如果有運行中的容器，會先執行 `docker compose down` 停止
-- 停止完成後才啟動新的容器
-- 使用者不需要手動執行 stop 腳本，直接執行 start 腳本即可
 
-**使用方式:**
-```bash
-# 開發環境 - 會自動停止現有容器後重新啟動
-./start-dev.sh
+**Dockerfile.dev 優化:**
+- 只 COPY composer.json 和 composer.lock (不是整個專案)
+- 安裝開發依賴 (包含 dev dependencies)
+- 應用程式檔案透過 volume 掛載，不使用 COPY
 
-# 正式環境 - 會自動停止現有容器後重新啟動
-./start-prod.sh
+**docker-compose.dev.yml 配置:**
+```yaml
+volumes:
+  - ./backend:/var/www/html          # 掛載整個專案目錄
+  - /var/www/html/vendor             # 保護 vendor 目錄不被覆蓋
 ```
+
+**開發優勢:**
+- ✅ 程式碼修改立即生效，無需重建容器
+- ✅ 加快開發迭代速度
+- ✅ 保留 vendor 目錄，避免重複安裝依賴
+- ✅ 開發體驗更流暢
+
+**測試結果:**
+- 修改 Cors.php 後立即生效，無需重建
+- API 請求正常響應
+- Volume 掛載配置正確
 
 ### 問題 2: useAuthStore is not defined ✅
 

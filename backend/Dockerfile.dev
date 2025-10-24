@@ -1,0 +1,46 @@
+FROM php:8.2-cli
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    libicu-dev \
+    default-mysql-client \
+    libzip-dev \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mysqli mbstring exif pcntl bcmath gd intl zip
+
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Copy only composer files for dependency installation
+COPY composer.json composer.lock ./
+
+# Install dependencies (including dev dependencies for development)
+RUN composer install --no-interaction --optimize-autoloader
+
+# Create necessary directories with proper permissions
+RUN mkdir -p /var/www/html/writable && \
+    chmod -R 777 /var/www/html/writable
+
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+EXPOSE 8000
+
+# Note: Application files will be mounted via volume
+# Use entrypoint to run migrations and seeds before starting server
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["php", "spark", "serve", "--host", "0.0.0.0", "--port", "8000"]

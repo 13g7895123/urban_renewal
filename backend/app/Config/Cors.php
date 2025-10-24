@@ -38,7 +38,7 @@ class Cors extends BaseConfig
             'http://localhost:4357',  // Local npm dev server (start-local-npm.sh)
             'http://localhost:9128',  // Frontend Docker container
             'http://localhost:3000',  // Alternative frontend port
-            'http://localhost:3001'   // Production environment port
+            'http://localhost:3001',  // Production environment port
             'http://localhost:4001'   // Production environment port
         ],
 
