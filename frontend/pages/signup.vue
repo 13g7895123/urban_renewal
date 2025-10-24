@@ -1,218 +1,180 @@
 <template>
-  <NuxtLayout name="auth" :main-class="`flex items-start justify-center pt-16 pb-8`" :logo-style="`width: auto;`">
+  <AuthPageLayout max-width-class="max-w-lg"
+    :card-class="{ 'mb-8': selectedAccountType === 'business' && currentStep === 2 }">
     <template #title>註冊</template>
-    
-    <div class="flex items-start justify-center pt-16 pb-8 w-full">
-      <UCard class="signup-card w-full max-w-lg" :class="{ 'mb-8': selectedAccountType === 'business' && currentStep === 2 }">
-        <!-- Progress Steps -->
-        <div class="progress-container mb-8">
-          <div class="flex justify-between items-center">
-            <div class="step-item" :class="{ active: currentStep === 1, completed: currentStep > 1 }">
-              <div class="step-circle">
-                <Icon v-if="currentStep > 1" name="heroicons:check" class="w-5 h-5" />
-                <span v-else>1</span>
-              </div>
-              <div class="step-text">選擇帳號類型</div>
-            </div>
-            <div class="step-line" :class="{ completed: currentStep > 1 }"></div>
-            <div class="step-item" :class="{ active: currentStep === 2, completed: currentStep > 2 }">
-              <div class="step-circle">
-                <Icon v-if="currentStep > 2" name="heroicons:check" class="w-5 h-5" />
-                <span v-else>2</span>
-              </div>
-              <div class="step-text">填入資料</div>
-            </div>
-            <div class="step-line" :class="{ completed: currentStep > 2 }"></div>
-            <div class="step-item" :class="{ active: currentStep === 3, completed: currentStep > 3 }">
-              <div class="step-circle">
-                <Icon v-if="currentStep > 3" name="heroicons:check" class="w-5 h-5" />
-                <span v-else>3</span>
-              </div>
-              <div class="step-text">完成</div>
-            </div>
+    <!-- Progress Steps -->
+    <div class="progress-container mb-8">
+      <div class="flex justify-between items-center">
+        <div class="step-item" :class="{ active: currentStep === 1, completed: currentStep > 1 }">
+          <div class="step-circle">
+            <Icon v-if="currentStep > 1" name="heroicons:check" class="w-5 h-5" />
+            <span v-else>1</span>
           </div>
+          <div class="step-text">選擇帳號類型</div>
         </div>
-
-        <!-- Step 1: Account Type Selection -->
-        <div v-if="currentStep === 1" class="account-selection">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <!-- Personal Account -->
-            <div class="account-option" :class="{ 'selected': selectedAccountType === 'personal' }">
-              <button 
-                @click="selectAccountType('personal')"
-                class="account-btn personal-btn w-full"
-                :class="{ 'active': selectedAccountType === 'personal' }"
-              >
-                <Icon name="heroicons:user" class="w-8 h-8 mb-2" />
-                <div class="text-lg font-semibold">個人帳號</div>
-              </button>
-              <div class="radio-container">
-                <label class="radio-label">
-                  <input 
-                    type="radio" 
-                    name="accountType" 
-                    value="personal" 
-                    :checked="selectedAccountType === 'personal'"
-                    @change="selectAccountType('personal')"
-                    class="radio-btn"
-                  />
-                </label>
-              </div>
-            </div>
-
-            <!-- Business Account -->
-            <div class="account-option" :class="{ 'selected': selectedAccountType === 'business' }">
-              <button 
-                @click="selectAccountType('business')"
-                class="account-btn business-btn w-full"
-                :class="{ 'active': selectedAccountType === 'business' }"
-              >
-                <Icon name="heroicons:building-office" class="w-8 h-8 mb-2" />
-                <div class="text-lg font-semibold">企業帳號</div>
-              </button>
-              <div class="radio-container">
-                <label class="radio-label">
-                  <input 
-                    type="radio" 
-                    name="accountType" 
-                    value="business" 
-                    :checked="selectedAccountType === 'business'"
-                    @change="selectAccountType('business')"
-                    class="radio-btn"
-                  />
-                </label>
-              </div>
-            </div>
+        <div class="step-line" :class="{ completed: currentStep > 1 }"></div>
+        <div class="step-item" :class="{ active: currentStep === 2, completed: currentStep > 2 }">
+          <div class="step-circle">
+            <Icon v-if="currentStep > 2" name="heroicons:check" class="w-5 h-5" />
+            <span v-else>2</span>
           </div>
-
-          <!-- Next Button -->
-          <UButton
-            @click="handleNext"
-            block
-            size="lg"
-            class="next-btn"
-            :disabled="!selectedAccountType"
-          >
-            下一步
-          </UButton>
+          <div class="step-text">填入資料</div>
         </div>
-
-        <!-- Step 2: Form Data -->
-        <div v-if="currentStep === 2" class="form-section">
-          <!-- Personal Account Form -->
-          <div v-if="selectedAccountType === 'personal'" class="form-grid">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div class="form-field">
-                <UInput v-model="formData.account" placeholder="帳號" />
-              </div>
-              <div class="form-field">
-                <UInput v-model="formData.nickname" placeholder="暱稱" />
-              </div>
-              <div class="form-field">
-                <UInput v-model="formData.password" placeholder="密碼" type="password" />
-              </div>
-              <div class="form-field">
-                <UInput v-model="formData.confirmPassword" placeholder="確認密碼" type="password" />
-              </div>
-              <div class="form-field">
-                <UInput v-model="formData.fullName" placeholder="姓名" />
-              </div>
-              <div class="form-field">
-                <UInput v-model="formData.email" placeholder="信箱" type="email" />
-              </div>
-              <div class="form-field">
-                <UInput v-model="formData.phone" placeholder="手機號碼" />
-              </div>
-              <div class="form-field">
-                <UInput v-model="formData.lineId" placeholder="Line帳號" />
-              </div>
-              <div class="form-field">
-                <UInput v-model="formData.companyName" placeholder="公司名稱" />
-              </div>
-              <div class="form-field">
-                <UInput v-model="formData.jobTitle" placeholder="職稱" />
-              </div>
-            </div>
+        <div class="step-line" :class="{ completed: currentStep > 2 }"></div>
+        <div class="step-item" :class="{ active: currentStep === 3, completed: currentStep > 3 }">
+          <div class="step-circle">
+            <Icon v-if="currentStep > 3" name="heroicons:check" class="w-5 h-5" />
+            <span v-else>3</span>
           </div>
-
-          <!-- Business Account Form -->
-          <div v-if="selectedAccountType === 'business'" class="form-grid">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div class="form-field">
-                <UInput v-model="formData.account" placeholder="帳號" />
-              </div>
-              <div class="form-field">
-                <UInput v-model="formData.nickname" placeholder="暱稱" />
-              </div>
-              <div class="form-field">
-                <UInput v-model="formData.password" placeholder="密碼" type="password" />
-              </div>
-              <div class="form-field">
-                <UInput v-model="formData.confirmPassword" placeholder="確認密碼" type="password" />
-              </div>
-              <div class="form-field">
-                <UInput v-model="formData.fullName" placeholder="姓名" />
-              </div>
-              <div class="form-field">
-                <UInput v-model="formData.email" placeholder="信箱" type="email" />
-              </div>
-              <div class="form-field">
-                <UInput v-model="formData.phone" placeholder="手機號碼" />
-              </div>
-              <div class="form-field">
-                <UInput v-model="formData.lineId" placeholder="Line帳號" />
-              </div>
-              <div class="form-field">
-                <UInput v-model="formData.companyName" placeholder="公司名稱" />
-              </div>
-              <div class="form-field">
-                <UInput v-model="formData.jobTitle" placeholder="職稱" />
-              </div>
-              <div class="form-field">
-                <UInput v-model="formData.businessName" placeholder="企業名稱" />
-              </div>
-              <div class="form-field">
-                <UInput v-model="formData.taxId" placeholder="統一編號" />
-              </div>
-              <div class="form-field">
-                <UInput v-model="formData.businessPhone" placeholder="企業電話" />
-              </div>
-            </div>
-          </div>
-
-          <!-- Form Buttons -->
-          <div class="flex gap-4 mt-4">
-            <UButton
-              @click="handleRegister"
-              size="lg"
-              class="register-btn flex-1"
-              :loading="loading"
-            >
-              註冊
-            </UButton>
-            <UButton
-              @click="goBack"
-              variant="outline"
-              size="lg"
-              class="back-btn flex-1"
-            >
-              回上一頁
-            </UButton>
-          </div>
+          <div class="step-text">完成</div>
         </div>
-
-        <!-- Step 3: Completion -->
-        <div v-if="currentStep === 3" class="completion-section text-center">
-          <Icon name="heroicons:check-circle" class="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h3 class="text-2xl font-bold mb-4 text-gray-800">註冊完成！</h3>
-          <p class="text-gray-600 mb-6">您的帳號已成功建立</p>
-          <UButton @click="$router.push('/login')" size="lg" class="login-btn">
-            前往登入
-          </UButton>
-        </div>
-      </UCard>
+      </div>
     </div>
-  </NuxtLayout>
+
+    <!-- Step 1: Account Type Selection -->
+    <div v-if="currentStep === 1" class="account-selection">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <!-- Personal Account -->
+        <div class="account-option" :class="{ 'selected': selectedAccountType === 'personal' }">
+          <button @click="selectAccountType('personal')" class="account-btn personal-btn w-full"
+            :class="{ 'active': selectedAccountType === 'personal' }">
+            <Icon name="heroicons:user" class="w-8 h-8 mb-2" />
+            <div class="text-lg font-semibold">個人帳號</div>
+          </button>
+          <div class="radio-container">
+            <label class="radio-label">
+              <input type="radio" name="accountType" value="personal" :checked="selectedAccountType === 'personal'"
+                @change="selectAccountType('personal')" class="radio-btn" />
+            </label>
+          </div>
+        </div>
+
+        <!-- Business Account -->
+        <div class="account-option" :class="{ 'selected': selectedAccountType === 'business' }">
+          <button @click="selectAccountType('business')" class="account-btn business-btn w-full"
+            :class="{ 'active': selectedAccountType === 'business' }">
+            <Icon name="heroicons:building-office" class="w-8 h-8 mb-2" />
+            <div class="text-lg font-semibold">企業帳號</div>
+          </button>
+          <div class="radio-container">
+            <label class="radio-label">
+              <input type="radio" name="accountType" value="business" :checked="selectedAccountType === 'business'"
+                @change="selectAccountType('business')" class="radio-btn" />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Next Button -->
+      <UButton @click="handleNext" block size="lg" class="next-btn" :disabled="!selectedAccountType">
+        下一步
+      </UButton>
+    </div>
+
+    <!-- Step 2: Form Data -->
+    <div v-if="currentStep === 2" class="form-section">
+      <!-- Personal Account Form -->
+      <div v-if="selectedAccountType === 'personal'" class="form-grid">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div class="form-field">
+            <UInput v-model="formData.account" placeholder="帳號" />
+          </div>
+          <div class="form-field">
+            <UInput v-model="formData.nickname" placeholder="暱稱" />
+          </div>
+          <div class="form-field">
+            <UInput v-model="formData.password" placeholder="密碼" type="password" />
+          </div>
+          <div class="form-field">
+            <UInput v-model="formData.confirmPassword" placeholder="確認密碼" type="password" />
+          </div>
+          <div class="form-field">
+            <UInput v-model="formData.fullName" placeholder="姓名" />
+          </div>
+          <div class="form-field">
+            <UInput v-model="formData.email" placeholder="信箱" type="email" />
+          </div>
+          <div class="form-field">
+            <UInput v-model="formData.phone" placeholder="手機號碼" />
+          </div>
+          <div class="form-field">
+            <UInput v-model="formData.lineId" placeholder="Line帳號" />
+          </div>
+          <div class="form-field">
+            <UInput v-model="formData.companyName" placeholder="公司名稱" />
+          </div>
+          <div class="form-field">
+            <UInput v-model="formData.jobTitle" placeholder="職稱" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Business Account Form -->
+      <div v-if="selectedAccountType === 'business'" class="form-grid">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div class="form-field">
+            <UInput v-model="formData.account" placeholder="帳號" />
+          </div>
+          <div class="form-field">
+            <UInput v-model="formData.nickname" placeholder="暱稱" />
+          </div>
+          <div class="form-field">
+            <UInput v-model="formData.password" placeholder="密碼" type="password" />
+          </div>
+          <div class="form-field">
+            <UInput v-model="formData.confirmPassword" placeholder="確認密碼" type="password" />
+          </div>
+          <div class="form-field">
+            <UInput v-model="formData.fullName" placeholder="姓名" />
+          </div>
+          <div class="form-field">
+            <UInput v-model="formData.email" placeholder="信箱" type="email" />
+          </div>
+          <div class="form-field">
+            <UInput v-model="formData.phone" placeholder="手機號碼" />
+          </div>
+          <div class="form-field">
+            <UInput v-model="formData.lineId" placeholder="Line帳號" />
+          </div>
+          <div class="form-field">
+            <UInput v-model="formData.companyName" placeholder="公司名稱" />
+          </div>
+          <div class="form-field">
+            <UInput v-model="formData.jobTitle" placeholder="職稱" />
+          </div>
+          <div class="form-field">
+            <UInput v-model="formData.businessName" placeholder="企業名稱" />
+          </div>
+          <div class="form-field">
+            <UInput v-model="formData.taxId" placeholder="統一編號" />
+          </div>
+          <div class="form-field">
+            <UInput v-model="formData.businessPhone" placeholder="企業電話" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Buttons -->
+      <div class="flex gap-4 mt-4">
+        <UButton @click="handleRegister" size="lg" class="register-btn flex-1" :loading="loading">
+          註冊
+        </UButton>
+        <UButton @click="goBack" variant="outline" size="lg" class="back-btn flex-1">
+          回上一頁
+        </UButton>
+      </div>
+    </div>
+
+    <!-- Step 3: Completion -->
+    <div v-if="currentStep === 3" class="completion-section text-center">
+      <Icon name="heroicons:check-circle" class="w-16 h-16 text-green-500 mx-auto mb-4" />
+      <h3 class="text-2xl font-bold mb-4 text-gray-800">註冊完成！</h3>
+      <p class="text-gray-600 mb-6">您的帳號已成功建立</p>
+      <UButton @click="$router.push('/login')" size="lg" class="login-btn">
+        前往登入
+      </UButton>
+    </div>
+  </AuthPageLayout>
 </template>
 
 <script setup>
@@ -244,7 +206,7 @@ const handleNext = () => {
   if (!selectedAccountType.value) {
     return
   }
-  
+
   currentStep.value = 2
 }
 
@@ -256,7 +218,7 @@ const handleRegister = async () => {
   if (!(await validateForm())) {
     return
   }
-  
+
   loading.value = true
   try {
     // Simulate API call
@@ -278,7 +240,7 @@ const handleRegister = async () => {
 
 const validateForm = async () => {
   const requiredFields = ['account', 'nickname', 'password', 'confirmPassword', 'fullName', 'email', 'phone']
-  
+
   for (const field of requiredFields) {
     if (!formData.value[field]) {
       await $swal.fire({
@@ -291,7 +253,7 @@ const validateForm = async () => {
       return false
     }
   }
-  
+
   if (formData.value.password !== formData.value.confirmPassword) {
     await $swal.fire({
       title: '密碼不一致',
@@ -302,7 +264,7 @@ const validateForm = async () => {
     })
     return false
   }
-  
+
   // Additional validation for business accounts
   if (selectedAccountType.value === 'business') {
     if (!formData.value.businessName || !formData.value.taxId) {
@@ -316,19 +278,12 @@ const validateForm = async () => {
       return false
     }
   }
-  
+
   return true
 }
 </script>
 
 <style scoped>
-.signup-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  padding: 2.5rem;
-}
-
 /* Progress Steps */
 .progress-container {
   padding: 0 1rem;
@@ -538,65 +493,6 @@ const validateForm = async () => {
 /* Form Section */
 .form-section {
   padding: 1rem 0;
-}
-
-.form-field {
-  margin-bottom: 1.2rem;
-  width: 100%;
-}
-
-/* Business form specific spacing */
-.signup-card.mb-8 {
-  margin-bottom: 2rem;
-}
-
-.form-field :deep(input) {
-  color: #000000 !important;
-  border: none;
-  border-bottom: 1px solid #d1d5db;
-  border-radius: 0;
-  padding: 12px 4px;
-  background: transparent;
-  width: 100%;
-  outline: none;
-  box-shadow: none;
-  transition: border-bottom-color 0.3s ease;
-}
-
-.form-field :deep(input::placeholder) {
-  color: #6b7280 !important;
-}
-
-.form-field :deep(input:focus) {
-  border: none;
-  border-bottom: 1px solid #2FA633;
-  box-shadow: none;
-  outline: none;
-}
-
-.form-field :deep(.ui-input-wrapper) {
-  width: 100%;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-}
-
-.form-field :deep(.ui-input-base) {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-}
-
-.form-field :deep(div) {
-  border: none;
-  box-shadow: none;
-  background: transparent;
-}
-
-.form-field :deep(.ui-input) {
-  border: none;
-  box-shadow: none;
-  background: transparent;
 }
 
 /* Buttons */

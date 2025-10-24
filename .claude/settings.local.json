@@ -37,7 +37,8 @@
       "WebFetch(domain:dinkomarinac.dev)",
       "Bash(test:*)",
       "Bash(docker ps:*)",
-      "Bash(./stop-dev.sh:*)"
+      "Bash(./stop-dev.sh:*)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": [],
     "ask": []
