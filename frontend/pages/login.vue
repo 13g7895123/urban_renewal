@@ -49,58 +49,40 @@ const handleLogin = async () => {
 
   loading.value = true
   try {
-    const { login } = useAuth()
-    const { setAuthToken } = useApi()
-
-    const response = await login({
+    const authStore = useAuthStore()
+    
+    // Use authStore login method
+    await authStore.login({
       username: username.value,
       password: password.value
     })
 
-    if (response.success && response.data?.token) {
-      // Store the token
-      setAuthToken(response.data.token)
+    // Show success message
+    const toast = useToast()
+    toast.add({
+      title: '登入成功',
+      description: `歡迎回來，${authStore.user?.full_name || authStore.user?.username || '用戶'}！`,
+      color: 'green'
+    })
 
-      // Store user data if available
-      if (response.data.user && process.client) {
-        localStorage.setItem('auth_user', JSON.stringify(response.data.user))
-      }
-
-      // Show success message
-      const toast = useToast()
-      toast.add({
-        title: '登入成功',
-        description: `歡迎回來，${response.data.user?.full_name || response.data.user?.username || '用戶'}！`,
-        color: 'green'
-      })
-
-      // Redirect based on user role
-      const userRole = response.data.user?.role
-      if (userRole === 'admin') {
-        // Admin goes to urban renewal management
-        await navigateTo('/tables/urban-renewal')
-      } else if (userRole === 'chairman' || userRole === 'member') {
-        // Chairman and members go to their assigned urban renewal or meeting list
-        await navigateTo('/tables/meeting')
-      } else {
-        // Default to home page
-        await navigateTo('/')
-      }
+    // Redirect based on user role
+    const userRole = authStore.user?.role
+    if (userRole === 'admin') {
+      // Admin goes to urban renewal management
+      await navigateTo('/tables/urban-renewal')
+    } else if (userRole === 'chairman' || userRole === 'member') {
+      // Chairman and members go to meeting list
+      await navigateTo('/tables/meeting')
     } else {
-      // Show error message
-      const toast = useToast()
-      toast.add({
-        title: '登入失敗',
-        description: response.error?.message || '帳號或密碼錯誤',
-        color: 'red'
-      })
+      // Default to home page
+      await navigateTo('/')
     }
   } catch (error) {
     console.error('Login error:', error)
     const toast = useToast()
     toast.add({
-      title: '登入錯誤',
-      description: '系統錯誤，請稍後再試',
+      title: '登入失敗',
+      description: error.message || '帳號或密碼錯誤',
       color: 'red'
     })
   } finally {

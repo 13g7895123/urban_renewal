@@ -12,7 +12,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // 檢查是否已登入且有有效token
   if (!authStore.isLoggedIn) {
     console.log('[Auth Middleware] User not authenticated, redirecting to login')
-    return navigateTo('/auth/login')
+    return navigateTo('/login')
   }
   
   // 嘗試驗證token是否仍然有效 (但不要太頻繁)
@@ -23,6 +23,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
   } catch (error) {
     console.warn('[Auth Middleware] Token validation failed:', error.message)
-    return navigateTo('/auth/login')
+    return navigateTo('/login')
   }
 })

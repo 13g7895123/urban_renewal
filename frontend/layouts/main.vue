@@ -9,21 +9,14 @@
       </h1>
 
       <div class="flex-1 flex justify-end items-center space-x-4">
+        <span class="text-white text-sm">{{ userName }}</span>
+        
         <UButton
           variant="ghost"
           color="white"
           size="sm"
           class="text-white hover:bg-green-600"
-        >
-          <Icon name="heroicons:shopping-cart" class="w-5 h-5 mr-2" />
-          購物車
-        </UButton>
-
-        <UButton
-          variant="ghost"
-          color="white"
-          size="sm"
-          class="text-white hover:bg-green-600"
+          @click="handleLogout"
         >
           <Icon name="heroicons:arrow-right-on-rectangle" class="w-5 h-5 mr-2" />
           登出
@@ -40,50 +33,21 @@
               <Icon name="heroicons:user" class="w-8 h-8 text-white" />
             </div>
             <div>
-              <div class="text-white font-medium">許湘淳</div>
-              <div class="w-6 h-6 bg-gray-600 rounded-full mt-1"></div>
+              <div class="text-white font-medium">{{ userName }}</div>
+              <div class="text-gray-400 text-sm">{{ roleLabel }}</div>
             </div>
           </div>
           
           <nav class="space-y-2">
-            <NuxtLink to="/" class="flex items-center space-x-3 p-3 rounded hover:bg-gray-700 transition-colors" :class="{ 'bg-blue-600': $route.path === '/' }">
-              <Icon name="heroicons:home" class="w-5 h-5" />
-              <span>首頁</span>
-            </NuxtLink>
-            
-            <NuxtLink to="/tables/urban-renewal" class="flex items-center space-x-3 p-3 rounded hover:bg-gray-700 transition-colors" :class="{ 'bg-blue-600': $route.path === '/tables/urban-renewal' }">
-              <Icon name="heroicons:building-office-2" class="w-5 h-5" />
-              <span>更新會管理</span>
-            </NuxtLink>
-            
-            <NuxtLink to="/tables/meeting" class="flex items-center space-x-3 p-3 rounded hover:bg-gray-700 transition-colors" :class="{ 'bg-blue-600': $route.path === '/tables/meeting' }">
-              <Icon name="heroicons:document-text" class="w-5 h-5" />
-              <span>會議管理</span>
-            </NuxtLink>
-            
-            <NuxtLink to="/tables/issue" class="flex items-center space-x-3 p-3 rounded hover:bg-gray-700 transition-colors" :class="{ 'bg-blue-600': $route.path === '/tables/issue' }">
-              <Icon name="heroicons:check-badge" class="w-5 h-5" />
-              <span>投票管理</span>
-            </NuxtLink>
-            
-            <NuxtLink to="/pages/shopping" class="flex items-center space-x-3 p-3 rounded hover:bg-gray-700 transition-colors" :class="{ 'bg-blue-600': $route.path === '/pages/shopping' }">
-              <Icon name="heroicons:shopping-bag" class="w-5 h-5" />
-              <span>商城</span>
-            </NuxtLink>
-            
-            <NuxtLink to="/tables/order" class="flex items-center space-x-3 p-3 rounded hover:bg-gray-700 transition-colors" :class="{ 'bg-blue-600': $route.path === '/tables/order' }">
-              <Icon name="heroicons:clipboard-document-list" class="w-5 h-5" />
-              <span>購買紀錄</span>
-            </NuxtLink>
-            
-            <NuxtLink to="/pages/user" class="flex items-center space-x-3 p-3 rounded hover:bg-gray-700 transition-colors" :class="{ 'bg-blue-600': $route.path === '/pages/user' }">
-              <Icon name="heroicons:user" class="w-5 h-5" />
-              <span>使用者基本資料變更</span>
-            </NuxtLink>
-            
-            <NuxtLink to="/tables/company-profile" class="flex items-center space-x-3 p-3 rounded hover:bg-gray-700 transition-colors" :class="{ 'bg-blue-600': $route.path === '/tables/company-profile' }">
-              <Icon name="heroicons:building-office" class="w-5 h-5" />
-              <span>企業管理</span>
+            <NuxtLink 
+              v-for="item in visibleMenuItems" 
+              :key="item.path"
+              :to="item.path" 
+              class="flex items-center space-x-3 p-3 rounded hover:bg-gray-700 transition-colors" 
+              :class="{ 'bg-blue-600': $route.path === item.path }"
+            >
+              <Icon :name="item.icon" class="w-5 h-5" />
+              <span>{{ item.label }}</span>
             </NuxtLink>
           </nav>
         </div>
@@ -103,7 +67,95 @@
 </template>
 
 <script setup>
-// Main layout for authenticated pages
+const authStore = useAuthStore()
+const router = useRouter()
+
+// User display name
+const userName = computed(() => {
+  return authStore.user?.full_name || authStore.user?.username || '用戶'
+})
+
+// Role label
+const roleLabel = computed(() => {
+  const roleMap = {
+    'admin': '系統管理員',
+    'chairman': '主任委員',
+    'member': '地主成員',
+    'observer': '觀察員'
+  }
+  return roleMap[authStore.user?.role] || authStore.user?.role || '未知'
+})
+
+// Menu items configuration with role restrictions
+const menuItems = [
+  {
+    path: '/',
+    icon: 'heroicons:home',
+    label: '首頁',
+    roles: ['admin', 'chairman', 'member', 'observer']
+  },
+  {
+    path: '/tables/urban-renewal',
+    icon: 'heroicons:building-office-2',
+    label: '更新會管理',
+    roles: ['admin']
+  },
+  {
+    path: '/tables/meeting',
+    icon: 'heroicons:document-text',
+    label: '會議管理',
+    roles: ['admin', 'chairman', 'member']
+  },
+  {
+    path: '/tables/issue',
+    icon: 'heroicons:check-badge',
+    label: '投票管理',
+    roles: ['admin', 'chairman', 'member']
+  },
+  {
+    path: '/pages/shopping',
+    icon: 'heroicons:shopping-bag',
+    label: '商城',
+    roles: ['admin', 'chairman', 'member']
+  },
+  {
+    path: '/tables/order',
+    icon: 'heroicons:clipboard-document-list',
+    label: '購買紀錄',
+    roles: ['admin', 'chairman', 'member']
+  },
+  {
+    path: '/pages/user',
+    icon: 'heroicons:user',
+    label: '使用者基本資料變更',
+    roles: ['admin', 'chairman', 'member', 'observer']
+  },
+  {
+    path: '/tables/company-profile',
+    icon: 'heroicons:building-office',
+    label: '企業管理',
+    roles: ['admin']
+  }
+]
+
+// Filter menu items based on user role
+const visibleMenuItems = computed(() => {
+  const userRole = authStore.user?.role
+  if (!userRole) return []
+  
+  return menuItems.filter(item => item.roles.includes(userRole))
+})
+
+// Logout handler
+const handleLogout = async () => {
+  try {
+    await authStore.logout()
+  } catch (error) {
+    console.error('Logout error:', error)
+    // Force redirect to login even if API call fails
+    await navigateTo('/login')
+  }
+}
 </script>
 
 <style scoped>

@@ -1,67 +1,56 @@
-1. 幫我調整一下develop的後端docker，我希望開發階段不要用COPY，用volumn的方式加速開發
-2. 目前登入頁出現這個錯誤error caught during app initialization ReferenceError: useAuthStore is not defined
-3.
+1. 登入成功請幫我跳轉到內頁，並且內頁每個頁面都需要驗證身分，且sidebar要依據身分顯示資料
+2.
 
 ## 問題修復 (2025-10-24)
 
-### 問題 1: 開發環境使用 Volume 加速開發 ✅
+### 問題 1: 登入跳轉與權限管理 ✅
 
 **需求:**
-調整develop的後端docker，開發階段不要用COPY，用volume的方式加速開發
+登入成功請幫我跳轉到內頁，並且內頁每個頁面都需要驗證身分，且sidebar要依據身分顯示資料
 
 **已修復:**
-1. ✅ 建立 `backend/Dockerfile.dev` - 專門用於開發環境的 Dockerfile
-2. ✅ 更新 `docker-compose.dev.yml` - 配置使用 Dockerfile.dev 和 volume 掛載
-3. ✅ 修復 `backend/app/Config/Cors.php` - 修正遺漏的逗號語法錯誤
+1. ✅ 更新 `pages/login.vue` - 使用 authStore 進行登入，依照角色跳轉
+2. ✅ 更新 `layouts/main.vue` - 顯示用戶資訊、角色標籤、角色過濾選單、登出功能
+3. ✅ 更新 `middleware/auth.js` - 修正登入頁面路徑為 `/login`
+4. ✅ 更新 `stores/auth.js` - 修正登出重定向路徑為 `/login`
+5. ✅ 添加頁面中介層保護 - `pages/index.vue`, `pages/tables/urban-renewal/index.vue`, `pages/tables/meeting/index.vue`
 
-**改善內容:**
+**登入後跳轉規則:**
+- **Admin (管理員)** → `/tables/urban-renewal` (更新會管理)
+- **Chairman (主任委員)** / **Member (地主成員)** → `/tables/meeting` (會議管理)
+- **其他角色** → `/` (首頁)
 
-**Dockerfile.dev 優化:**
-- 只 COPY composer.json 和 composer.lock (不是整個專案)
-- 安裝開發依賴 (包含 dev dependencies)
-- 應用程式檔案透過 volume 掛載，不使用 COPY
+**頁面權限設定:**
+- 首頁 (`/`) - 所有已登入用戶
+- 更新會管理 (`/tables/urban-renewal`) - 僅 admin
+- 會議管理 (`/tables/meeting`) - admin, chairman, member
+- 其他內頁 - 需要 auth middleware 保護
 
-**docker-compose.dev.yml 配置:**
-```yaml
-volumes:
-  - ./backend:/var/www/html          # 掛載整個專案目錄
-  - /var/www/html/vendor             # 保護 vendor 目錄不被覆蓋
+**側邊欄選單顯示規則:**
+
+| 選單項目 | Admin | Chairman | Member | Observer |
+|---------|-------|----------|--------|----------|
+| 首頁 | ✅ | ✅ | ✅ | ✅ |
+| 更新會管理 | ✅ | ❌ | ❌ | ❌ |
+| 會議管理 | ✅ | ✅ | ✅ | ❌ |
+| 投票管理 | ✅ | ✅ | ✅ | ❌ |
+| 商城 | ✅ | ✅ | ✅ | ❌ |
+| 購買紀錄 | ✅ | ✅ | ✅ | ❌ |
+| 使用者資料變更 | ✅ | ✅ | ✅ | ✅ |
+| 企業管理 | ✅ | ❌ | ❌ | ❌ |
+
+**功能特色:**
+- ✅ 顯示用戶姓名和角色標籤
+- ✅ 根據角色動態顯示選單項目
+- ✅ 點擊登出清除認證狀態並跳轉登入頁
+- ✅ 所有內頁均受 auth middleware 保護
+- ✅ 無權限訪問時顯示 `/unauthorized` 頁面
+
+**測試方式:**
+```bash
+# 使用不同角色登入測試
+# Admin: admin / password
+# Chairman: chairman / password  
+# Member: member1 / password
+# Observer: observer1 / password
 ```
-
-**開發優勢:**
-- ✅ 程式碼修改立即生效，無需重建容器
-- ✅ 加快開發迭代速度
-- ✅ 保留 vendor 目錄，避免重複安裝依賴
-- ✅ 開發體驗更流暢
-
-**測試結果:**
-- 修改 Cors.php 後立即生效，無需重建
-- API 請求正常響應
-- Volume 掛載配置正確
-
-### 問題 2: useAuthStore is not defined ✅
-
-**問題分析:**
-1. auth.client.js 插件沒有在 nuxt.config.ts 中明確註冊
-2. auth store 中的 API 響應路徑不正確 (使用了 `response.data.data` 而不是 `response.data`)
-
-**已修復:**
-1. ✅ 在 nuxt.config.ts 的 plugins 陣列中添加了 `~/plugins/auth.client.js`
-2. ✅ 修正了 auth.js store 中的響應路徑：
-   - login: `response.data.data` → `response.data`
-   - fetchUser: `response.data.data.user` → `response.data`
-   - updateProfile: `response.data.data.user` → `response.data`
-   - refreshAuthToken: `response.data.data` → `response.data`
-
-**測試用帳號 (從 UserSeeder.php):**
-- Admin: username=`admin`, password=`password`, role=`admin`
-- Chairman: username=`chairman`, password=`password`, role=`chairman`
-- Member: username=`member1`, password=`password`, role=`member`
-- Observer: username=`observer1`, password=`password`, role=`observer`
-
-**後端 API 響應格式確認:**
-- `/api/auth/login`: `{ success: true, data: { user, token, refresh_token, expires_in } }`
-- `/api/auth/me`: `{ success: true, data: user }`
-- `/api/auth/refresh`: `{ success: true, data: { token, refresh_token, expires_in } }`
-
-前端已重啟，登入功能應該正常運作。

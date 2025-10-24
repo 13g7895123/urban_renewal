@@ -247,6 +247,8 @@ import { ref } from 'vue'
 import { navigateTo } from '#app'
 
 definePageMeta({
+  middleware: ['auth', 'role'],
+  role: ['admin', 'chairman', 'member'],
   layout: false
 })
 

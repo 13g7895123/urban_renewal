@@ -138,7 +138,7 @@ export const useAuthStore = defineStore('auth', () => {
       }
       
       // 重定向到登入頁面
-      await navigateTo('/auth/login')
+      await navigateTo('/login')
     }
   }
 

@@ -73,6 +73,7 @@
 
 <script setup>
 definePageMeta({
+  middleware: 'auth',
   layout: false
 })
 </script>

@@ -5,19 +5,19 @@
         <div class="md:col-span-4"></div>
         
         <div class="md:col-span-4 flex flex-col md:flex-row items-center justify-center">
-          <img src="/assets/images/logo.jpg" alt="Logo" class="footer-logo" :style="logoStyle" />
+          <label class="text-4xl mr-3 font-bold">開發建經</label>
           <div class="contact-info space-y-2 text-sm text-gray-600 text-center md:text-left">
             <div class="flex items-center justify-center md:justify-start">
               <Icon name="heroicons:phone" class="w-4 h-4 mr-2" />
-              服務電話: (02)-8913-6162
+              服務電話: 02-6604-3889
             </div>
             <div class="flex items-center justify-center md:justify-start">
               <Icon name="heroicons:printer" class="w-4 h-4 mr-2" />
-              服務傳真: (02)-3393-0761
+              服務傳真: 02-2585-3900
             </div>
             <div class="flex items-center justify-center md:justify-start whitespace-nowrap">
               <Icon name="heroicons:envelope" class="w-4 h-4 mr-2" />
-              服務信箱: service@都更平台.tw
+              服務信箱: K80686159@gmail.com
             </div>
           </div>
         </div>
