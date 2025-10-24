@@ -1,9 +1,34 @@
-1. 目前登入按鈕送出後是有問題的，幫我確認一下是哪邊的問題，並確認一下seeder中是否至少有兩個身分的帳號存在
+1. 可否幫我調整一下啟用的sh，啟用前先確認容器是否有在運作，如果有運作則先關閉後再啟用，這樣只要留一支sh即可，develop與production都一樣
 2. 目前登入頁出現這個錯誤error caught during app initialization ReferenceError: useAuthStore is not defined
+3.
 
 ## 問題修復 (2025-10-24)
 
-### 問題 2: useAuthStore is not defined
+### 問題 1: 啟動腳本改善 ✅
+
+**需求:**
+調整啟用的sh，啟用前先確認容器是否有在運作，如果有運作則先關閉後再啟用，這樣只要留一支sh即可，develop與production都一樣
+
+**已修復:**
+1. ✅ 更新 `start-dev.sh` - 新增容器狀態檢查，如果發現開發環境容器正在運行會先自動停止
+2. ✅ 更新 `start-prod.sh` - 新增容器狀態檢查，如果發現正式環境容器正在運行會先自動停止
+
+**改善內容:**
+- 腳本執行前會自動檢查是否有相同環境的容器正在運行
+- 如果有運行中的容器，會先執行 `docker compose down` 停止
+- 停止完成後才啟動新的容器
+- 使用者不需要手動執行 stop 腳本，直接執行 start 腳本即可
+
+**使用方式:**
+```bash
+# 開發環境 - 會自動停止現有容器後重新啟動
+./start-dev.sh
+
+# 正式環境 - 會自動停止現有容器後重新啟動
+./start-prod.sh
+```
+
+### 問題 2: useAuthStore is not defined ✅
 
 **問題分析:**
 1. auth.client.js 插件沒有在 nuxt.config.ts 中明確註冊

@@ -39,6 +39,7 @@ class Cors extends BaseConfig
             'http://localhost:9128',  // Frontend Docker container
             'http://localhost:3000',  // Alternative frontend port
             'http://localhost:3001'   // Production environment port
+            'http://localhost:4001'   // Production environment port
         ],
 
         /**

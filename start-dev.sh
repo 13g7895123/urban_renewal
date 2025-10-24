@@ -52,6 +52,15 @@ else
     exit 1
 fi
 
+# 檢查容器是否正在運行
+echo "🔍 檢查現有容器狀態..."
+if $DOCKER_COMPOSE -f docker-compose.dev.yml ps --quiet 2>/dev/null | grep -q .; then
+    echo "⚠️  發現開發環境容器正在運行，先停止現有服務..."
+    $DOCKER_COMPOSE -f docker-compose.dev.yml --env-file .env down
+    echo "✅ 現有服務已停止"
+    echo ""
+fi
+
 echo "🚀 啟動 Docker Compose (Development Mode)..."
 $DOCKER_COMPOSE -f docker-compose.dev.yml --env-file .env up -d
 
