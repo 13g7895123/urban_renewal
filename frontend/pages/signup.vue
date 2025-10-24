@@ -3,7 +3,7 @@
     :card-class="{ 'mb-8': selectedAccountType === 'business' && currentStep === 2 }">
     <template #title>註冊</template>
     <!-- Progress Steps -->
-    <div class="progress-container mb-8">
+    <div class="progress-container mb-4">
       <div class="flex justify-between items-center">
         <div class="step-item" :class="{ active: currentStep === 1, completed: currentStep > 1 }">
           <div class="step-circle">
@@ -33,7 +33,7 @@
 
     <!-- Step 1: Account Type Selection -->
     <div v-if="currentStep === 1" class="account-selection">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <!-- Personal Account -->
         <div class="account-option" :class="{ 'selected': selectedAccountType === 'personal' }">
           <button @click="selectAccountType('personal')" class="account-btn personal-btn w-full"
@@ -75,7 +75,7 @@
     <div v-if="currentStep === 2" class="form-section">
       <!-- Personal Account Form -->
       <div v-if="selectedAccountType === 'personal'" class="form-grid">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
           <div class="form-field">
             <UInput v-model="formData.account" placeholder="帳號" />
           </div>
@@ -111,7 +111,7 @@
 
       <!-- Business Account Form -->
       <div v-if="selectedAccountType === 'business'" class="form-grid">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
           <div class="form-field">
             <UInput v-model="formData.account" placeholder="帳號" />
           </div>
@@ -286,7 +286,7 @@ const validateForm = async () => {
 <style scoped>
 /* Progress Steps */
 .progress-container {
-  padding: 0 1rem;
+  padding: 0 0.5rem;
 }
 
 .step-item {
@@ -299,8 +299,8 @@ const validateForm = async () => {
 }
 
 .step-circle {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: 2px solid #d1d5db;
   display: flex;
@@ -309,7 +309,7 @@ const validateForm = async () => {
   background: white;
   color: #6b7280;
   font-weight: bold;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   transition: all 0.3s ease;
 }
 
@@ -326,7 +326,7 @@ const validateForm = async () => {
 }
 
 .step-text {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: #6b7280;
   font-weight: 500;
 }
@@ -358,7 +358,7 @@ const validateForm = async () => {
 
 /* Account Selection */
 .account-selection {
-  padding: 1rem 0;
+  padding: 0.5rem 0;
 }
 
 .account-option {
@@ -369,14 +369,14 @@ const validateForm = async () => {
   background: white;
   border: 2px solid #d1d5db;
   border-radius: 12px;
-  padding: 2rem 1rem;
+  padding: 1.5rem 1rem;
   transition: all 0.3s ease;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 140px;
+  min-height: 120px;
 }
 
 .account-btn:hover {
@@ -492,7 +492,7 @@ const validateForm = async () => {
 
 /* Form Section */
 .form-section {
-  padding: 1rem 0;
+  padding: 0.5rem 0;
 }
 
 /* Buttons */
@@ -566,7 +566,7 @@ const validateForm = async () => {
 
 /* Completion Section */
 .completion-section {
-  padding: 2rem 0;
+  padding: 1rem 0;
 }
 
 .login-btn {

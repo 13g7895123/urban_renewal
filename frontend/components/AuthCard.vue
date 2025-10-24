@@ -1,6 +1,6 @@
 <template>
-  <div class="flex items-start justify-center pt-16 pb-8 w-full">
-    <UCard class="auth-card w-full" :class="[maxWidthClass, cardClass]">
+  <div class="flex items-start justify-center w-full h-full">
+    <UCard class="auth-card w-full max-h-full overflow-y-auto" :class="[maxWidthClass, cardClass]">
       <!-- Optional Header Slot -->
       <template v-if="$slots.header" #header>
         <slot name="header" />
@@ -30,12 +30,12 @@ defineProps({
   background: white;
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  padding: 2.5rem;
+  padding: 1.5rem;
 }
 
 /* Form Field Styles (shared between login and signup) */
 .auth-card :deep(.form-field) {
-  margin-bottom: 1.2rem;
+  margin-bottom: 0.5rem;
   width: 100%;
 }
 
@@ -44,7 +44,7 @@ defineProps({
   border: none;
   border-bottom: 1px solid #d1d5db;
   border-radius: 0;
-  padding: 12px 4px;
+  padding: 8px 4px;
   background: transparent;
   width: 100%;
   outline: none;

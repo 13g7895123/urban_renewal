@@ -1,7 +1,7 @@
 <template>
   <NuxtLayout
     name="auth"
-    :main-class="`flex items-start justify-center pt-16 pb-8`"
+    :main-class="`flex items-center justify-center h-full overflow-y-auto py-4`"
     :logo-style="`width: auto;`"
   >
     <template #title>

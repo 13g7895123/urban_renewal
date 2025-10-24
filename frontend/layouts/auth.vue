@@ -1,17 +1,17 @@
 <template>
-  <div class="min-h-screen flex flex-col">
+  <div class="h-screen flex flex-col overflow-hidden">
     <!-- Navbar -->
-    <header class="navbar-gradient h-20 flex items-center px-6">
+    <header class="navbar-gradient h-16 flex items-center px-6 flex-shrink-0">
       <div class="flex-1"></div>
-      
+
       <h1 class="text-white text-xl font-bold">
         <slot name="title">都更計票系統首頁</slot>
       </h1>
-      
+
       <div class="flex-1 flex justify-end space-x-4">
-        <UButton 
-          variant="ghost" 
-          color="white" 
+        <UButton
+          variant="ghost"
+          color="white"
           size="lg"
           class="text-white navbar-btn"
           @click="$router.push('/signup')"
@@ -19,10 +19,10 @@
           <Icon name="heroicons:user-plus" class="w-5 h-5 mr-2" />
           註冊
         </UButton>
-        
-        <UButton 
-          variant="ghost" 
-          color="white" 
+
+        <UButton
+          variant="ghost"
+          color="white"
           size="lg"
           class="text-white navbar-btn"
           @click="$router.push('/login')"
@@ -34,14 +34,14 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1">
+    <main class="flex-1 overflow-hidden">
       <BackgroundImage :container-class="mainClass">
         <slot />
       </BackgroundImage>
     </main>
 
     <!-- Footer -->
-    <Footer :logo-style="logoStyle" />
+    <Footer :logo-style="logoStyle" class="flex-shrink-0" />
   </div>
 </template>
 
