@@ -34,7 +34,10 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:stackoverflow.com)",
       "WebFetch(domain:dev.to)",
-      "WebFetch(domain:dinkomarinac.dev)"
+      "WebFetch(domain:dinkomarinac.dev)",
+      "Bash(test:*)",
+      "Bash(docker ps:*)",
+      "Bash(./stop-dev.sh:*)"
     ],
     "deny": [],
     "ask": []

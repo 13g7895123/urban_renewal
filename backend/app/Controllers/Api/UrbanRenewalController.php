@@ -5,9 +5,12 @@ namespace App\Controllers\Api;
 use App\Controllers\BaseController;
 use App\Models\UrbanRenewalModel;
 use CodeIgniter\HTTP\ResponseInterface;
+use App\Traits\HasRbacPermissions;
 
 class UrbanRenewalController extends BaseController
 {
+    use HasRbacPermissions;
+
     protected $urbanRenewalModel;
     protected $format = 'json';
 

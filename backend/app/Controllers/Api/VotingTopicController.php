@@ -3,9 +3,12 @@
 namespace App\Controllers\Api;
 
 use CodeIgniter\RESTful\ResourceController;
+use App\Traits\HasRbacPermissions;
 
 class VotingTopicController extends ResourceController
 {
+    use HasRbacPermissions;
+
     protected $modelName = 'App\Models\VotingTopicModel';
     protected $format = 'json';
 

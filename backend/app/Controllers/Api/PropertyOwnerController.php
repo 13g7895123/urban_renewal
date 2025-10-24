@@ -5,9 +5,12 @@ namespace App\Controllers\Api;
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\HTTP\ResponseInterface;
 use JsonException;
+use App\Traits\HasRbacPermissions;
 
 class PropertyOwnerController extends ResourceController
 {
+    use HasRbacPermissions;
+
     protected $propertyOwnerModel;
     protected $ownerBuildingModel;
     protected $ownerLandModel;

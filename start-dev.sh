@@ -1,55 +1,81 @@
 #!/bin/bash
+# 都更計票系統 - 開發環境啟動腳本
+# Urban Renewal Voting System - Development Startup Script
+#
+# 此腳本會啟動開發環境，包含：
+#   - Backend (後端 API 服務)
+#   - MariaDB (資料庫)
+#   - phpMyAdmin (資料庫管理介面)
+#   - Cron (定時任務服務)
+#
+# 注意：前端需要另外使用 npm run dev 啟動
 
-# Urban Renewal Development Environment Startup Script
-# This script starts only the backend services (backend, database, phpmyadmin)
-# Run the frontend separately using start-frontend.sh for faster development
+set -e
 
-echo "🚀 Starting Urban Renewal Backend Services..."
+echo "========================================="
+echo "都更計票系統 - 開發環境啟動"
+echo "Urban Renewal Voting System - Development"
+echo "========================================="
 echo ""
 
-# Check if Docker is running
+# 檢查 .env 檔案是否存在
+if [ ! -f .env ]; then
+    echo "❌ 錯誤：找不到 .env 檔案"
+    echo "請先複製 .env.example 並設定環境變數："
+    echo "  cp .env.example .env"
+    exit 1
+fi
+
+# 載入環境變數
+source .env
+
+echo "🔧 環境配置："
+echo "  - 後端 Port: ${BACKEND_PORT}"
+echo "  - 資料庫 Port: ${DB_PORT}"
+echo "  - phpMyAdmin Port: ${PHPMYADMIN_PORT}"
+echo ""
+
+# 檢查 Docker 是否正在執行
 if ! docker info > /dev/null 2>&1; then
-    echo "❌ Docker is not running. Please start Docker and try again."
+    echo "❌ 錯誤：Docker 未運行"
+    echo "請先啟動 Docker Desktop 或 Docker 服務"
     exit 1
 fi
 
-# Check if .env.local exists
-if [ ! -f ".env.local" ]; then
-    echo "❌ .env.local file not found. Please create it first."
-    exit 1
-fi
-
-# Load environment variables from .env.local
-set -a
-source .env.local
-set +a
-
-echo "🧹 Cleaning up any existing backend containers..."
-# Stop and remove any existing containers to avoid conflicts
-if command -v docker &> /dev/null && docker compose version &> /dev/null; then
-    docker compose -f docker-compose.local.yml --env-file .env.local down backend mariadb_dev phpmyadmin_dev 2>/dev/null || true
-elif command -v docker-compose &> /dev/null; then
-    docker-compose -f docker-compose.local.yml --env-file .env.local down backend mariadb_dev phpmyadmin_dev 2>/dev/null || true
-fi
-
-echo ""
-echo "📦 Starting backend services..."
-echo "   Backend API: http://localhost:${BACKEND_PORT:-9228}"
-echo "   Database: localhost:${DB_PORT:-3306}"
-echo "   phpMyAdmin: http://localhost:${PHPMYADMIN_PORT:-3003}"
-echo ""
-echo "💡 Run './start-frontend.sh' in another terminal to start the frontend"
-echo ""
-
-# Start only the backend services (this will also start their dependencies)
-if command -v docker &> /dev/null && docker compose version &> /dev/null; then
-    docker compose -f docker-compose.local.yml --env-file .env.local up --build backend mariadb_dev phpmyadmin_dev
-elif command -v docker-compose &> /dev/null; then
-    docker-compose -f docker-compose.local.yml --env-file .env.local up --build backend mariadb_dev phpmyadmin_dev
+# 檢查並使用正確的 docker compose 命令
+if docker compose version > /dev/null 2>&1; then
+    DOCKER_COMPOSE="docker compose"
+elif command -v docker-compose > /dev/null 2>&1; then
+    DOCKER_COMPOSE="docker-compose"
 else
-    echo "❌ Neither 'docker compose' nor 'docker-compose' is available. Please install Docker Compose."
+    echo "❌ 錯誤：找不到 docker compose 或 docker-compose 命令"
     exit 1
 fi
 
+echo "🚀 啟動 Docker Compose (Development Mode)..."
+$DOCKER_COMPOSE -f docker-compose.dev.yml --env-file .env up -d
+
 echo ""
-echo "🛑 Backend services stopped."
+echo "⏳ 等待服務啟動..."
+sleep 5
+
+echo ""
+echo "✅ 後端服務啟動完成！"
+echo ""
+echo "📊 服務存取資訊："
+echo "  - 後端 API: http://localhost:${BACKEND_PORT}/api"
+echo "  - phpMyAdmin: http://localhost:${PHPMYADMIN_PORT}"
+echo "  - 資料庫連線: localhost:${DB_PORT}"
+echo ""
+echo "📝 前端開發："
+echo "  請在另一個終端視窗執行："
+echo "    cd frontend"
+echo "    npm install"
+echo "    npm run dev"
+echo "  前端通常會在 http://localhost:3000 啟動"
+echo ""
+echo "📝 常用指令："
+echo "  - 查看服務狀態: docker-compose -f docker-compose.dev.yml ps"
+echo "  - 查看服務日誌: docker-compose -f docker-compose.dev.yml logs -f"
+echo "  - 停止所有服務: ./stop-dev.sh"
+echo ""

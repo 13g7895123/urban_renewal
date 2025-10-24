@@ -1,9 +1,14 @@
 /**
  * Base API composable for handling HTTP requests
  */
+// Token refresh state (shared across all instances)
+let isRefreshing = false
+let refreshPromise = null
+
 export const useApi = () => {
   const config = useRuntimeConfig()
-  
+  const authStore = process.client ? useAuthStore() : null
+
   // Get base URL from environment - handle development vs production
   const getBaseURL = () => {
     // Check if we're running on client-side (browser) or server-side (SSR)
@@ -108,24 +113,75 @@ export const useApi = () => {
       console.error('[API] Full URL:', `${baseURL}${endpoint}`)
       console.error('[API] Options:', defaultOptions)
       
-      // Handle authentication errors
-      if (error.status === 401 || error.statusCode === 401) {
+      // Handle 401 authentication errors with token refresh retry
+      if ((error.status === 401 || error.statusCode === 401) && process.client && authStore) {
+        // Skip retry for auth endpoints to avoid infinite loops
+        const isAuthEndpoint = endpoint.includes('/auth/login') ||
+                               endpoint.includes('/auth/refresh') ||
+                               endpoint.includes('/auth/logout')
+
+        if (!isAuthEndpoint && authStore.refreshToken) {
+          console.log('[API] 401 error detected, attempting token refresh...')
+
+          try {
+            // Wait for ongoing refresh or start new one
+            if (isRefreshing) {
+              console.log('[API] Token refresh already in progress, waiting...')
+              await refreshPromise
+            } else {
+              isRefreshing = true
+              refreshPromise = authStore.refreshAuthToken()
+                .finally(() => {
+                  isRefreshing = false
+                  refreshPromise = null
+                })
+              await refreshPromise
+            }
+
+            // Retry the original request with new token
+            console.log('[API] Token refreshed successfully, retrying original request...')
+            const retryOptions = {
+              ...defaultOptions,
+              headers: {
+                ...defaultOptions.headers,
+                ...getAuthHeaders() // Get updated token
+              }
+            }
+
+            const retryResponse = await $fetch(endpoint, retryOptions)
+            console.log(`[API] Retry success: ${baseURL}${endpoint}`)
+            return {
+              success: true,
+              data: retryResponse,
+              error: null
+            }
+          } catch (refreshError) {
+            console.error('[API] Token refresh failed:', refreshError)
+            // Refresh failed, proceed with logout
+          }
+        }
+
+        // Token refresh failed or not available, clear auth and redirect
         console.warn('[API] Authentication error - clearing auth state')
-        
+
         // Clear authentication data
-        if (process.client) {
+        if (authStore) {
+          await authStore.logout(true) // Skip API call during logout
+        } else {
           localStorage.removeItem('auth_token')
+          localStorage.removeItem('auth_refresh_token')
+          localStorage.removeItem('auth_token_expires_at')
           localStorage.removeItem('auth_user')
         }
-        
+
         // Redirect to login page (only if not already on login page)
-        if (process.client && !window.location.pathname.includes('/auth/login')) {
+        if (!window.location.pathname.includes('/auth/login')) {
           try {
             await navigateTo('/auth/login')
           } catch (navError) {
             // If Nuxt navigation fails, fall back to window.location
             console.warn('[API] Navigation failed, using window.location fallback:', navError)
-            window.location.href = '/login'
+            window.location.href = '/auth/login'
           }
         }
       }

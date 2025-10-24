@@ -1,0 +1,6 @@
+# Urban Renewal Cron Jobs
+# Session cleanup - runs daily at 2:00 AM
+0 2 * * * cd /var/www/html/backend && php spark session:cleanup >> /var/log/cron/session-cleanup.log 2>&1
+
+# Authentication events cleanup - runs daily at 3:00 AM
+0 3 * * * cd /var/www/html/backend && php spark auth:cleanup >> /var/log/cron/auth-cleanup.log 2>&1

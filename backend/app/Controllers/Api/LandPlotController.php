@@ -6,9 +6,12 @@ use App\Controllers\BaseController;
 use App\Models\LandPlotModel;
 use App\Models\UrbanRenewalModel;
 use CodeIgniter\HTTP\ResponseInterface;
+use App\Traits\HasRbacPermissions;
 
 class LandPlotController extends BaseController
 {
+    use HasRbacPermissions;
+
     protected $landPlotModel;
     protected $urbanRenewalModel;
     protected $format = 'json';

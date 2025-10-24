@@ -7,9 +7,12 @@ use App\Models\MeetingAttendanceModel;
 use App\Models\MeetingModel;
 use App\Models\PropertyOwnerModel;
 use CodeIgniter\HTTP\ResponseInterface;
+use App\Traits\HasRbacPermissions;
 
 class MeetingAttendanceController extends BaseController
 {
+    use HasRbacPermissions;
+
     protected $attendanceModel;
     protected $meetingModel;
     protected $propertyOwnerModel;

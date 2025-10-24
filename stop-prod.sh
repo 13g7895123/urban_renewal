@@ -1,12 +1,12 @@
 #!/bin/bash
-# 都更計票系統 - 開發環境停止腳本
-# Urban Renewal Voting System - Development Stop Script
+# 都更計票系統 - 正式環境停止腳本
+# Urban Renewal Voting System - Production Stop Script
 
 set -e
 
 echo "========================================="
-echo "都更計票系統 - 開發環境停止"
-echo "Urban Renewal Voting System - Development"
+echo "都更計票系統 - 正式環境停止"
+echo "Urban Renewal Voting System - Production"
 echo "========================================="
 echo ""
 
@@ -21,13 +21,12 @@ else
 fi
 
 echo "🛑 停止 Docker Compose 服務..."
-$DOCKER_COMPOSE -f docker-compose.dev.yml --env-file .env down
+$DOCKER_COMPOSE -f docker-compose.prod.yml --env-file .env down
 
 echo ""
-echo "✅ 所有後端服務已停止"
+echo "✅ 所有服務已停止"
 echo ""
 echo "💡 提示："
-echo "  - 重新啟動: ./start-dev.sh"
-echo "  - 完全清除 (包含資料): docker-compose -f docker-compose.dev.yml down -v"
-echo "  - 如果前端 (npm run dev) 還在執行，請按 Ctrl+C 停止"
+echo "  - 重新啟動: ./start-prod.sh"
+echo "  - 完全清除 (包含資料): docker-compose -f docker-compose.prod.yml down -v"
 echo ""

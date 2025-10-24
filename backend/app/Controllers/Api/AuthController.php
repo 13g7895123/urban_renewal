@@ -18,7 +18,7 @@ class AuthController extends ResourceController
         $this->userModel = new UserModel();
 
         // Load helper functions
-        helper(['auth', 'response']);
+        helper(['auth', 'response', 'audit']);
 
         // Set CORS headers
         header('Access-Control-Allow-Origin: *');
@@ -59,6 +59,8 @@ class AuthController extends ResourceController
                                    ->first();
 
             if (!$user) {
+                // 記錄失敗登入事件（使用者不存在）
+                log_auth_event('login_failure', null, $username, 'invalid_credentials');
                 return response_error('帳號或密碼錯誤', 401);
             }
 
@@ -82,6 +84,12 @@ class AuthController extends ResourceController
 
                 $this->userModel->update($user['id'], $updateData);
 
+                // 記錄失敗登入事件（密碼錯誤）
+                $failureReason = $loginAttempts >= $maxAttempts ? 'account_locked' : 'invalid_password';
+                log_auth_event('login_failure', $user['id'], $username, $failureReason, [
+                    'login_attempts' => $loginAttempts
+                ]);
+
                 return response_error('帳號或密碼錯誤', 401);
             }
 
@@ -98,6 +106,12 @@ class AuthController extends ResourceController
 
             // 儲存 session
             $this->saveUserSession($user['id'], $token, $refreshToken);
+
+            // 記錄成功登入事件
+            log_auth_event('login_success', $user['id'], null, null, [
+                'role' => $user['role'],
+                'urban_renewal_id' => $user['urban_renewal_id']
+            ]);
 
             // 移除敏感資料
             unset($user['password_hash'], $user['password_reset_token'], $user['login_attempts']);
@@ -139,7 +153,13 @@ class AuthController extends ResourceController
 
             // 使 session 失效
             $sessionModel = model('UserSessionModel');
+            $session = $sessionModel->where('session_token', $token)->first();
             $sessionModel->where('session_token', $token)->set(['is_active' => 0])->update();
+
+            // 記錄登出事件
+            if ($session) {
+                log_auth_event('logout', $session['user_id']);
+            }
 
             return $this->respond([
                 'success' => true,
@@ -206,6 +226,9 @@ class AuthController extends ResourceController
                 'refresh_expires_at' => date('Y-m-d H:i:s', time() + 604800), // 7天
                 'last_activity_at' => date('Y-m-d H:i:s')
             ]);
+
+            // 記錄 token 更新事件
+            log_auth_event('token_refresh', $user['id']);
 
             return $this->respond([
                 'success' => true,
@@ -411,6 +434,8 @@ class AuthController extends ResourceController
             'user_id' => $user['id'],
             'username' => $user['username'],
             'role' => $user['role'],
+            // 管理員的 urban_renewal_id 為 null，允許存取所有資源
+            // 一般使用者只能存取其指派的 urban_renewal_id 資源
             'urban_renewal_id' => $user['urban_renewal_id']
         ];
 

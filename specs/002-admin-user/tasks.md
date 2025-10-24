@@ -23,9 +23,9 @@
 
 **目的**: Docker cron 服務設定與測試基礎架構準備
 
-- [ ] T001 [P] 建立 Docker cron 容器 Dockerfile 在 `cron/Dockerfile`
-- [ ] T002 [P] 建立 crontab 配置檔案在 `cron/crontab`（每日 2:00AM 清理會話）
-- [ ] T003 更新 `docker-compose.yml` 新增 cron 服務配置
+- [X] T001 [P] 建立 Docker cron 容器 Dockerfile 在 `cron/Dockerfile`
+- [X] T002 [P] 建立 crontab 配置檔案在 `cron/crontab`（每日 2:00AM 清理會話）
+- [X] T003 更新 `docker-compose.yml` 新增 cron 服務配置
 
 ---
 
@@ -37,20 +37,20 @@
 
 ### 認證事件審計基礎設施（FR-024, FR-025）
 
-- [ ] T004 建立 authentication_events 資料表遷移在 `backend/app/Database/Migrations/2025-10-24-000001_CreateAuthenticationEventsTable.php`
-- [ ] T005 [P] 建立 AuthenticationEventModel 在 `backend/app/Models/AuthenticationEventModel.php`（包含 getFailedLoginsByIP、getUserAuthHistory、deleteOldEvents 方法）
-- [ ] T006 [P] 建立 audit_helper.php 在 `backend/app/Helpers/audit_helper.php`（實作 log_auth_event 函數）
-- [ ] T007 執行資料庫遷移以建立 authentication_events 資料表
+- [X] T004 建立 authentication_events 資料表遷移在 `backend/app/Database/Migrations/2025-10-24-000001_CreateAuthenticationEventsTable.php`
+- [X] T005 [P] 建立 AuthenticationEventModel 在 `backend/app/Models/AuthenticationEventModel.php`（包含 getFailedLoginsByIP、getUserAuthHistory、deleteOldEvents 方法）
+- [X] T006 [P] 建立 audit_helper.php 在 `backend/app/Helpers/audit_helper.php`（實作 log_auth_event 函數）
+- [X] T007 執行資料庫遷移以建立 authentication_events 資料表
 
 ### RBAC 權限基礎設施（FR-008, FR-014）
 
-- [ ] T008 建立 HasRbacPermissions trait 在 `backend/app/Traits/HasRbacPermissions.php`（checkResourceScope、checkRolePermission、getResourceUrbanRenewalId 方法）
-- [ ] T009 更新 `backend/app/Helpers/auth_helper.php` 新增 auth_check_resource_scope 和 auth_can_access_resource 函數
+- [X] T008 建立 HasRbacPermissions trait 在 `backend/app/Traits/HasRbacPermissions.php`（checkResourceScope、checkRolePermission、getResourceUrbanRenewalId 方法）
+- [X] T009 更新 `backend/app/Helpers/auth_helper.php` 新增 auth_check_resource_scope 和 auth_can_access_resource 函數
 
 ### 排程任務基礎設施（FR-026）
 
-- [ ] T010 建立 SessionCleanup Command 在 `backend/app/Commands/SessionCleanup.php`
-- [ ] T011 建立 AuthEventCleanup Command 在 `backend/app/Commands/AuthEventCleanup.php`
+- [X] T010 建立 SessionCleanup Command 在 `backend/app/Commands/SessionCleanup.php`
+- [X] T011 建立 AuthEventCleanup Command 在 `backend/app/Commands/AuthEventCleanup.php`
 
 **Checkpoint**: 基礎設施就緒 - 使用者故事實作現可並行開始
 
@@ -64,17 +64,17 @@
 
 ### 後端實作 - 管理員認證與審計
 
-- [ ] T012 [US1] 在 AuthController login 方法新增 log_auth_event 呼叫（成功登入事件）在 `backend/app/Controllers/Api/AuthController.php:72-78`
-- [ ] T013 [US1] 在 AuthController login 方法新增失敗登入的 log_auth_event 呼叫在 `backend/app/Controllers/Api/AuthController.php:58-62,83-87`
-- [ ] T014 [US1] 在 AuthController logout 方法新增 log_auth_event 呼叫在 `backend/app/Controllers/Api/AuthController.php:93-103`
-- [ ] T015 [US1] 在 AuthController refresh 方法新增 log_auth_event 呼叫（token 更新事件）在 `backend/app/Controllers/Api/AuthController.php:112-130`
-- [ ] T016 [US1] 驗證 AuthController 在管理員登入時正確設定 urban_renewal_id=null 在 `backend/app/Controllers/Api/AuthController.php:72`
+- [X] T012 [US1] 在 AuthController login 方法新增 log_auth_event 呼叫（成功登入事件）在 `backend/app/Controllers/Api/AuthController.php:72-78`
+- [X] T013 [US1] 在 AuthController login 方法新增失敗登入的 log_auth_event 呼叫在 `backend/app/Controllers/Api/AuthController.php:58-62,83-87`
+- [X] T014 [US1] 在 AuthController logout 方法新增 log_auth_event 呼叫在 `backend/app/Controllers/Api/AuthController.php:93-103`
+- [X] T015 [US1] 在 AuthController refresh 方法新增 log_auth_event 呼叫（token 更新事件）在 `backend/app/Controllers/Api/AuthController.php:112-130`
+- [X] T016 [US1] 在 AuthController 在管理員登入時正確設定 urban_renewal_id=null 在 `backend/app/Controllers/Api/AuthController.php:72`
 
 ### 測試 - 管理員認證與審計
 
-- [ ] T017 [P] [US1] 建立 AuthenticationEventModelTest 單元測試在 `backend/tests/Unit/Models/AuthenticationEventModelTest.php`（測試 getFailedLoginsByIP、getUserAuthHistory、deleteOldEvents）
-- [ ] T018 [P] [US1] 更新 AuthControllerTest 新增審計記錄測試在 `backend/tests/app/Controllers/Api/AuthControllerTest.php`（驗證登入成功/失敗/登出/更新都記錄事件）
-- [ ] T019 [P] [US1] 建立 AdminPermissionsTest 整合測試在 `backend/tests/Feature/RBAC/AdminPermissionsTest.php`（驗收情境 1-5）
+- [X] T017 [P] [US1] 建立 AuthenticationEventModelTest 單元測試在 `backend/tests/Unit/Models/AuthenticationEventModelTest.php`（測試 getFailedLoginsByIP、getUserAuthHistory、deleteOldEvents）
+- [X] T018 [P] [US1] 更新 AuthControllerTest 新增審計記錄測試在 `backend/tests/app/Controllers/Api/AuthControllerTest.php`（驗證登入成功/失敗/登出/更新都記錄事件）
+- [X] T019 [P] [US1] 建立 AdminPermissionsTest 整合測試在 `backend/tests/Feature/RBAC/AdminPermissionsTest.php`（驗收情境 1-5）
 
 **Checkpoint**: 管理員可登入、登出、更新 token，所有認證事件被記錄，管理員擁有無限制存取權
 
@@ -88,24 +88,24 @@
 
 ### 後端實作 - RBAC 強制執行
 
-- [ ] T020 [P] [US2] 在 UserController 新增 HasRbacPermissions trait 使用並實作權限檢查在 `backend/app/Controllers/Api/UserController.php`
-- [ ] T021 [P] [US2] 在 VotingController 新增 HasRbacPermissions trait 使用並實作權限檢查在 `backend/app/Controllers/Api/VotingController.php`
-- [ ] T022 [P] [US2] 在 MeetingController 新增 HasRbacPermissions trait 使用並實作權限檢查在 `backend/app/Controllers/Api/MeetingController.php`
-- [ ] T023 [P] [US2] 稽核並更新其他 10+ 個控制器新增 RBAC 檢查在 `backend/app/Controllers/Api/` 目錄（DocumentController、NotificationController 等）
+- [X] T020 [P] [US2] 在 UserController 新增 HasRbacPermissions trait 使用並實作權限檢查在 `backend/app/Controllers/Api/UserController.php`
+- [X] T021 [P] [US2] 在 VotingController 新增 HasRbacPermissions trait 使用並實作權限檢查在 `backend/app/Controllers/Api/VotingController.php`
+- [X] T022 [P] [US2] 在 MeetingController 新增 HasRbacPermissions trait 使用並實作權限檢查在 `backend/app/Controllers/Api/MeetingController.php`
+- [X] T023 [P] [US2] 稽核並更新其他 10+ 個控制器新增 RBAC 檢查在 `backend/app/Controllers/Api/` 目錄（DocumentController、NotificationController 等）
 
 ### 測試基礎設施
 
-- [ ] T024 [P] [US2] 建立 UserFixture 測試工廠在 `backend/tests/Support/Fixtures/UserFixture.php`（包含所有 4 種角色的測試使用者和 generateToken 方法）
-- [ ] T025 [P] [US2] 建立 UrbanRenewalFixture 測試工廠在 `backend/tests/Support/Fixtures/UrbanRenewalFixture.php`
-- [ ] T026 [P] [US2] 建立 MeetingFixture 測試工廠在 `backend/tests/Support/Fixtures/MeetingFixture.php`
+- [X] T024 [P] [US2] 建立 UserFixture 測試工廠在 `backend/tests/Support/Fixtures/UserFixture.php`（包含所有 4 種角色的測試使用者和 generateToken 方法）
+- [X] T025 [P] [US2] 建立 UrbanRenewalFixture 測試工廠在 `backend/tests/Support/Fixtures/UrbanRenewalFixture.php`
+- [X] T026 [P] [US2] 建立 MeetingFixture 測試工廠在 `backend/tests/Support/Fixtures/MeetingFixture.php`
 
 ### 測試 - RBAC 權限矩陣
 
-- [ ] T027 [P] [US2] 建立 ChairmanPermissionsTest 在 `backend/tests/Feature/RBAC/ChairmanPermissionsTest.php`（驗收情境 2、6、7）
-- [ ] T028 [P] [US2] 建立 MemberPermissionsTest 在 `backend/tests/Feature/RBAC/MemberPermissionsTest.php`（驗收情境 1、4、7）
-- [ ] T029 [P] [US2] 建立 ObserverPermissionsTest 在 `backend/tests/Feature/RBAC/ObserverPermissionsTest.php`（驗收情境 5）
-- [ ] T030 [P] [US2] 建立 CrossUrbanRenewalAccessTest 在 `backend/tests/Feature/RBAC/CrossUrbanRenewalAccessTest.php`（驗收情境 3、US4 驗收情境 5）
-- [ ] T031 [P] [US2] 建立 AuthHelperTest 單元測試在 `backend/tests/Unit/Helpers/AuthHelperTest.php`（測試 auth_check_resource_scope 和 auth_can_access_resource）
+- [X] T027 [P] [US2] 建立 ChairmanPermissionsTest 在 `backend/tests/Feature/RBAC/ChairmanPermissionsTest.php`（驗收情境 2、6、7）
+- [X] T028 [P] [US2] 建立 MemberPermissionsTest 在 `backend/tests/Feature/RBAC/MemberPermissionsTest.php`（驗收情境 1、4、7）
+- [X] T029 [P] [US2] 建立 ObserverPermissionsTest 在 `backend/tests/Feature/RBAC/ObserverPermissionsTest.php`（驗收情境 5）
+- [X] T030 [P] [US2] 建立 CrossUrbanRenewalAccessTest 在 `backend/tests/Feature/RBAC/CrossUrbanRenewalAccessTest.php`（驗收情境 3、US4 驗收情境 5）
+- [X] T031 [P] [US2] 建立 AuthHelperTest 單元測試在 `backend/tests/Unit/Helpers/AuthHelperTest.php`（測試 auth_check_resource_scope 和 auth_can_access_resource）
 
 **Checkpoint**: 一般使用者登入後僅能存取其 urban_renewal_id 資源，角色權限正確強制執行，所有 RBAC 測試通過
 
@@ -119,20 +119,20 @@
 
 ### 前端實作 - 自動 Token 更新
 
-- [ ] T032 [US3] 更新 auth.js Pinia store 新增 tokenExpiresAt 狀態和 decodeToken、isTokenExpiringSoon 輔助函數在 `frontend/stores/auth.js`
-- [ ] T033 [US3] 更新 auth.js login action 儲存 refresh_token 和 token_expires_at 到 localStorage 在 `frontend/stores/auth.js`
-- [ ] T034 [US3] 建立 token-refresh.client.js plugin 實作主動排程更新在 `frontend/plugins/token-refresh.client.js`（包含 scheduleTokenRefresh 和 watch）
-- [ ] T035 [US3] 更新 useApi.js 實作被動 401 攔截器與重試邏輯在 `frontend/composables/useApi.js`（包含 isRefreshing 旗標和 refreshPromise）
+- [X] T032 [US3] 更新 auth.js Pinia store 新增 tokenExpiresAt 狀態和 decodeToken、isTokenExpiringSoon 輔助函數在 `frontend/stores/auth.js`
+- [X] T033 [US3] 更新 auth.js login action 儲存 refresh_token 和 token_expires_at 到 localStorage 在 `frontend/stores/auth.js`
+- [X] T034 [US3] 建立 token-refresh.client.js plugin 實作主動排程更新在 `frontend/plugins/token-refresh.client.js`（包含 scheduleTokenRefresh 和 watch）
+- [X] T035 [US3] 更新 useApi.js 實作被動 401 攔截器與重試邏輯在 `frontend/composables/useApi.js`（包含 isRefreshing 旗標和 refreshPromise）
 
 ### 後端實作 - 會話清理
 
-- [ ] T036 [US3] 驗證 SessionCleanup Command 正確刪除過期會話（手動測試 `php spark session:cleanup --force`）
-- [ ] T037 [US3] 驗證 Docker cron 容器正確執行排程任務（檢查 `docker-compose logs -f cron`）
+- [X] T036 [US3] 驗證 SessionCleanup Command 正確刪除過期會話（手動測試 `php spark session:cleanup --force`）
+- [X] T037 [US3] 驗證 Docker cron 容器正確執行排程任務（檢查 `docker-compose logs -f cron`）
 
 ### 測試 - 會話管理
 
-- [ ] T038 [P] [US3] 建立 useApi.spec.js 測試在 `frontend/tests/composables/useApi.spec.js`（測試自動更新邏輯、401 重試、並發請求處理）
-- [ ] T039 [P] [US3] 更新 role.spec.js 增強測試在 `frontend/tests/middleware/role.spec.js`（更多角色情境）
+- [X] T038 [P] [US3] 建立 useApi.spec.js 測試在 `frontend/tests/composables/useApi.spec.js`（測試自動更新邏輯、401 重試、並發請求處理）
+- [X] T039 [P] [US3] 更新 role.spec.js 增強測試在 `frontend/tests/middleware/role.spec.js`（更多角色情境）
 
 **Checkpoint**: Token 在過期前自動更新（95% 成功率）、401 錯誤自動重試、登出正確清除 tokens、過期會話自動清理
 
@@ -146,14 +146,14 @@
 
 ### 後端實作 - API 端點權限驗證
 
-- [ ] T040 [US4] 在 VotingController 驗證觀察員無法提交投票（後端驗證）在 `backend/app/Controllers/Api/VotingController.php`
-- [ ] T041 [US4] 在 MeetingController 驗證會員無法建立會議（後端驗證）在 `backend/app/Controllers/Api/MeetingController.php`
-- [ ] T042 [US4] 在 UserController 驗證理事長無法管理使用者（缺少 system_admin 權限）在 `backend/app/Controllers/Api/UserController.php`
+- [X] T040 [US4] 在 VotingController 驗證觀察員無法提交投票（後端驗證）在 `backend/app/Controllers/Api/VotingController.php`
+- [X] T041 [US4] 在 MeetingController 驗證會員無法建立會議（後端驗證）在 `backend/app/Controllers/Api/MeetingController.php`
+- [X] T042 [US4] 在 UserController 驗證理事長無法管理使用者（缺少 system_admin 權限）在 `backend/app/Controllers/Api/UserController.php`
 
 ### 測試 - 路由保護與權限拒絕
 
-- [ ] T043 [P] [US4] 建立 RolePermissionTest 整合測試在 `backend/tests/app/Controllers/Api/RolePermissionTest.php`（驗收情境 1-5：路由保護、API 拒絕、403/401 回應）
-- [ ] T044 [P] [US4] 更新現有控制器測試驗證 RBAC 強制執行在 `backend/tests/Feature/Controllers/`（UserControllerTest、MeetingControllerTest、VotingControllerTest）
+- [X] T043 [P] [US4] 建立 RolePermissionTest 整合測試在 `backend/tests/app/Controllers/Api/RolePermissionTest.php`（驗收情境 1-5：路由保護、API 拒絕、403/401 回應）
+- [X] T044 [P] [US4] 更新現有控制器測試驗證 RBAC 強制執行在 `backend/tests/Feature/Controllers/`（UserControllerTest、MeetingControllerTest、VotingControllerTest）
 
 **Checkpoint**: 所有角色僅能存取其允許的路由和 API 端點，未授權嘗試被正確拒絕並返回 403/401，前後端路由保護一致
 
@@ -165,22 +165,22 @@
 
 ### 程式碼品質與測試涵蓋率
 
-- [ ] T045 [P] 執行 PHPUnit 涵蓋率報告 `XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-html build/coverage`
-- [ ] T046 [P] 驗證涵蓋率達標：Auth/RBAC 95%、Controllers 85%、Helpers 90%、Models 80%、整體 80%+
-- [ ] T047 [P] 補充缺失的單元測試以達成涵蓋率目標在 `backend/tests/Unit/`
-- [ ] T048 程式碼重構：提取重複的權限檢查邏輯到 trait 方法
+- [X] T045 [P] 執行 PHPUnit 涵蓋率報告 `XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-html build/coverage`
+- [X] T046 [P] 驗證涵蓋率達標：Auth/RBAC 95%、Controllers 85%、Helpers 90%、Models 80%、整體 80%+
+- [X] T047 [P] 補充缺失的單元測試以達成涵蓋率目標在 `backend/tests/Unit/`
+- [X] T048 程式碼重構：提取重複的權限檢查邏輯到 trait 方法
 
 ### 安全性強化
 
-- [ ] T049 [P] 驗證所有敏感欄位已從 API 回應移除（password_hash、password_reset_token、login_attempts）
-- [ ] T050 [P] 驗證所有錯誤訊息使用繁體中文
-- [ ] T051 安全性審查：檢查所有 API 端點的 JWT 驗證與 RBAC 強制執行
+- [X] T049 [P] 驗證所有敏感欄位已從 API 回應移除（password_hash、password_reset_token、login_attempts）
+- [X] T050 [P] 驗證所有錯誤訊息使用繁體中文
+- [X] T051 安全性審查：檢查所有 API 端點的 JWT 驗證與 RBAC 強制執行
 
 ### 文件與驗證
 
-- [ ] T052 [P] 更新 IMPLEMENTATION_STATUS.md 標記所有功能為完成
-- [ ] T053 [P] 建立測試執行文件記錄如何執行所有測試套件
-- [ ] T054 執行完整測試套件驗證所有使用者故事
+- [X] T052 [P] 更新 IMPLEMENTATION_STATUS.md 標記所有功能為完成
+- [X] T053 [P] 建立測試執行文件記錄如何執行所有測試套件
+- [X] T054 執行完整測試套件驗證所有使用者故事
 
 ---
 

@@ -1,30 +1,33 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version Change: INITIAL → 1.0.0
-Created: 2025-10-24
+Version Change: 1.0.0 → 1.0.1
+Amended: 2025-10-24
 
-This is the initial constitution for the Urban Renewal Voting System project.
+This is a PATCH update reinforcing existing Principle I (Traditional Chinese First).
 
-Principles Established:
-- I. Traditional Chinese First (zh-TW)
-- II. Security-First Development
-- III. Test Coverage Requirements
-- IV. API-First Architecture
-- V. Code Quality & Maintainability
+Principles Modified:
+- I. Traditional Chinese First (zh-TW) - Reinforced enforcement section with explicit
+  documentation hierarchy and verification procedures
+
+Changes Made:
+- Enhanced enforcement section in Principle I with clearer documentation hierarchy
+- Clarified MUST requirements for spec.md, plan.md, tasks.md files
+- Added explicit verification checklist for Traditional Chinese compliance
+- No semantic changes to principle intent - only clarification
 
 Templates Requiring Updates:
-- ✅ .specify/templates/spec-template.md (language requirement implicit)
-- ✅ .specify/templates/plan-template.md (constitution check added)
-- ✅ .specify/templates/tasks-template.md (aligns with principles)
+- ✅ .specify/templates/spec-template.md (already compliant)
+- ✅ .specify/templates/plan-template.md (already compliant)
+- ✅ .specify/templates/tasks-template.md (already compliant)
 
-Follow-up TODOs: None - all placeholders filled
+Follow-up TODOs: None
 
-Rationale for Version 1.0.0:
-- Initial constitution creation (MAJOR version)
-- Establishes foundational governance for project
-- Based on user requirement for Traditional Chinese documentation
-- Incorporates existing project standards from CLAUDE.md
+Rationale for Version 1.0.1:
+- PATCH version (clarification only, no semantic change)
+- User input reaffirms existing Principle I
+- Enhanced enforcement clarity without changing core requirements
+- All existing specifications remain fully compliant
 -->
 
 # Urban Renewal Voting System Constitution
@@ -34,9 +37,11 @@ Rationale for Version 1.0.0:
 
 ### I. Traditional Chinese First (繁體中文優先)
 
-**REQUIREMENT**: All specifications, plans, implementation guides, and user-facing documentation MUST be written in Traditional Chinese (zh-TW).
+**REQUIREMENT**: All specifications, plans, implementation guides, and user-facing
+documentation MUST be written in Traditional Chinese (zh-TW).
 
-**Rationale**: The target users are Taiwanese urban renewal project stakeholders (管理員、理事長、會員、觀察員). Traditional Chinese ensures:
+**Rationale**: The target users are Taiwanese urban renewal project stakeholders
+(管理員、理事長、會員、觀察員). Traditional Chinese ensures:
 - Clear communication with end users
 - Accurate translation of domain-specific terms (都更、會議、投票)
 - Compliance with local regulatory documentation standards
@@ -45,14 +50,32 @@ Rationale for Version 1.0.0:
 **Exceptions**:
 - Code comments MAY be in English where technical clarity requires it
 - Third-party library documentation remains in original language
-- Git commit messages MUST follow conventional commit format in English (feat:, fix:, docs:, etc.) per CLAUDE.md
-- API endpoint names and JSON keys remain in English for international standards compliance
+- Git commit messages MUST follow conventional commit format in English
+  (feat:, fix:, docs:, etc.) per CLAUDE.md
+- API endpoint names and JSON keys remain in English for international
+  standards compliance
 
 **Enforcement**:
-- All `.md` files in `/specs/` directory MUST use Traditional Chinese
+- **CRITICAL**: All `.md` files in `/specs/` directory MUST use Traditional Chinese
+  - `spec.md` - Feature specifications MUST be in Traditional Chinese
+  - `plan.md` - Implementation plans MUST be in Traditional Chinese
+  - `tasks.md` - Task descriptions MUST be in Traditional Chinese
+  - `research.md` - Research findings SHOULD be in Traditional Chinese
+  - `data-model.md` - Entity descriptions MUST be in Traditional Chinese
+  - `quickstart.md` - User guides MUST be in Traditional Chinese
 - User-facing error messages in code MUST use Traditional Chinese
 - Database comments and migration descriptions SHOULD use Traditional Chinese
-- Code review checklist includes language verification
+- Code review checklist includes language verification for:
+  - UI labels, tooltips, error messages
+  - API response messages shown to users
+  - Documentation files in `/specs/` directories
+
+**Verification Checklist**:
+1. All user-facing text in Traditional Chinese
+2. All `/specs/*/*.md` files in Traditional Chinese
+3. All error messages returned to users in Traditional Chinese
+4. Database migration descriptions in Traditional Chinese
+5. Commit messages in English with conventional commit format
 
 ---
 
@@ -63,13 +86,18 @@ Rationale for Version 1.0.0:
 **Non-Negotiable Security Standards**:
 - **Authentication**: JWT tokens with bcrypt password hashing (MUST use firebase/php-jwt)
 - **Authorization**: Role-based access control (RBAC) enforced at both API and route levels
-- **Session Management**: Account lockout after 5 failed attempts, 24h token expiration, 7-day refresh tokens
-- **Audit Logging**: All authentication events MUST be logged (login success/failure, logout, token refresh)
-- **Data Protection**: Sensitive fields (password_hash, tokens) MUST be removed from API responses
-- **Input Validation**: All user inputs MUST be validated and sanitized before database operations
+- **Session Management**: Account lockout after 5 failed attempts, 24h token expiration,
+  7-day refresh tokens
+- **Audit Logging**: All authentication events MUST be logged (login success/failure,
+  logout, token refresh)
+- **Data Protection**: Sensitive fields (password_hash, tokens) MUST be removed from
+  API responses
+- **Input Validation**: All user inputs MUST be validated and sanitized before database
+  operations
 - **HTTPS**: Production deployment MUST use HTTPS (development may use HTTP localhost)
 
-**Rationale**: Urban renewal voting involves sensitive stakeholder data and financial decisions. Security breaches could compromise voting integrity and user privacy.
+**Rationale**: Urban renewal voting involves sensitive stakeholder data and financial
+decisions. Security breaches could compromise voting integrity and user privacy.
 
 **Enforcement**:
 - Security review required before merging authentication/authorization changes
@@ -93,10 +121,12 @@ Rationale for Version 1.0.0:
 **Test Types Required**:
 - **Unit Tests**: Helpers, filters, models (PHPUnit for backend, Vitest for frontend)
 - **Integration Tests**: API endpoints with authentication (70% of test effort)
-- **RBAC Tests**: Permission matrix covering all role-action combinations (4 roles × 4 actions × N resources)
+- **RBAC Tests**: Permission matrix covering all role-action combinations
+  (4 roles × 4 actions × N resources)
 - **Security Tests**: SQL injection prevention, XSS prevention, unauthorized access blocking
 
-**Rationale**: Voting system correctness and security cannot be manually verified. Automated tests provide confidence in role-based access control and prevent regression.
+**Rationale**: Voting system correctness and security cannot be manually verified.
+Automated tests provide confidence in role-based access control and prevent regression.
 
 **Enforcement**:
 - CI/CD pipeline MUST run tests before merge
@@ -113,7 +143,8 @@ Rationale for Version 1.0.0:
 **Architecture Standards**:
 - **Backend**: CodeIgniter 4 RESTful API (PHP 8.1+) providing JSON responses
 - **Frontend**: Nuxt 3 SSR application (Vue 3 + Nuxt UI) consuming API
-- **Communication**: All data exchange via HTTP JSON API (no direct database access from frontend)
+- **Communication**: All data exchange via HTTP JSON API (no direct database access
+  from frontend)
 - **Authentication**: JWT tokens in Authorization headers (`Bearer <token>`)
 - **Versioning**: API endpoints MAY include version prefix (`/api/v1/`) for breaking changes
 - **Documentation**: OpenAPI/Swagger specs SHOULD be maintained in `/specs/*/contracts/`
@@ -131,7 +162,8 @@ Rationale for Version 1.0.0:
 - Error messages MUST be in Traditional Chinese
 - HTTP status codes MUST follow RESTful conventions (200, 201, 400, 401, 403, 404, 422, 500)
 
-**Rationale**: Decoupling enables independent backend/frontend development, easier testing, and potential future mobile app development.
+**Rationale**: Decoupling enables independent backend/frontend development, easier
+testing, and potential future mobile app development.
 
 **Enforcement**:
 - Frontend MUST NOT import backend code directly
@@ -152,8 +184,10 @@ Rationale for Version 1.0.0:
   - Traditional Chinese in comments for business logic explanations
 
 - **File Organization**:
-  - Backend: Controllers in `app/Controllers/Api/`, Models in `app/Models/`, business logic in Services
-  - Frontend: Pages in `pages/`, Components in `components/`, State in `stores/` (Pinia), API calls in `composables/`
+  - Backend: Controllers in `app/Controllers/Api/`, Models in `app/Models/`,
+    business logic in Services
+  - Frontend: Pages in `pages/`, Components in `components/`, State in `stores/` (Pinia),
+    API calls in `composables/`
   - Tests: Mirror source structure in `tests/` directory
 
 - **Code Reusability**:
@@ -166,7 +200,8 @@ Rationale for Version 1.0.0:
   - Complex business logic MUST have explanatory comments in Traditional Chinese
   - README files MUST exist for major features in `/specs/` directory
 
-**Rationale**: Maintainability ensures long-term project sustainability and eases onboarding of new developers.
+**Rationale**: Maintainability ensures long-term project sustainability and eases
+onboarding of new developers.
 
 **Enforcement**:
 - Code review checklist includes readability assessment
@@ -181,6 +216,7 @@ Rationale for Version 1.0.0:
 **MUST** be written in Traditional Chinese (zh-TW):
 - Feature specifications (`/specs/*/spec.md`)
 - Implementation plans (`/specs/*/plan.md`)
+- Task lists (`/specs/*/tasks.md`)
 - User guides and quickstart tutorials (`/specs/*/quickstart.md`)
 - API error messages returned to users
 - Database migration descriptions (comments in SQL)
@@ -230,7 +266,7 @@ Rationale for Version 1.0.0:
 ```
 feat(auth): add authentication event audit logging
 
-實作認證事件審計日誌功能，記錄所有登入、登出、Token 更新事件
+實作認證事件審計日誌功能,記錄所有登入、登出、Token 更新事件
 ```
 
 ---
@@ -292,4 +328,4 @@ In case of conflicts, this constitution supersedes all other documents.
 
 ---
 
-**Version**: 1.0.0 | **Ratified**: 2025-10-24 | **Last Amended**: 2025-10-24
+**Version**: 1.0.1 | **Ratified**: 2025-10-24 | **Last Amended**: 2025-10-24

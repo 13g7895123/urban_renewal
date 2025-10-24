@@ -3,9 +3,12 @@
 namespace App\Controllers\Api;
 
 use CodeIgniter\RESTful\ResourceController;
+use App\Traits\HasRbacPermissions;
 
 class SystemSettingsController extends ResourceController
 {
+    use HasRbacPermissions;
+
     protected $modelName = 'App\Models\SystemSettingModel';
     protected $format = 'json';
 

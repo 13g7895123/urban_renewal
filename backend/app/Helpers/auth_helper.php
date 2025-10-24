@@ -165,3 +165,73 @@ if (!function_exists('auth_check_permission')) {
         return in_array($permission, $permissions);
     }
 }
+
+if (!function_exists('auth_check_resource_scope')) {
+    /**
+     * 檢查使用者是否可以存取特定 urban_renewal_id 的資源
+     *
+     * @param int|null $resourceUrbanRenewalId 資源的 urban_renewal_id
+     * @param array|null $user 使用者資料（若未提供則取得當前使用者）
+     * @return bool
+     */
+    function auth_check_resource_scope(?int $resourceUrbanRenewalId, ?array $user = null): bool
+    {
+        if (!$user) {
+            $user = auth_get_current_user();
+        }
+
+        if (!$user) {
+            return false;
+        }
+
+        // 管理員可以存取所有資源
+        if ($user['role'] === 'admin') {
+            return true;
+        }
+
+        // 非管理員使用者只能存取其指派的 urban_renewal_id
+        $userUrbanRenewalId = $user['urban_renewal_id'] ?? null;
+
+        if ($userUrbanRenewalId === null) {
+            return false;
+        }
+
+        return $resourceUrbanRenewalId === $userUrbanRenewalId;
+    }
+}
+
+if (!function_exists('auth_can_access_resource')) {
+    /**
+     * 檢查使用者是否可以存取資源（結合角色權限和資源範圍）
+     *
+     * @param string $requiredPermission 需要的權限
+     * @param int|null $resourceUrbanRenewalId 資源的 urban_renewal_id（可選）
+     * @param array|null $user 使用者資料
+     * @return bool
+     */
+    function auth_can_access_resource(
+        string $requiredPermission,
+        ?int $resourceUrbanRenewalId = null,
+        ?array $user = null
+    ): bool {
+        if (!$user) {
+            $user = auth_get_current_user();
+        }
+
+        if (!$user) {
+            return false;
+        }
+
+        // 檢查角色權限
+        if (!auth_check_permission($requiredPermission, $user)) {
+            return false;
+        }
+
+        // 如果提供了 resourceUrbanRenewalId，檢查資源範圍
+        if ($resourceUrbanRenewalId !== null) {
+            return auth_check_resource_scope($resourceUrbanRenewalId, $user);
+        }
+
+        return true;
+    }
+}

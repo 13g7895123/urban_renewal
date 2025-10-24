@@ -1,42 +1,75 @@
 #!/bin/bash
+# 都更計票系統 - 正式環境啟動腳本
+# Urban Renewal Voting System - Production Startup Script
+#
+# 此腳本會啟動完整的正式環境，包含：
+#   - Frontend (前端服務)
+#   - Backend (後端 API 服務)
+#   - MariaDB (資料庫)
+#   - phpMyAdmin (資料庫管理介面)
+#   - Cron (定時任務服務)
 
-echo "Starting Urban Renewal Production Environment..."
+set -e
 
-# Check if .env.production exists
-if [ ! -f .env.production ]; then
-    echo "Error: .env.production file not found!"
+echo "========================================="
+echo "都更計票系統 - 正式環境啟動"
+echo "Urban Renewal Voting System - Production"
+echo "========================================="
+echo ""
+
+# 檢查 .env 檔案是否存在
+if [ ! -f .env ]; then
+    echo "❌ 錯誤：找不到 .env 檔案"
+    echo "請先複製 .env.example 並設定環境變數："
+    echo "  cp .env.example .env"
     exit 1
 fi
 
-# Load environment variables from .env.production
-export $(grep -v '^#' .env.production | xargs)
+# 載入環境變數
+source .env
 
-echo "Starting containers (without rebuilding)..."
+echo "🔧 環境配置："
+echo "  - 前端 Port: ${FRONTEND_PORT}"
+echo "  - 後端 Port: ${BACKEND_PORT}"
+echo "  - 資料庫 Port: ${DB_PORT}"
+echo "  - phpMyAdmin Port: ${PHPMYADMIN_PORT}"
+echo ""
 
-# Try docker compose (newer version) first, fallback to docker-compose (older version)
-if command -v docker &> /dev/null && docker compose version &> /dev/null; then
-    docker compose -f docker-compose.prod.yml --env-file .env.production up -d
-elif command -v docker-compose &> /dev/null; then
-    docker-compose -f docker-compose.prod.yml --env-file .env.production up -d
+# 檢查 Docker 是否正在執行
+if ! docker info > /dev/null 2>&1; then
+    echo "❌ 錯誤：Docker 未運行"
+    echo "請先啟動 Docker Desktop 或 Docker 服務"
+    exit 1
+fi
+
+# 檢查並使用正確的 docker compose 命令
+if docker compose version > /dev/null 2>&1; then
+    DOCKER_COMPOSE="docker compose"
+elif command -v docker-compose > /dev/null 2>&1; then
+    DOCKER_COMPOSE="docker-compose"
 else
-    echo "Error: Neither 'docker compose' nor 'docker-compose' command found."
-    echo "Please install Docker Compose first."
+    echo "❌ 錯誤：找不到 docker compose 或 docker-compose 命令"
     exit 1
 fi
 
-if [ $? -eq 0 ]; then
-    echo ""
-    echo "✓ Production environment started successfully!"
-    echo ""
-    echo "Services are available at:"
-    echo "  Frontend:    http://localhost:${FRONTEND_PORT}"
-    echo "  Backend:     http://localhost:${BACKEND_PORT}"
-    echo "  Database:    localhost:${DB_PORT}"
-    echo "  phpMyAdmin:  http://localhost:${PHPMYADMIN_PORT}"
-    echo ""
-    echo "To view logs: docker compose -f docker-compose.prod.yml logs -f"
-    echo "To stop: ./stop-production.sh"
-else
-    echo "Error: Failed to start production environment"
-    exit 1
-fi
+echo "🚀 啟動 Docker Compose (Production Mode)..."
+$DOCKER_COMPOSE -f docker-compose.prod.yml --env-file .env up -d
+
+echo ""
+echo "⏳ 等待服務啟動..."
+sleep 5
+
+echo ""
+echo "✅ 服務啟動完成！"
+echo ""
+echo "📊 服務存取資訊："
+echo "  - 前端網站: http://localhost:${FRONTEND_PORT}"
+echo "  - 後端 API: http://localhost:${BACKEND_PORT}/api"
+echo "  - phpMyAdmin: http://localhost:${PHPMYADMIN_PORT}"
+echo "  - 資料庫連線: localhost:${DB_PORT}"
+echo ""
+echo "📝 常用指令："
+echo "  - 查看服務狀態: docker-compose -f docker-compose.prod.yml ps"
+echo "  - 查看服務日誌: docker-compose -f docker-compose.prod.yml logs -f"
+echo "  - 停止所有服務: ./stop-prod.sh"
+echo ""

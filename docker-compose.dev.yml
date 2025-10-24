@@ -1,60 +1,41 @@
-# Urban Renewal Voting System - Production Environment
-# 都更計票系統 - 正式環境
+# Urban Renewal Voting System - Development Environment
+# 都更計票系統 - 開發環境
 #
-# 包含完整的前後端部署：Frontend + Backend + Database + phpMyAdmin + Cron
+# 僅包含後端部署：Backend + Database + phpMyAdmin
+# 前端使用 npm run dev 在本地執行
 #
 # 使用方式：
-#   啟動：./start-prod.sh
-#   停止：./stop-prod.sh
-#   或使用：docker-compose -f docker-compose.prod.yml --env-file .env up -d
+#   啟動：./start-dev.sh
+#   停止：./stop-dev.sh
+#   或使用：docker-compose -f docker-compose.dev.yml --env-file .env up -d
 
 services:
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: urban_renewal_frontend_prod
-    ports:
-      - "${FRONTEND_PORT}:3000"
-    environment:
-      - NODE_ENV=production
-      - HOST=0.0.0.0
-      - PORT=3000
-      - NUXT_PUBLIC_API_BASE_URL=${BACKEND_API_URL}
-      - NUXT_PUBLIC_BACKEND_URL=${BACKEND_URL}
-      - NUXT_PUBLIC_BACKEND_HOST=backend
-      - NUXT_PUBLIC_BACKEND_PORT=${BACKEND_PORT}
-    depends_on:
-      backend:
-        condition: service_started
-    restart: unless-stopped
-    networks:
-      - urban_renewal_network
-
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: urban_renewal_backend_prod
+    container_name: urban_renewal_backend_dev
     ports:
       - "${BACKEND_PORT}:8000"
     environment:
-      - CI_ENVIRONMENT=production
+      - CI_ENVIRONMENT=development
       - APP_BASE_URL=${BACKEND_URL}
       - DB_HOST=${DB_HOST}
       - DB_DATABASE=${DB_DATABASE}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - ./backend:/var/www/html
     depends_on:
       mariadb:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      - urban_renewal_network
+      - urban_renewal_dev_network
 
   mariadb:
     image: mariadb:11.4
-    container_name: urban_renewal_db_prod
+    container_name: urban_renewal_db_dev
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
       - MYSQL_DATABASE=${DB_DATABASE}
@@ -63,7 +44,7 @@ services:
     ports:
       - "${DB_PORT}:3306"
     volumes:
-      - mariadb_prod_data:/var/lib/mysql
+      - mariadb_dev_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       timeout: 10s
@@ -72,11 +53,11 @@ services:
       start_period: 60s
     restart: unless-stopped
     networks:
-      - urban_renewal_network
+      - urban_renewal_dev_network
 
   phpmyadmin:
     image: phpmyadmin:5.2
-    container_name: urban_renewal_phpmyadmin_prod
+    container_name: urban_renewal_phpmyadmin_dev
     environment:
       - PMA_HOST=mariadb
       - PMA_PORT=3306
@@ -88,13 +69,13 @@ services:
       - mariadb
     restart: unless-stopped
     networks:
-      - urban_renewal_network
+      - urban_renewal_dev_network
 
   cron:
     build:
       context: ./cron
       dockerfile: Dockerfile
-    container_name: urban_renewal_cron_prod
+    container_name: urban_renewal_cron_dev
     volumes:
       - ./backend:/var/www/html/backend
       - cron_logs:/var/log/cron
@@ -103,12 +84,12 @@ services:
       - mariadb
     restart: unless-stopped
     networks:
-      - urban_renewal_network
+      - urban_renewal_dev_network
 
 volumes:
-  mariadb_prod_data:
+  mariadb_dev_data:
   cron_logs:
 
 networks:
-  urban_renewal_network:
+  urban_renewal_dev_network:
     driver: bridge

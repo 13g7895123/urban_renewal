@@ -7,9 +7,12 @@ use App\Models\CountyModel;
 use App\Models\DistrictModel;
 use App\Models\SectionModel;
 use CodeIgniter\RESTful\ResourceController;
+use App\Traits\HasRbacPermissions;
 
 class LocationController extends ResourceController
 {
+    use HasRbacPermissions;
+
     protected $format = 'json';
 
     /**

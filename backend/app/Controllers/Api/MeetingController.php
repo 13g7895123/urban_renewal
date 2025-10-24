@@ -6,9 +6,12 @@ use App\Controllers\BaseController;
 use App\Models\MeetingModel;
 use App\Models\UrbanRenewalModel;
 use CodeIgniter\HTTP\ResponseInterface;
+use App\Traits\HasRbacPermissions;
 
 class MeetingController extends BaseController
 {
+    use HasRbacPermissions;
+
     protected $meetingModel;
     protected $urbanRenewalModel;
     protected $format = 'json';
