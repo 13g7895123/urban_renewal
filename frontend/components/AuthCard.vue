@@ -1,6 +1,6 @@
 <template>
-  <div class="flex items-start justify-center w-full h-full">
-    <UCard class="auth-card w-full max-h-full overflow-y-auto" :class="[maxWidthClass, cardClass]">
+  <div class="flex items-center justify-center w-full h-full">
+    <UCard class="auth-card w-full overflow-y-auto" style="max-height: 90vh;" :class="[maxWidthClass, cardClass]">
       <!-- Optional Header Slot -->
       <template v-if="$slots.header" #header>
         <slot name="header" />
