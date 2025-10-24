@@ -24,7 +24,17 @@
       "Bash(docker inspect:*)",
       "Bash(docker run:*)",
       "Bash(docker volume rm:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(.specify/scripts/bash/check-prerequisites.sh:*)",
+      "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
+      "Bash(.specify/scripts/bash/setup-plan.sh:*)",
+      "Bash(cat:*)",
+      "WebSearch",
+      "Bash(php spark:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:stackoverflow.com)",
+      "WebFetch(domain:dev.to)",
+      "WebFetch(domain:dinkomarinac.dev)"
     ],
     "deny": [],
     "ask": []
