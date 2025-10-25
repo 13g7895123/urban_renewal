@@ -1,5 +1,6 @@
+import { useAuthStore } from '~/stores/auth'
+
 export default defineNuxtRouteMiddleware(async (to) => {
-  const { useAuthStore } = await import('~/stores/auth')
   const authStore = useAuthStore()
   
   // Skip middleware on server-side for better SSR handling

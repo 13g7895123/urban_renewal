@@ -68,6 +68,9 @@ const handleLogin = async () => {
       password: password.value
     })
 
+    // 確保認證狀態已完全初始化
+    await authStore.initializeAuth()
+
     // Show success message
     const toast = useToast()
     toast.add({
@@ -75,6 +78,9 @@ const handleLogin = async () => {
       description: `歡迎回來，${authStore.user?.full_name || authStore.user?.username || '用戶'}！`,
       color: 'green'
     })
+
+    // 使用 nextTick 確保狀態更新完成後再導航
+    await nextTick()
 
     // Redirect based on user role
     const userRole = authStore.user?.role

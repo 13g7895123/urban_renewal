@@ -1,15 +1,22 @@
+import { useAuthStore } from '~/stores/auth'
+
 export default defineNuxtRouteMiddleware(async (to) => {
   // Skip middleware on server-side for better SSR handling
   if (process.server) {
     return
   }
 
-  // Dynamically import to avoid issues
-  const { useAuthStore } from await import('~/stores/auth')
   const authStore = useAuthStore()
 
   // 初始化認證狀態 (只在客戶端運行)
   await authStore.initializeAuth()
+
+  console.log('[Auth Middleware] Checking authentication:', {
+    isLoggedIn: authStore.isLoggedIn,
+    hasUser: !!authStore.user,
+    hasToken: !!authStore.token,
+    user: authStore.user
+  })
 
   // 檢查是否已登入且有有效token
   if (!authStore.isLoggedIn) {

@@ -78,11 +78,18 @@ export const useAuthStore = defineStore('auth', () => {
       const { post } = useApi()
       const response = await post('/auth/login', loginData)
       
+      console.log('[Auth Store] API response:', response)
+      
       if (!response.success) {
         throw new Error(response.error?.message || '登入失敗')
       }
       
-      const { user: userData, token: userToken, refresh_token, expires_in } = response.data
+      // 後端回傳格式: { success: true, data: { user, token, refresh_token, expires_in } }
+      // useApi 包裝後: { success: true, data: <後端response>, error: null }
+      const backendData = response.data.data || response.data
+      const { user: userData, token: userToken, refresh_token, expires_in } = backendData
+      
+      console.log('[Auth Store] Extracted data:', { userData, userToken, refresh_token, expires_in })
 
       // 設定用戶資料和token
       user.value = userData
@@ -109,6 +116,13 @@ export const useAuthStore = defineStore('auth', () => {
           localStorage.setItem(TOKEN_EXPIRES_AT_KEY, tokenExpiresAt.value)
         }
         localStorage.setItem(USER_KEY, JSON.stringify(userData))
+        
+        console.log('[Auth Store] Login successful, data saved:', {
+          hasUser: !!user.value,
+          hasToken: !!token.value,
+          isLoggedIn: isLoggedIn.value,
+          userData
+        })
       }
 
       return { success: true, user: userData, token: userToken }

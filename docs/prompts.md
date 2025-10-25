@@ -1,4 +1,1 @@
-1. 我點登入後出現錯誤，// Dynamically import to avoid issues
-9  |    const { useAuthStore } from await import('~/stores/auth')
-   |                           ^
-10 |    const authStore = useAuthStore()
+1. 檢查一下登入流程，我看api回傳登入成功，pinia的資料卻完全沒有更新
