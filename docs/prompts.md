@@ -1,1 +1,1 @@
-1. /tables/meeting/1/member-checkin，這個頁面的報到彈窗，彈窗還是透明底色
+1. 確認一下

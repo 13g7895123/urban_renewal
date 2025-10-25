@@ -34,7 +34,7 @@
               <label class="block text-sm font-medium text-gray-700 mb-2">所屬更新會</label>
               <UInput
                 v-if="selectedMeeting"
-                :value="selectedMeeting?.renewalGroup"
+                :value="selectedMeeting.renewalGroup || ''"
                 readonly
                 class="bg-gray-50"
               />
@@ -51,10 +51,14 @@
               <UInput v-model="meetingName" placeholder="請輸入會議名稱" />
             </div>
 
-            <!-- 會議類型 (readonly) -->
+            <!-- 會議類型 -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">會議類型</label>
-              <UInput value="會員大會" readonly class="bg-gray-50" />
+              <UInput 
+                :value="selectedMeeting?.meetingType || '會員大會'" 
+                readonly 
+                class="bg-gray-50" 
+              />
             </div>
 
             <!-- 會議日期時間 -->
@@ -316,6 +320,7 @@ const meetings = [
     id: '1',
     name: '114年度第一屆第1次會員大會',
     renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會',
+    meetingType: '會員大會',
     date: '2025年3月15日',
     time: '下午2:00:00',
     attendees: 73,
@@ -328,6 +333,7 @@ const meetings = [
     id: '2',
     name: '114年度第一屆第2次會員大會',
     renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會',
+    meetingType: '會員大會',
     date: '2025年8月9日',
     time: '下午2:00:00',
     attendees: 74,
@@ -346,11 +352,21 @@ onMounted(() => {
   } else {
     // Load existing meeting data
     selectedMeeting.value = meetings.find(m => m.id === meetingId)
+    console.log('[Basic Info] Loading meeting:', meetingId)
+    console.log('[Basic Info] Selected meeting:', selectedMeeting.value)
+    
     if (selectedMeeting.value) {
       // Initialize form fields with existing data
       meetingDateTime.value = `${selectedMeeting.value.date} ${selectedMeeting.value.time}`
       meetingLocation.value = selectedMeeting.value.location || ''
       totalObservers.value = selectedMeeting.value.totalObservers || 0
+      
+      console.log('[Basic Info] Form initialized:', {
+        renewalGroup: selectedMeeting.value.renewalGroup,
+        meetingType: selectedMeeting.value.meetingType,
+        meetingDateTime: meetingDateTime.value,
+        meetingLocation: meetingLocation.value
+      })
     }
   }
 })
