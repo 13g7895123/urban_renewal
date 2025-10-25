@@ -78,24 +78,49 @@
     </div>
 
     <!-- Attendance Selection Modal -->
-    <UModal v-model="showAttendanceModal" :ui="{ width: 'max-w-md' }">
-      <UCard>
+    <UModal 
+      v-model="showAttendanceModal" 
+      :ui="{ 
+        width: 'max-w-2xl',
+        background: 'bg-white',
+        overlay: { background: 'bg-gray-900/75' }
+      }"
+    >
+      <UCard 
+        :ui="{ 
+          background: 'bg-white',
+          ring: 'ring-0',
+          divide: '',
+          body: { 
+            base: 'bg-white',
+            padding: 'p-8'
+          },
+          header: {
+            base: 'bg-white',
+            padding: 'px-8 pt-6 pb-4'
+          },
+          footer: {
+            base: 'bg-white',
+            padding: 'px-8 pb-6 pt-4'
+          }
+        }"
+      >
         <template #header>
           <div class="flex items-center justify-between">
             <div class="flex items-center">
-              <h3 class="text-lg font-semibold text-gray-900">
+              <h3 class="text-2xl font-bold text-gray-900">
                 報到人 {{ selectedOwner?.owner_name }}
               </h3>
               <span
                 v-if="selectedOwner?.attendance_status"
-                class="ml-3 px-2 py-1 text-xs font-medium text-white bg-green-500 rounded-md relative"
+                class="ml-3 px-3 py-1 text-sm font-medium text-white bg-green-500 rounded-md relative"
               >
                 {{ getStatusText(selectedOwner.attendance_status) }}
                 <button
                   @click="clearAttendanceStatus"
-                  class="ml-1 text-white hover:text-gray-200"
+                  class="ml-2 text-white hover:text-gray-200"
                 >
-                  <Icon name="heroicons:x-mark" class="w-3 h-3" />
+                  <Icon name="heroicons:x-mark" class="w-4 h-4" />
                 </button>
               </span>
             </div>
@@ -107,47 +132,56 @@
           </div>
         </template>
 
-        <div class="space-y-4 p-6">
-          <!-- Attendance Buttons -->
-          <div class="space-y-3">
-            <UButton
-              block
-              :color="selectedOwner?.attendance_status === 'personal' ? 'blue' : 'gray'"
-              :variant="selectedOwner?.attendance_status === 'personal' ? 'solid' : 'outline'"
+        <div class="py-6">
+          <!-- Attendance Buttons - Horizontal Layout -->
+          <div class="grid grid-cols-3 gap-4">
+            <!-- 親自出席 - 藍色 -->
+            <button
               @click="setAttendanceStatus('personal')"
-              class="transition-all duration-200"
+              :class="[
+                'py-12 px-6 rounded-xl text-xl font-bold transition-all duration-200 shadow-md hover:shadow-lg',
+                selectedOwner?.attendance_status === 'personal'
+                  ? 'bg-blue-500 text-white scale-105'
+                  : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+              ]"
             >
               親自出席
-            </UButton>
+            </button>
 
-            <UButton
-              block
-              :color="selectedOwner?.attendance_status === 'delegated' ? 'blue' : 'gray'"
-              :variant="selectedOwner?.attendance_status === 'delegated' ? 'solid' : 'outline'"
+            <!-- 委託出席 - 橘色 -->
+            <button
               @click="setAttendanceStatus('delegated')"
-              class="transition-all duration-200"
+              :class="[
+                'py-12 px-6 rounded-xl text-xl font-bold transition-all duration-200 shadow-md hover:shadow-lg',
+                selectedOwner?.attendance_status === 'delegated'
+                  ? 'bg-orange-500 text-white scale-105'
+                  : 'bg-orange-50 text-orange-700 hover:bg-orange-100'
+              ]"
             >
               委託出席
-            </UButton>
+            </button>
 
-            <UButton
-              block
-              :color="selectedOwner?.attendance_status === 'cancelled' ? 'blue' : 'gray'"
-              :variant="selectedOwner?.attendance_status === 'cancelled' ? 'solid' : 'outline'"
+            <!-- 取消出席 - 灰色 -->
+            <button
               @click="setAttendanceStatus('cancelled')"
-              class="transition-all duration-200"
+              :class="[
+                'py-12 px-6 rounded-xl text-xl font-bold transition-all duration-200 shadow-md hover:shadow-lg',
+                selectedOwner?.attendance_status === 'cancelled'
+                  ? 'bg-gray-500 text-white scale-105'
+                  : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+              ]"
             >
               取消出席
-            </UButton>
+            </button>
           </div>
         </div>
 
         <template #footer>
           <div class="flex justify-end gap-3">
-            <UButton variant="outline" @click="closeAttendanceModal">
+            <UButton variant="outline" size="lg" @click="closeAttendanceModal">
               取消
             </UButton>
-            <UButton color="blue" @click="confirmAttendance">
+            <UButton color="blue" size="lg" @click="confirmAttendance">
               確認
             </UButton>
           </div>

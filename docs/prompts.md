@@ -1,1 +1,1 @@
-1. 檢查一下登入流程，我看api回傳登入成功，pinia的資料卻完全沒有更新
+1. /tables/meeting/1/member-checkin，這個頁面的報到彈窗，彈窗還是透明底色
