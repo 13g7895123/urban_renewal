@@ -281,6 +281,12 @@ const validateForm = async () => {
 
   return true
 }
+
+// Page metadata - guest only (redirect if already authenticated)
+definePageMeta({
+  middleware: 'guest',
+  layout: false
+})
 </script>
 
 <style scoped>

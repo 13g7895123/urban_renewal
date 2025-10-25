@@ -7,7 +7,8 @@
  *   role: 'admin' // or ['admin', 'chairman']
  * })
  */
-export default defineNuxtRouteMiddleware((to) => {
+export default defineNuxtRouteMiddleware(async (to) => {
+  const { useAuthStore } = await import('~/stores/auth')
   const authStore = useAuthStore()
 
   // Get required role from page meta

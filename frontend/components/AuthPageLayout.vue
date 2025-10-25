@@ -1,8 +1,8 @@
 <template>
   <NuxtLayout
     name="auth"
-    :main-class="`flex items-center justify-center h-full overflow-y-auto py-4`"
-    :logo-style="`width: auto;`"
+    main-class="flex items-center justify-center h-full overflow-y-auto py-4"
+    logo-style="width: auto;"
   >
     <template #title>
       <slot name="title">都更計票系統</slot>

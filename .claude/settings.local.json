@@ -39,7 +39,14 @@
       "Bash(docker ps:*)",
       "Bash(./stop-dev.sh:*)",
       "mcp__ide__getDiagnostics",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(/home/jarvis/.nvm/versions/node/v20.14.0/bin/npm run dev)",
+      "Bash(source ~/.bashrc)",
+      "Bash(lsof:*)",
+      "Bash(kill:*)",
+      "Bash(docker stop:*)",
+      "Bash(/home/jarvis/project/bonus/urban_renewal/test-login.sh:*)",
+      "Bash(sudo chown:*)"
     ],
     "deny": [],
     "ask": []

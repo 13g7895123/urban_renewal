@@ -1,6 +1,6 @@
 <template>
   <AuthPageLayout max-width-class="max-w-lg"
-  :card-class="{ 'mb-8': selectedAccountType === 'business' && currentStep === 2 }">
+  card-class="">
     <template #title>都更計票系統首頁</template>
 
     <template #header>
@@ -49,8 +49,19 @@ const handleLogin = async () => {
 
   loading.value = true
   try {
+    // Clear any invalid localStorage data first
+    if (process.client) {
+      const savedUser = localStorage.getItem('auth_user')
+      if (savedUser === 'undefined' || savedUser === 'null') {
+        localStorage.removeItem('auth_user')
+        localStorage.removeItem('auth_token')
+        localStorage.removeItem('auth_refresh_token')
+        localStorage.removeItem('auth_token_expires_at')
+      }
+    }
+
     const authStore = useAuthStore()
-    
+
     // Use authStore login method
     await authStore.login({
       username: username.value,
@@ -89,6 +100,12 @@ const handleLogin = async () => {
     loading.value = false
   }
 }
+
+// Page metadata - guest only (redirect if already authenticated)
+definePageMeta({
+  middleware: 'guest',
+  layout: false
+})
 </script>
 
 <style scoped>

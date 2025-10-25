@@ -70,7 +70,7 @@ export const useAuthStore = defineStore('auth', () => {
       
       // 準備登入數據 - 後端期望 'login' 字段而非 'username'
       const loginData = {
-        login: credentials.username,
+        username: credentials.username,
         password: credentials.password
       }
       
@@ -89,15 +89,25 @@ export const useAuthStore = defineStore('auth', () => {
       token.value = userToken
       refreshToken.value = refresh_token
 
-      // 計算 token 過期時間
-      const expiresAt = new Date(Date.now() + (expires_in * 1000))
-      tokenExpiresAt.value = expiresAt.toISOString()
+      // 計算 token 過期時間 - 添加錯誤處理
+      if (expires_in) {
+        const expiresAt = new Date(Date.now() + (expires_in * 1000))
+        tokenExpiresAt.value = expiresAt.toISOString()
+      } else {
+        // 如果沒有 expires_in，預設設定為 24 小時
+        const expiresAt = new Date(Date.now() + (24 * 60 * 60 * 1000))
+        tokenExpiresAt.value = expiresAt.toISOString()
+      }
 
       // 儲存到 localStorage
-      if (process.client) {
+      if (process.client && userData && userToken) {
         localStorage.setItem(TOKEN_KEY, userToken)
-        localStorage.setItem(REFRESH_TOKEN_KEY, refresh_token)
-        localStorage.setItem(TOKEN_EXPIRES_AT_KEY, tokenExpiresAt.value)
+        if (refresh_token) {
+          localStorage.setItem(REFRESH_TOKEN_KEY, refresh_token)
+        }
+        if (tokenExpiresAt.value) {
+          localStorage.setItem(TOKEN_EXPIRES_AT_KEY, tokenExpiresAt.value)
+        }
         localStorage.setItem(USER_KEY, JSON.stringify(userData))
       }
 
@@ -156,9 +166,9 @@ export const useAuthStore = defineStore('auth', () => {
       
       const userData = response.data
       user.value = userData
-      
+
       // 更新 localStorage 中的用戶資料
-      if (process.client) {
+      if (process.client && userData) {
         localStorage.setItem(USER_KEY, JSON.stringify(userData))
       }
       
@@ -179,7 +189,7 @@ export const useAuthStore = defineStore('auth', () => {
       const savedExpiresAt = localStorage.getItem(TOKEN_EXPIRES_AT_KEY)
       const savedUser = localStorage.getItem(USER_KEY)
 
-      if (savedToken && savedUser) {
+      if (savedToken && savedUser && savedUser !== 'undefined' && savedUser !== 'null') {
         try {
           token.value = savedToken
           refreshToken.value = savedRefreshToken
@@ -216,9 +226,9 @@ export const useAuthStore = defineStore('auth', () => {
       
       const updatedUser = response.data
       user.value = updatedUser
-      
+
       // 更新 localStorage
-      if (process.client) {
+      if (process.client && updatedUser) {
         localStorage.setItem(USER_KEY, JSON.stringify(updatedUser))
       }
       
@@ -266,9 +276,15 @@ export const useAuthStore = defineStore('auth', () => {
       token.value = newToken
       refreshToken.value = newRefreshToken
 
-      // 計算新的 token 過期時間
-      const expiresAt = new Date(Date.now() + (expires_in * 1000))
-      tokenExpiresAt.value = expiresAt.toISOString()
+      // 計算新的 token 過期時間 - 添加錯誤處理
+      if (expires_in) {
+        const expiresAt = new Date(Date.now() + (expires_in * 1000))
+        tokenExpiresAt.value = expiresAt.toISOString()
+      } else {
+        // 如果沒有 expires_in，預設設定為 24 小時
+        const expiresAt = new Date(Date.now() + (24 * 60 * 60 * 1000))
+        tokenExpiresAt.value = expiresAt.toISOString()
+      }
 
       // 更新 localStorage
       if (process.client) {

@@ -875,7 +875,9 @@ const fillTestData = () => {
   formData.contact_address = `台北市${['大安區', '信義區', '中山區', '松山區', '萬華區'][Math.floor(Math.random() * 5)]}${randomName}路${Math.floor(Math.random() * 999) + 1}號`
   formData.registered_address = `台北市${['中正區', '大同區', '中山區', '松山區', '大安區'][Math.floor(Math.random() * 5)]}${randomName}街${Math.floor(Math.random() * 999) + 1}號`
   formData.exclusion_type = testExcludeReasons[Math.floor(Math.random() * testExcludeReasons.length)]
-  formData.notes = `${randomName}的測試資料，更新於${new Date().toLocaleString()}`
+  const now = new Date()
+  const dateString = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`
+  formData.notes = `${randomName}的測試資料，更新於${dateString}`
 
   alert.success('測試資料已填入', '所有表單欄位已自動填入測試資料')
 }
