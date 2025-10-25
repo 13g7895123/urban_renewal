@@ -266,7 +266,8 @@ class VotingRecordModel extends Model
     }
 
     /**
-     * 匯出投票記錄
+     * 匯出投票記錄（供舊版使用）
+     * @deprecated 建議使用 getDetailedVotingRecords 和 controller 中的 generateExcelReport
      */
     public function exportVotingRecords($topicId, $format = 'csv')
     {
