@@ -82,9 +82,19 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         $routes->get('search', 'MeetingController::search');                    // GET /api/meetings/search
         $routes->get('upcoming', 'MeetingController::upcoming');                // GET /api/meetings/upcoming
         $routes->get('status-statistics', 'MeetingController::statusStatistics'); // GET /api/meetings/status-statistics
+        
+        // Meeting Attendances nested routes
+        $routes->get('(:num)/attendances', 'MeetingAttendanceController::index/$1');          // GET /api/meetings/{id}/attendances
+        $routes->post('(:num)/attendances/(:num)', 'MeetingAttendanceController::checkIn/$1/$2'); // POST /api/meetings/{meetingId}/attendances/{ownerId}
+        $routes->put('(:num)/attendances/(:num)', 'MeetingAttendanceController::update/$1/$2'); // PUT /api/meetings/{meetingId}/attendances/{ownerId}
+        $routes->get('(:num)/attendances/statistics', 'MeetingAttendanceController::statistics/$1'); // GET /api/meetings/{id}/attendances/statistics
+        $routes->post('(:num)/attendances/export', 'MeetingAttendanceController::export/$1'); // POST /api/meetings/{id}/attendances/export
+        $routes->post('(:num)/attendances/batch', 'MeetingAttendanceController::batchCheckIn/$1'); // POST /api/meetings/{id}/attendances/batch
 
         // Handle OPTIONS for specific routes
         $routes->options('(:any)', 'MeetingController::options');
+        $routes->options('(:num)/attendances', 'MeetingAttendanceController::options');
+        $routes->options('(:num)/attendances/(:any)', 'MeetingAttendanceController::options');
     });
 
     // Meeting Attendance API

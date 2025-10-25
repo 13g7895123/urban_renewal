@@ -8,6 +8,11 @@ use App\Models\MeetingModel;
 use App\Models\PropertyOwnerModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use App\Traits\HasRbacPermissions;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class MeetingAttendanceController extends BaseController
 {
@@ -415,7 +420,7 @@ class MeetingAttendanceController extends BaseController
                     ], 422);
             }
 
-            if (!$filePath) {
+            if (!$filePath || !file_exists($filePath)) {
                 return $this->fail([
                     'success' => false,
                     'error' => [
@@ -425,15 +430,13 @@ class MeetingAttendanceController extends BaseController
                 ], 500);
             }
 
-            return $this->respond([
-                'success' => true,
-                'data' => [
-                    'download_url' => base_url('api/downloads/' . basename($filePath)),
-                    'filename' => basename($filePath),
-                    'format' => $format
-                ],
-                'message' => '匯出檔案產生成功'
-            ]);
+            // 直接回傳檔案供下載
+            return $this->response
+                ->setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                ->setHeader('Content-Disposition', 'attachment; filename="' . basename($filePath) . '"')
+                ->setHeader('Cache-Control', 'max-age=0')
+                ->setBody(file_get_contents($filePath))
+                ->send();
 
         } catch (\Exception $e) {
             log_message('error', 'Export attendance error: ' . $e->getMessage());
@@ -572,9 +575,167 @@ class MeetingAttendanceController extends BaseController
      */
     private function generateExcelReport($data)
     {
-        // TODO: 實作 Excel 匯出功能
-        // 這裡需要整合 PhpSpreadsheet 或類似的套件
-        return false;
+        try {
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            
+            // 設定文件屬性
+            $spreadsheet->getProperties()
+                ->setCreator('都更計票系統')
+                ->setTitle('會議簽到結果')
+                ->setSubject('會議簽到結果匯出')
+                ->setDescription('會議簽到結果匯出報表');
+            
+            $meeting = $data['meeting'];
+            $attendances = $data['attendances'];
+            $statistics = $data['statistics'];
+            
+            // 標題行
+            $sheet->setCellValue('A1', '會議簽到結果');
+            $sheet->mergeCells('A1:D1');
+            $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
+            $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            
+            // 會議資訊
+            $row = 3;
+            $sheet->setCellValue('A' . $row, '會議名稱：');
+            $sheet->setCellValue('B' . $row, $meeting['name'] ?? '');
+            $sheet->mergeCells('B' . $row . ':D' . $row);
+            $row++;
+            
+            $sheet->setCellValue('A' . $row, '更新會：');
+            $sheet->setCellValue('B' . $row, $meeting['urban_renewal_name'] ?? '');
+            $sheet->mergeCells('B' . $row . ':D' . $row);
+            $row++;
+            
+            $sheet->setCellValue('A' . $row, '會議時間：');
+            $meetingDateTime = ($meeting['meeting_date'] ?? '') . ' ' . ($meeting['meeting_time'] ?? '');
+            $sheet->setCellValue('B' . $row, trim($meetingDateTime));
+            $sheet->mergeCells('B' . $row . ':D' . $row);
+            $row++;
+            
+            $sheet->setCellValue('A' . $row, '匯出時間：');
+            $sheet->setCellValue('B' . $row, $data['export_time']);
+            $sheet->mergeCells('B' . $row . ':D' . $row);
+            $row += 2;
+            
+            // 統計資訊
+            if ($statistics) {
+                $sheet->setCellValue('A' . $row, '出席統計');
+                $sheet->mergeCells('A' . $row . ':D' . $row);
+                $sheet->getStyle('A' . $row)->getFont()->setBold(true)->setSize(14);
+                $row++;
+                
+                $sheet->setCellValue('A' . $row, '親自出席：');
+                $sheet->setCellValue('B' . $row, $statistics['present_count'] ?? 0);
+                $row++;
+                
+                $sheet->setCellValue('A' . $row, '委託出席：');
+                $sheet->setCellValue('B' . $row, $statistics['proxy_count'] ?? 0);
+                $row++;
+                
+                $sheet->setCellValue('A' . $row, '未出席：');
+                $sheet->setCellValue('B' . $row, $statistics['absent_count'] ?? 0);
+                $row++;
+                
+                $sheet->setCellValue('A' . $row, '總人數：');
+                $sheet->setCellValue('B' . $row, $statistics['total_count'] ?? 0);
+                $row += 2;
+            }
+            
+            // 簽到明細表頭
+            $sheet->setCellValue('A' . $row, '簽到明細');
+            $sheet->mergeCells('A' . $row . ':E' . $row);
+            $sheet->getStyle('A' . $row)->getFont()->setBold(true)->setSize(14);
+            $row++;
+            
+            $headerRow = $row;
+            $headers = ['編號', '所有權人姓名', '出席狀態', '委託代理人', '報到時間'];
+            $columns = ['A', 'B', 'C', 'D', 'E'];
+            
+            foreach ($columns as $index => $col) {
+                $sheet->setCellValue($col . $headerRow, $headers[$index]);
+                $sheet->getStyle($col . $headerRow)->getFont()->setBold(true);
+                $sheet->getStyle($col . $headerRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle($col . $headerRow)->getFill()
+                    ->setFillType(Fill::FILL_SOLID)
+                    ->getStartColor()->setARGB('FFE0E0E0');
+            }
+            
+            // 設定邊框
+            $sheet->getStyle('A' . $headerRow . ':E' . $headerRow)->getBorders()->getAllBorders()
+                ->setBorderStyle(Border::BORDER_THIN);
+            
+            $row++;
+            
+            // 簽到資料
+            $dataStartRow = $row;
+            foreach ($attendances as $index => $attendance) {
+                $sheet->setCellValue('A' . $row, $index + 1);
+                $sheet->setCellValue('B' . $row, $attendance['owner_name'] ?? '');
+                
+                // 出席狀態
+                $statusText = '';
+                switch ($attendance['attendance_type'] ?? '') {
+                    case 'present':
+                        $statusText = '親自出席';
+                        break;
+                    case 'proxy':
+                        $statusText = '委託出席';
+                        break;
+                    case 'absent':
+                        $statusText = '未出席';
+                        break;
+                    default:
+                        $statusText = '未報到';
+                }
+                $sheet->setCellValue('C' . $row, $statusText);
+                
+                $sheet->setCellValue('D' . $row, $attendance['proxy_person'] ?? '');
+                $sheet->setCellValue('E' . $row, $attendance['check_in_time'] ?? '');
+                
+                // 設定對齊
+                $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle('C' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                
+                $row++;
+            }
+            
+            // 設定資料區域邊框
+            if ($row > $dataStartRow) {
+                $sheet->getStyle('A' . $dataStartRow . ':E' . ($row - 1))->getBorders()->getAllBorders()
+                    ->setBorderStyle(Border::BORDER_THIN);
+            }
+            
+            // 自動調整欄寬
+            foreach ($columns as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+            
+            // 確保目錄存在
+            $exportDir = WRITEPATH . 'exports';
+            if (!is_dir($exportDir)) {
+                mkdir($exportDir, 0755, true);
+            }
+            
+            // 產生檔案名稱（避免亂碼，使用英文和日期）
+            $filename = 'attendance_' . ($meeting['id'] ?? 'unknown') . '_' . date('YmdHis') . '.xlsx';
+            $filePath = $exportDir . '/' . $filename;
+            
+            // 寫入檔案
+            $writer = new Xlsx($spreadsheet);
+            $writer->save($filePath);
+            
+            // 清理記憶體
+            $spreadsheet->disconnectWorksheets();
+            unset($spreadsheet);
+            
+            return $filePath;
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Generate Excel report error: ' . $e->getMessage());
+            return false;
+        }
     }
 
     /**

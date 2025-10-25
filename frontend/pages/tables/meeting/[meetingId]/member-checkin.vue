@@ -320,30 +320,45 @@ const goBack = () => {
   router.push('/tables/meeting')
 }
 
-const exportCheckinResults = () => {
-  console.log('Exporting check-in results...')
-  // TODO: Implement export functionality
+const exportCheckinResults = async () => {
+  try {
+    const config = useRuntimeConfig()
+    const backendUrl = config.public.backendUrl || 'http://localhost:8000'
+    
+    // 呼叫後端 API 匯出 Excel
+    const response = await fetch(`${backendUrl}/api/meetings/${meetingId}/attendances/export`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        format: 'excel'
+      })
+    })
 
-  // Generate CSV data
-  const csvData = propertyOwners.value.map((owner, index) => {
-    return [
-      String(index + 1).padStart(2, '0'),
-      owner.owner_name,
-      getStatusText(owner.attendance_status) || '未報到'
-    ].join(',')
-  })
+    if (!response.ok) {
+      throw new Error('匯出失敗')
+    }
 
-  const csvContent = '編號,姓名,出席狀態\n' + csvData.join('\n')
-
-  // Create and download CSV file
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  const link = document.createElement('a')
-  const url = URL.createObjectURL(blob)
-  link.setAttribute('href', url)
-  link.setAttribute('download', `會員報到結果_${meeting.value.name}.csv`)
-  link.style.visibility = 'hidden'
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
+    // 取得檔案 blob
+    const blob = await response.blob()
+    
+    // 建立下載連結
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `會員報到結果_${meeting.value.name}_${new Date().getTime()}.xlsx`
+    document.body.appendChild(link)
+    link.click()
+    
+    // 清理
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    
+    console.log('匯出成功')
+  } catch (error) {
+    console.error('匯出簽到結果失敗:', error)
+    alert('匯出失敗，請稍後再試')
+  }
 }
 </script>
