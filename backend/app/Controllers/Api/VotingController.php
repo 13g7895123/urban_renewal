@@ -4,6 +4,7 @@ namespace App\Controllers\Api;
 
 use CodeIgniter\RESTful\ResourceController;
 use App\Traits\HasRbacPermissions;
+use App\Services\ExcelExportService;
 
 class VotingController extends ResourceController
 {
@@ -438,103 +439,59 @@ class VotingController extends ResourceController
      */
     private function generateExcelReport($data, $topicId)
     {
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
+        $excel = new ExcelExportService();
+        $statistics = $data['statistics'];
 
         // 設定文件屬性
-        $spreadsheet->getProperties()
-            ->setCreator('都市更新會管理系統')
-            ->setTitle('投票記錄報表')
-            ->setSubject('投票記錄')
-            ->setDescription('投票議題記錄匯出');
+        $excel->setDocumentProperties(
+            '都市更新會管理系統',
+            '投票記錄報表',
+            '投票記錄',
+            '投票議題記錄匯出'
+        );
 
         // 設定標題
-        $sheet->setCellValue('A1', '投票記錄報表');
-        $sheet->mergeCells('A1:G1');
-        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
-        $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $excel->setTitle('投票記錄報表', 'A', 'G');
 
         // 議題資訊
-        $row = 3;
-        $sheet->setCellValue('A' . $row, '議題名稱：' . ($data['topic']['title'] ?? ''));
-        $row++;
-        $sheet->setCellValue('A' . $row, '議題說明：' . ($data['topic']['description'] ?? ''));
-        $row++;
-        $sheet->setCellValue('A' . $row, '會議名稱：' . ($data['meeting']['name'] ?? ''));
-        $row += 2;
+        $excel->addEmptyRows(1);
+        $excel->addInfoRow('議題名稱', $data['topic']['title'] ?? '', 'A', 'B', 'G');
+        $excel->addInfoRow('議題說明', $data['topic']['description'] ?? '', 'A', 'B', 'G');
+        $excel->addInfoRow('會議名稱', $data['meeting']['name'] ?? '', 'A', 'B', 'G');
 
         // 統計資訊
-        $sheet->setCellValue('A' . $row, '投票統計');
-        $sheet->getStyle('A' . $row)->getFont()->setBold(true)->setSize(14);
-        $row++;
+        $excel->addEmptyRows(1);
+        $excel->addSectionTitle('投票統計');
 
-        $statistics = $data['statistics'];
-        $sheet->setCellValue('A' . $row, '選項');
-        $sheet->setCellValue('B' . $row, '票數');
-        $sheet->setCellValue('C' . $row, '土地面積權重');
-        $sheet->setCellValue('D' . $row, '建物面積權重');
-        $sheet->getStyle('A' . $row . ':D' . $row)->getFont()->setBold(true);
-        $sheet->getStyle('A' . $row . ':D' . $row)->getFill()
-            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
-            ->getStartColor()->setARGB('FFD3D3D3');
-        $row++;
+        // 統計表頭
+        $excel->addTableHeader(['選項', '票數', '土地面積權重', '建物面積權重']);
 
-        // 同意票
-        $sheet->setCellValue('A' . $row, '同意');
-        $sheet->setCellValue('B' . $row, $statistics['agree_votes'] ?? 0);
-        $sheet->setCellValue('C' . $row, number_format($statistics['agree_land_area'] ?? 0, 2));
-        $sheet->setCellValue('D' . $row, number_format($statistics['agree_building_area'] ?? 0, 2));
-        $row++;
-
-        // 不同意票
-        $sheet->setCellValue('A' . $row, '不同意');
-        $sheet->setCellValue('B' . $row, $statistics['disagree_votes'] ?? 0);
-        $sheet->setCellValue('C' . $row, number_format($statistics['disagree_land_area'] ?? 0, 2));
-        $sheet->setCellValue('D' . $row, number_format($statistics['disagree_building_area'] ?? 0, 2));
-        $row++;
-
-        // 棄權票
-        $sheet->setCellValue('A' . $row, '棄權');
-        $sheet->setCellValue('B' . $row, $statistics['abstain_votes'] ?? 0);
-        $sheet->setCellValue('C' . $row, number_format($statistics['abstain_land_area'] ?? 0, 2));
-        $sheet->setCellValue('D' . $row, number_format($statistics['abstain_building_area'] ?? 0, 2));
-        $row++;
+        // 統計資料
+        $statisticsData = [
+            ['同意', $statistics['agree_votes'] ?? 0, number_format($statistics['agree_land_area'] ?? 0, 2), number_format($statistics['agree_building_area'] ?? 0, 2)],
+            ['不同意', $statistics['disagree_votes'] ?? 0, number_format($statistics['disagree_land_area'] ?? 0, 2), number_format($statistics['disagree_building_area'] ?? 0, 2)],
+            ['棄權', $statistics['abstain_votes'] ?? 0, number_format($statistics['abstain_land_area'] ?? 0, 2), number_format($statistics['abstain_building_area'] ?? 0, 2)]
+        ];
+        $excel->addTableData($statisticsData, true, 4);
 
         // 總計
-        $sheet->setCellValue('A' . $row, '總計');
-        $sheet->setCellValue('B' . $row, $statistics['total_votes'] ?? 0);
-        $sheet->setCellValue('C' . $row, number_format($statistics['total_land_area'] ?? 0, 2));
-        $sheet->setCellValue('D' . $row, number_format($statistics['total_building_area'] ?? 0, 2));
-        $sheet->getStyle('A' . $row . ':D' . $row)->getFont()->setBold(true);
-        $row += 2;
+        $excel->addRow(
+            ['總計', $statistics['total_votes'] ?? 0, number_format($statistics['total_land_area'] ?? 0, 2), number_format($statistics['total_building_area'] ?? 0, 2)],
+            true,
+            true,
+            4
+        );
 
-        // 詳細投票記錄表頭
-        $sheet->setCellValue('A' . $row, '詳細投票記錄');
-        $sheet->getStyle('A' . $row)->getFont()->setBold(true)->setSize(14);
-        $row++;
+        // 詳細投票記錄
+        $excel->addEmptyRows(1);
+        $excel->addSectionTitle('詳細投票記錄');
 
-        $headers = ['投票時間', '所有權人姓名', '身分證字號', '投票選擇', '土地面積權重', '建物面積權重', '備註'];
-        $col = 'A';
-        foreach ($headers as $header) {
-            $sheet->setCellValue($col . $row, $header);
-            $col++;
-        }
+        // 詳細記錄表頭
+        $excel->addTableHeader(['投票時間', '所有權人姓名', '身分證字號', '投票選擇', '土地面積權重', '建物面積權重', '備註']);
 
-        // 設定表頭樣式
-        $sheet->getStyle('A' . $row . ':G' . $row)->getFont()->setBold(true);
-        $sheet->getStyle('A' . $row . ':G' . $row)->getFill()
-            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
-            ->getStartColor()->setARGB('FFD3D3D3');
-
-        // 設定表頭邊框
-        $headerRow = $row;
-        $sheet->getStyle('A' . $row . ':G' . $row)->getBorders()->getAllBorders()
-            ->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-
-        $row++;
-
-        // 填入投票記錄資料
+        // 詳細記錄資料
         $records = $data['records'];
+        $recordsData = [];
         foreach ($records as $record) {
             $voteChoiceText = '';
             switch ($record['vote_choice']) {
@@ -551,38 +508,23 @@ class VotingController extends ResourceController
                     $voteChoiceText = $record['vote_choice'];
             }
 
-            $sheet->setCellValue('A' . $row, $record['vote_time']);
-            $sheet->setCellValue('B' . $row, $record['owner_name']);
-            $sheet->setCellValue('C' . $row, $record['id_number']);
-            $sheet->setCellValue('D' . $row, $voteChoiceText);
-            $sheet->setCellValue('E' . $row, number_format($record['land_area_weight'] ?? 0, 2));
-            $sheet->setCellValue('F' . $row, number_format($record['building_area_weight'] ?? 0, 2));
-            $sheet->setCellValue('G' . $row, $record['notes'] ?? '');
-
-            // 設定資料邊框
-            $sheet->getStyle('A' . $row . ':G' . $row)->getBorders()->getAllBorders()
-                ->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-
-            $row++;
+            $recordsData[] = [
+                $record['vote_time'],
+                $record['owner_name'],
+                $record['id_number'],
+                $voteChoiceText,
+                number_format($record['land_area_weight'] ?? 0, 2),
+                number_format($record['building_area_weight'] ?? 0, 2),
+                $record['notes'] ?? ''
+            ];
         }
+        $excel->addTableData($recordsData, true, 7);
 
         // 自動調整欄寬
-        foreach (range('A', 'G') as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
-        }
+        $excel->autoSizeColumns('A', 'G');
 
         // 儲存檔案
         $filename = '投票記錄_' . $topicId . '_' . date('YmdHis') . '.xlsx';
-        $filepath = WRITEPATH . 'exports/' . $filename;
-
-        // 確保目錄存在
-        if (!is_dir(WRITEPATH . 'exports')) {
-            mkdir(WRITEPATH . 'exports', 0755, true);
-        }
-
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-        $writer->save($filepath);
-
-        return $filepath;
+        return $excel->saveToFile($filename);
     }
 }

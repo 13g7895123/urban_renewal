@@ -6,6 +6,8 @@ use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\HTTP\ResponseInterface;
 use JsonException;
 use App\Traits\HasRbacPermissions;
+use App\Services\ExcelExportService;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class PropertyOwnerController extends ResourceController
 {
@@ -559,67 +561,57 @@ class PropertyOwnerController extends ResourceController
             $urbanRenewal = $urbanRenewalModel->find($urbanRenewalId);
             $urbanRenewalName = $urbanRenewal['name'] ?? '所有權人';
 
-            // Create new spreadsheet
-            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-            $sheet = $spreadsheet->getActiveSheet();
+            // Create Excel export
+            $excel = new ExcelExportService();
 
-            // Set headers
-            $headers = [
-                'A1' => '所有權人編號',
-                'B1' => '所有權人名稱',
-                'C1' => '身分證字號',
-                'D1' => '電話1',
-                'E1' => '電話2',
-                'F1' => '聯絡地址',
-                'G1' => '戶籍地址',
-                'H1' => '排除類型',
-                'I1' => '備註'
-            ];
+            // Set document properties
+            $excel->setDocumentProperties(
+                '都市更新會管理系統',
+                '所有權人清單',
+                '所有權人資料匯出',
+                '所有權人資料匯出'
+            );
 
-            foreach ($headers as $cell => $header) {
-                $sheet->setCellValue($cell, $header);
-                $sheet->getStyle($cell)->getFont()->setBold(true);
-                $sheet->getStyle($cell)->getFill()
-                    ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
-                    ->getStartColor()->setARGB('FFE0E0E0');
+            // Add table header
+            $excel->addTableHeader([
+                '所有權人編號',
+                '所有權人名稱',
+                '身分證字號',
+                '電話1',
+                '電話2',
+                '聯絡地址',
+                '戶籍地址',
+                '排除類型',
+                '備註'
+            ]);
+
+            // Prepare data
+            $data = [];
+            foreach ($propertyOwners as $owner) {
+                $data[] = [
+                    $owner['owner_code'] ?? '',
+                    $owner['name'] ?? '',
+                    $owner['id_number'] ?? '',
+                    $owner['phone1'] ?? '',
+                    $owner['phone2'] ?? '',
+                    $owner['contact_address'] ?? '',
+                    $owner['household_address'] ?? '',
+                    $owner['exclusion_type'] ?? '',
+                    $owner['notes'] ?? ''
+                ];
             }
+
+            // Add data
+            $excel->addTableData($data, true, 9);
 
             // Auto-size columns
-            foreach (range('A', 'I') as $column) {
-                $sheet->getColumnDimension($column)->setAutoSize(true);
-            }
-
-            // Fill data
-            $row = 2;
-            foreach ($propertyOwners as $owner) {
-                $sheet->setCellValue('A' . $row, $owner['owner_code'] ?? '');
-                $sheet->setCellValue('B' . $row, $owner['name'] ?? '');
-                $sheet->setCellValue('C' . $row, $owner['id_number'] ?? '');
-                $sheet->setCellValue('D' . $row, $owner['phone1'] ?? '');
-                $sheet->setCellValue('E' . $row, $owner['phone2'] ?? '');
-                $sheet->setCellValue('F' . $row, $owner['contact_address'] ?? '');
-                $sheet->setCellValue('G' . $row, $owner['household_address'] ?? '');
-                $sheet->setCellValue('H' . $row, $owner['exclusion_type'] ?? '');
-                $sheet->setCellValue('I' . $row, $owner['notes'] ?? '');
-                $row++;
-            }
+            $excel->autoSizeColumns('A', 'I');
 
             // Generate filename with date
             $filename = '所有權人_' . $urbanRenewalName . '_' . date('Ymd') . '.xlsx';
 
-            // Create writer
-            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-
-            // Set headers for download
-            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            header('Content-Disposition: attachment;filename="' . $filename . '"');
-            header('Cache-Control: max-age=0');
-            header('Access-Control-Allow-Origin: *');
-            header('Access-Control-Expose-Headers: Content-Disposition');
-
-            // Output file
-            $writer->save('php://output');
-            exit;
+            // Download the file
+            $excel->download($filename);
 
         } catch (\Exception $e) {
             log_message('error', 'Error exporting property owners: ' . $e->getMessage());
@@ -636,69 +628,61 @@ class PropertyOwnerController extends ResourceController
     public function downloadTemplate(): ResponseInterface
     {
         try {
-            // Create new spreadsheet
-            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-            $sheet = $spreadsheet->getActiveSheet();
+            // Create Excel export
+            $excel = new ExcelExportService();
 
-            // Set headers
-            $headers = [
-                'A1' => '所有權人編號',
-                'B1' => '所有權人名稱',
-                'C1' => '身分證字號',
-                'D1' => '電話1',
-                'E1' => '電話2',
-                'F1' => '聯絡地址',
-                'G1' => '戶籍地址',
-                'H1' => '排除類型',
-                'I1' => '備註'
-            ];
+            // Set document properties
+            $excel->setDocumentProperties(
+                '都市更新會管理系統',
+                '所有權人匯入範本',
+                '所有權人匯入範本',
+                '所有權人資料匯入範本'
+            );
 
-            foreach ($headers as $cell => $header) {
-                $sheet->setCellValue($cell, $header);
-                $sheet->getStyle($cell)->getFont()->setBold(true);
-                $sheet->getStyle($cell)->getFill()
-                    ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
-                    ->getStartColor()->setARGB('FFE0E0E0');
-            }
+            // Add table header
+            $excel->addTableHeader([
+                '所有權人編號',
+                '所有權人名稱',
+                '身分證字號',
+                '電話1',
+                '電話2',
+                '聯絡地址',
+                '戶籍地址',
+                '排除類型',
+                '備註'
+            ]);
 
             // Add example row (will be skipped during import)
-            $sheet->setCellValue('A2', 'OW001');
-            $sheet->setCellValue('B2', '王小明');
-            $sheet->setCellValue('C2', 'A123456789');
-            $sheet->setCellValue('D2', '0912345678');
-            $sheet->setCellValue('E2', '02-12345678');
-            $sheet->setCellValue('F2', '台北市信義區信義路一段123號');
-            $sheet->setCellValue('G2', '台北市大安區和平東路二段456號');
-            $sheet->setCellValue('H2', '');
-            $sheet->setCellValue('I2', '範例資料（此列不會被匯入）');
+            $exampleData = [
+                [
+                    'OW001',
+                    '王小明',
+                    'A123456789',
+                    '0912345678',
+                    '02-12345678',
+                    '台北市信義區信義路一段123號',
+                    '台北市大安區和平東路二段456號',
+                    '',
+                    '範例資料（此列不會被匯入）'
+                ]
+            ];
+            $excel->addTableData($exampleData, true, 9);
 
-            // Style example row as lighter text with gray background
+            // Style the example row with lighter text
+            $sheet = $excel->getSheet();
             $sheet->getStyle('A2:I2')->getFont()->getColor()->setARGB('FFAAAAAA');
             $sheet->getStyle('A2:I2')->getFill()
-                ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                ->setFillType(Fill::FILL_SOLID)
                 ->getStartColor()->setARGB('FFF5F5F5');
 
             // Auto-size columns
-            foreach (range('A', 'I') as $column) {
-                $sheet->getColumnDimension($column)->setAutoSize(true);
-            }
+            $excel->autoSizeColumns('A', 'I');
 
             // Generate filename
             $filename = '所有權人匯入範本_' . date('Ymd') . '.xlsx';
 
-            // Create writer
-            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-
-            // Set headers for download
-            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            header('Content-Disposition: attachment;filename="' . $filename . '"');
-            header('Cache-Control: max-age=0');
-            header('Access-Control-Allow-Origin: *');
-            header('Access-Control-Expose-Headers: Content-Disposition');
-
-            // Output file
-            $writer->save('php://output');
-            exit;
+            // Download the file
+            $excel->download($filename);
 
         } catch (\Exception $e) {
             log_message('error', 'Error generating template: ' . $e->getMessage());
