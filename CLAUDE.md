@@ -34,3 +34,4 @@ This project uses Nuxt 3 with Nuxt UI for the frontend components. The login pag
 - Avoid mentioning co-authors, collaboration tools, or external assistance
 - Use clear, concise descriptions of what was implemented or changed
 - Follow conventional commit format when possible (feat:, fix:, docs:, style:, etc.)
+- reply with zh-tw
