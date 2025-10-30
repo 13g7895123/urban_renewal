@@ -14,7 +14,15 @@
       </div>
 
       <UCard>
-        <div class="space-y-6 p-6">
+        <!-- Loading state -->
+        <div v-if="loading" class="flex items-center justify-center p-12">
+          <div class="text-center">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+            <p class="mt-4 text-gray-600">載入中...</p>
+          </div>
+        </div>
+
+        <div v-else class="space-y-6 p-6">
           <!-- Test Data Button -->
           <div v-if="!selectedTopic" class="flex justify-end">
             <UButton
@@ -218,9 +226,14 @@ const route = useRoute()
 const meetingId = route.params.meetingId
 const topicId = route.params.topicId
 
-// Get topic and meeting data (this would typically come from an API)
+// Import API composables
+const { getMeeting } = useMeetings()
+const { getVotingTopic } = useVotingTopics()
+
+// Get topic and meeting data from API
 const selectedTopic = ref(null)
 const meetingInfo = ref(null)
+const loading = ref(true)
 
 // Form fields
 const topicName = ref('')
@@ -280,37 +293,65 @@ const mockMeeting = {
   renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會'
 }
 
-onMounted(() => {
-  meetingInfo.value = mockMeeting
+onMounted(async () => {
+  loading.value = true
 
-  if (topicId === 'new') {
-    // Creating new topic
-    selectedTopic.value = null
-    resetFormFields()
-  } else {
-    // Load existing topic data
-    selectedTopic.value = mockTopics.find(t => t.id === topicId)
-    if (selectedTopic.value) {
-      // Initialize form fields with existing data
-      topicName.value = selectedTopic.value.name
-      isAnonymous.value = selectedTopic.value.isAnonymous
-      maxSelections.value = selectedTopic.value.maxSelections
-      acceptedCount.value = selectedTopic.value.acceptedCount
-      alternateCount.value = selectedTopic.value.alternateCount
-      landAreaRatioNumerator.value = selectedTopic.value.landAreaRatioNumerator
-      landAreaRatioDenominator.value = selectedTopic.value.landAreaRatioDenominator
-      buildingAreaRatioNumerator.value = selectedTopic.value.buildingAreaRatioNumerator
-      buildingAreaRatioDenominator.value = selectedTopic.value.buildingAreaRatioDenominator
-      peopleRatioNumerator.value = selectedTopic.value.peopleRatioNumerator
-      peopleRatioDenominator.value = selectedTopic.value.peopleRatioDenominator
-      remarks.value = selectedTopic.value.remarks
-
-      // Add sample property owners for demo
-      propertyOwners.value = [
-        { name: '張三', isPinned: false },
-        { name: '李四', isPinned: true }
-      ]
+  try {
+    // Fetch meeting information
+    const meetingResult = await getMeeting(meetingId)
+    if (meetingResult.success && meetingResult.data) {
+      const meeting = meetingResult.data
+      meetingInfo.value = {
+        name: meeting.name || '',
+        dateTime: meeting.meeting_date && meeting.meeting_time
+          ? `${meeting.meeting_date} ${meeting.meeting_time}`
+          : '',
+        renewalGroup: meeting.urban_renewal_name || ''
+      }
     }
+
+    if (topicId === 'new') {
+      // Creating new topic
+      selectedTopic.value = null
+      resetFormFields()
+    } else {
+      // Load existing topic data
+      const topicResult = await getVotingTopic(topicId)
+      if (topicResult.success && topicResult.data) {
+        selectedTopic.value = topicResult.data
+
+        // Initialize form fields with existing data
+        topicName.value = selectedTopic.value.title || selectedTopic.value.name || ''
+        isAnonymous.value = selectedTopic.value.is_anonymous || selectedTopic.value.isAnonymous || false
+        maxSelections.value = selectedTopic.value.max_selections || selectedTopic.value.maxSelections || 1
+        acceptedCount.value = selectedTopic.value.accepted_count || selectedTopic.value.acceptedCount || 1
+        alternateCount.value = selectedTopic.value.alternate_count || selectedTopic.value.alternateCount || 0
+        landAreaRatioNumerator.value = selectedTopic.value.land_area_ratio_numerator || selectedTopic.value.landAreaRatioNumerator || 0
+        landAreaRatioDenominator.value = selectedTopic.value.land_area_ratio_denominator || selectedTopic.value.landAreaRatioDenominator || 0
+        buildingAreaRatioNumerator.value = selectedTopic.value.building_area_ratio_numerator || selectedTopic.value.buildingAreaRatioNumerator || 0
+        buildingAreaRatioDenominator.value = selectedTopic.value.building_area_ratio_denominator || selectedTopic.value.buildingAreaRatioDenominator || 0
+        peopleRatioNumerator.value = selectedTopic.value.people_ratio_numerator || selectedTopic.value.peopleRatioNumerator || 0
+        peopleRatioDenominator.value = selectedTopic.value.people_ratio_denominator || selectedTopic.value.peopleRatioDenominator || 0
+        remarks.value = selectedTopic.value.remarks || selectedTopic.value.notes || ''
+
+        // Load property owners if available
+        if (selectedTopic.value.options && Array.isArray(selectedTopic.value.options)) {
+          propertyOwners.value = selectedTopic.value.options.map(option => ({
+            name: option.name || option.option_name || '',
+            isPinned: option.is_pinned || option.isPinned || false
+          }))
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error loading data:', error)
+    // Fallback to mock data if API fails
+    meetingInfo.value = mockMeeting
+    if (topicId !== 'new') {
+      selectedTopic.value = mockTopics.find(t => t.id === topicId)
+    }
+  } finally {
+    loading.value = false
   }
 })
 

@@ -15,10 +15,14 @@ class UrbanRenewalModel extends Model
 
     protected $allowedFields = [
         'name',
+        'tax_id',
         'area',
         'member_count',
         'chairman_name',
         'chairman_phone',
+        'company_phone',
+        'max_renewal_count',
+        'max_issue_count',
         'address',
         'representative'
     ];

@@ -46,7 +46,9 @@
       "Bash(kill:*)",
       "Bash(docker stop:*)",
       "Bash(/home/jarvis/project/bonus/urban_renewal/test-login.sh:*)",
-      "Bash(sudo chown:*)"
+      "Bash(sudo chown:*)",
+      "Bash(npm install:*)",
+      "Bash(npx playwright install chromium)"
     ],
     "deny": [],
     "ask": []

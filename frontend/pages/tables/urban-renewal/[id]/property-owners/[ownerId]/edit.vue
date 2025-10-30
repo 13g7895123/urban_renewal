@@ -607,13 +607,13 @@ const fetchPropertyOwner = async () => {
       Object.assign(formData, {
         id: data.id,
         urban_renewal_id: data.urban_renewal_id,
-        owner_name: data.owner_name || '',
-        identity_number: data.identity_number || '',
+        owner_name: data.name || '',  // Backend returns 'name', not 'owner_name'
+        identity_number: data.id_number || '',  // Backend returns 'id_number', not 'identity_number'
         owner_code: data.owner_code || '',
         phone1: data.phone1 || '',
         phone2: data.phone2 || '',
         contact_address: data.contact_address || '',
-        registered_address: data.registered_address || '',
+        registered_address: data.household_address || '',  // Backend returns 'household_address', not 'registered_address'
         exclusion_type: data.exclusion_type || '',
         buildings: data.buildings || [],
         lands: data.lands || [],
@@ -806,6 +806,7 @@ const onSubmit = async () => {
   isSubmitting.value = true
 
   try {
+    // Send formData as-is - backend expects owner_name, identity_number, registered_address
     const response = await $fetch(`http://localhost:9228/api/property-owners/${ownerId.value}`, {
       method: 'PUT',
       headers: {

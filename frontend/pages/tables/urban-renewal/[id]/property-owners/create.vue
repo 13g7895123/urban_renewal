@@ -887,13 +887,13 @@ const onSubmit = async () => {
   // 轉換欄位名稱以符合後端API格式
   const submitData = {
     urban_renewal_id: formData.urban_renewal_id,
-    owner_name: formData.owner_name,  // 使用 owner_name，讓後端處理映射
-    identity_number: formData.identity_number,  // 使用 identity_number，讓後端處理映射
+    owner_name: formData.owner_name,  // Backend expects 'owner_name' for create
+    identity_number: formData.identity_number,  // Backend expects 'identity_number' for create
     // owner_code 由後端自動生成，不發送
     phone1: formData.phone1,
     phone2: formData.phone2,
     contact_address: formData.contact_address,
-    registered_address: formData.registered_address,  // 使用 registered_address，讓後端處理映射
+    registered_address: formData.registered_address,  // Backend expects 'registered_address' for create
     exclusion_type: formData.exclusion_type,
     lands: formData.lands.map(land => {
       // 從可用地號列表中找到對應的地號資訊

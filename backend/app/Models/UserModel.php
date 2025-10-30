@@ -18,6 +18,8 @@ class UserModel extends Model
         'email',
         'password_hash',
         'role',
+        'user_type',
+        'is_company_manager',
         'urban_renewal_id',
         'property_owner_id',
         'full_name',
@@ -282,5 +284,119 @@ class UserModel extends Model
         }
 
         return empty($errors) ? true : $errors;
+    }
+
+    /**
+     * 取得企業管理者列表
+     */
+    public function getCompanyManagers($urbanRenewalId, $page = 1, $perPage = 10)
+    {
+        return $this->select('users.*')
+                   ->where('urban_renewal_id', $urbanRenewalId)
+                   ->where('user_type', 'enterprise')
+                   ->where('is_company_manager', 1)
+                   ->where('is_active', 1)
+                   ->paginate($perPage, 'default', $page);
+    }
+
+    /**
+     * 取得企業使用者列表（不含管理者）
+     */
+    public function getCompanyUsers($urbanRenewalId, $page = 1, $perPage = 10)
+    {
+        return $this->select('users.*')
+                   ->where('urban_renewal_id', $urbanRenewalId)
+                   ->where('user_type', 'enterprise')
+                   ->where('is_company_manager', 0)
+                   ->where('is_active', 1)
+                   ->paginate($perPage, 'default', $page);
+    }
+
+    /**
+     * 取得所有企業成員（管理者 + 使用者）
+     */
+    public function getAllCompanyMembers($urbanRenewalId, $page = 1, $perPage = 10)
+    {
+        return $this->select('users.*')
+                   ->where('urban_renewal_id', $urbanRenewalId)
+                   ->where('user_type', 'enterprise')
+                   ->where('is_active', 1)
+                   ->orderBy('is_company_manager', 'DESC')
+                   ->orderBy('created_at', 'DESC')
+                   ->paginate($perPage, 'default', $page);
+    }
+
+    /**
+     * 設定為企業使用者（移除管理者權限）
+     */
+    public function setAsCompanyUser($userId)
+    {
+        $user = $this->find($userId);
+        if (!$user) {
+            return false;
+        }
+
+        // 確認是企業使用者
+        if ($user['user_type'] !== 'enterprise') {
+            return false;
+        }
+
+        return $this->update($userId, [
+            'is_company_manager' => 0
+        ]);
+    }
+
+    /**
+     * 設定為企業管理者
+     */
+    public function setAsCompanyManager($userId)
+    {
+        $user = $this->find($userId);
+        if (!$user) {
+            return false;
+        }
+
+        // 確認是企業使用者
+        if ($user['user_type'] !== 'enterprise') {
+            return false;
+        }
+
+        return $this->update($userId, [
+            'is_company_manager' => 1
+        ]);
+    }
+
+    /**
+     * 檢查使用者是否為企業管理者
+     */
+    public function isCompanyManager($userId)
+    {
+        $user = $this->find($userId);
+        if (!$user) {
+            return false;
+        }
+
+        return $user['user_type'] === 'enterprise' && $user['is_company_manager'] == 1;
+    }
+
+    /**
+     * 檢查使用者是否可以管理指定企業
+     */
+    public function canManageCompany($userId, $urbanRenewalId)
+    {
+        $user = $this->find($userId);
+        if (!$user) {
+            return false;
+        }
+
+        // 系統管理員可以管理所有企業
+        if ($user['role'] === 'admin') {
+            return true;
+        }
+
+        // 企業管理者只能管理自己的企業
+        return $user['user_type'] === 'enterprise'
+            && $user['is_company_manager'] == 1
+            && $user['urban_renewal_id'] == $urbanRenewalId;
     }
 }

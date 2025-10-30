@@ -552,4 +552,229 @@ class UserController extends ResourceController
             return response_error('更新密碼失敗', 500);
         }
     }
+
+    /**
+     * 取得企業管理者列表
+     */
+    public function getCompanyManagers($companyId = null)
+    {
+        try {
+            // 驗證用戶權限
+            $user = auth_validate_request(['admin', 'chairman']);
+            if (!$user) {
+                return $this->failUnauthorized('請重新登入');
+            }
+
+            if (!$companyId) {
+                return response_error('企業ID為必填', 400);
+            }
+
+            // 檢查權限
+            if ($user['role'] === 'chairman' && $user['urban_renewal_id'] != $companyId) {
+                return $this->failForbidden('無權限查看此企業資料');
+            }
+
+            $page = $this->request->getGet('page') ?? 1;
+            $perPage = $this->request->getGet('per_page') ?? 10;
+
+            $managers = $this->model->getCompanyManagers($companyId, $page, $perPage);
+
+            // 移除敏感資訊
+            $managers = array_map(function($userData) {
+                unset($userData['password_hash'], $userData['password_reset_token']);
+                return $userData;
+            }, $managers);
+
+            return response_success('企業管理者列表', [
+                'managers' => $managers,
+                'pager' => $this->model->pager->getDetails()
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', '取得企業管理者列表失敗: ' . $e->getMessage());
+            return response_error('取得企業管理者列表失敗', 500);
+        }
+    }
+
+    /**
+     * 取得企業使用者列表
+     */
+    public function getCompanyUsers($companyId = null)
+    {
+        try {
+            // 驗證用戶權限
+            $user = auth_validate_request(['admin', 'chairman']);
+            if (!$user) {
+                return $this->failUnauthorized('請重新登入');
+            }
+
+            if (!$companyId) {
+                return response_error('企業ID為必填', 400);
+            }
+
+            // 檢查權限
+            if ($user['role'] === 'chairman' && $user['urban_renewal_id'] != $companyId) {
+                return $this->failForbidden('無權限查看此企業資料');
+            }
+
+            $page = $this->request->getGet('page') ?? 1;
+            $perPage = $this->request->getGet('per_page') ?? 10;
+
+            $users = $this->model->getCompanyUsers($companyId, $page, $perPage);
+
+            // 移除敏感資訊
+            $users = array_map(function($userData) {
+                unset($userData['password_hash'], $userData['password_reset_token']);
+                return $userData;
+            }, $users);
+
+            return response_success('企業使用者列表', [
+                'users' => $users,
+                'pager' => $this->model->pager->getDetails()
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', '取得企業使用者列表失敗: ' . $e->getMessage());
+            return response_error('取得企業使用者列表失敗', 500);
+        }
+    }
+
+    /**
+     * 取得所有企業成員（管理者 + 使用者）
+     */
+    public function getAllCompanyMembers($companyId = null)
+    {
+        try {
+            // 驗證用戶權限
+            $user = auth_validate_request(['admin', 'chairman']);
+            if (!$user) {
+                return $this->failUnauthorized('請重新登入');
+            }
+
+            if (!$companyId) {
+                return response_error('企業ID為必填', 400);
+            }
+
+            // 檢查權限
+            if ($user['role'] === 'chairman' && $user['urban_renewal_id'] != $companyId) {
+                return $this->failForbidden('無權限查看此企業資料');
+            }
+
+            $page = $this->request->getGet('page') ?? 1;
+            $perPage = $this->request->getGet('per_page') ?? 100;
+
+            $members = $this->model->getAllCompanyMembers($companyId, $page, $perPage);
+
+            // 移除敏感資訊
+            $members = array_map(function($userData) {
+                unset($userData['password_hash'], $userData['password_reset_token']);
+                return $userData;
+            }, $members);
+
+            return response_success('企業成員列表', [
+                'members' => $members,
+                'pager' => $this->model->pager->getDetails()
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', '取得企業成員列表失敗: ' . $e->getMessage());
+            return response_error('取得企業成員列表失敗', 500);
+        }
+    }
+
+    /**
+     * 設定為企業使用者（移除管理者權限）
+     */
+    public function setAsCompanyUser($id = null)
+    {
+        try {
+            // 驗證用戶權限
+            $user = auth_validate_request(['admin', 'chairman']);
+            if (!$user) {
+                return $this->failUnauthorized('請重新登入');
+            }
+
+            if (!$id) {
+                return response_error('使用者ID為必填', 400);
+            }
+
+            $targetUser = $this->model->find($id);
+            if (!$targetUser) {
+                return response_error('找不到該使用者', 404);
+            }
+
+            // 檢查權限
+            if ($user['role'] === 'chairman') {
+                if ($user['urban_renewal_id'] !== $targetUser['urban_renewal_id']) {
+                    return $this->failForbidden('只能操作同企業的使用者');
+                }
+                if ($targetUser['role'] === 'admin') {
+                    return $this->failForbidden('無權限操作管理員帳號');
+                }
+            }
+
+            // 不能操作自己
+            if ($user['id'] === (int)$id) {
+                return response_error('不能移除自己的管理者權限', 400);
+            }
+
+            $success = $this->model->setAsCompanyUser($id);
+            if (!$success) {
+                return response_error('設定失敗', 500);
+            }
+
+            $updatedUser = $this->model->find($id);
+            unset($updatedUser['password_hash'], $updatedUser['password_reset_token']);
+
+            return response_success('已設定為企業使用者', $updatedUser);
+
+        } catch (\Exception $e) {
+            log_message('error', '設定企業使用者失敗: ' . $e->getMessage());
+            return response_error('設定企業使用者失敗', 500);
+        }
+    }
+
+    /**
+     * 設定為企業管理者
+     */
+    public function setAsCompanyManager($id = null)
+    {
+        try {
+            // 驗證用戶權限
+            $user = auth_validate_request(['admin', 'chairman']);
+            if (!$user) {
+                return $this->failUnauthorized('請重新登入');
+            }
+
+            if (!$id) {
+                return response_error('使用者ID為必填', 400);
+            }
+
+            $targetUser = $this->model->find($id);
+            if (!$targetUser) {
+                return response_error('找不到該使用者', 404);
+            }
+
+            // 檢查權限
+            if ($user['role'] === 'chairman') {
+                if ($user['urban_renewal_id'] !== $targetUser['urban_renewal_id']) {
+                    return $this->failForbidden('只能操作同企業的使用者');
+                }
+            }
+
+            $success = $this->model->setAsCompanyManager($id);
+            if (!$success) {
+                return response_error('設定失敗', 500);
+            }
+
+            $updatedUser = $this->model->find($id);
+            unset($updatedUser['password_hash'], $updatedUser['password_reset_token']);
+
+            return response_success('已設定為企業管理者', $updatedUser);
+
+        } catch (\Exception $e) {
+            log_message('error', '設定企業管理者失敗: ' . $e->getMessage());
+            return response_error('設定企業管理者失敗', 500);
+        }
+    }
 }

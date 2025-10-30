@@ -235,3 +235,139 @@ if (!function_exists('auth_can_access_resource')) {
         return true;
     }
 }
+
+if (!function_exists('auth_is_company_manager')) {
+    /**
+     * 檢查使用者是否為企業管理者
+     *
+     * @param array|null $user 使用者資料（若未提供則取得當前使用者）
+     * @return bool
+     */
+    function auth_is_company_manager(?array $user = null): bool
+    {
+        if (!$user) {
+            $user = auth_get_current_user();
+        }
+
+        if (!$user) {
+            return false;
+        }
+
+        return ($user['user_type'] ?? '') === 'enterprise'
+            && ($user['is_company_manager'] ?? 0) == 1;
+    }
+}
+
+if (!function_exists('auth_is_company_user')) {
+    /**
+     * 檢查使用者是否為企業使用者（含管理者）
+     *
+     * @param array|null $user 使用者資料（若未提供則取得當前使用者）
+     * @return bool
+     */
+    function auth_is_company_user(?array $user = null): bool
+    {
+        if (!$user) {
+            $user = auth_get_current_user();
+        }
+
+        if (!$user) {
+            return false;
+        }
+
+        return ($user['user_type'] ?? '') === 'enterprise';
+    }
+}
+
+if (!function_exists('auth_is_general_user')) {
+    /**
+     * 檢查使用者是否為一般使用者
+     *
+     * @param array|null $user 使用者資料（若未提供則取得當前使用者）
+     * @return bool
+     */
+    function auth_is_general_user(?array $user = null): bool
+    {
+        if (!$user) {
+            $user = auth_get_current_user();
+        }
+
+        if (!$user) {
+            return false;
+        }
+
+        return ($user['user_type'] ?? 'general') === 'general';
+    }
+}
+
+if (!function_exists('auth_can_manage_company')) {
+    /**
+     * 檢查使用者是否可以管理指定企業
+     *
+     * @param int $urbanRenewalId 都市更新會ID
+     * @param array|null $user 使用者資料（若未提供則取得當前使用者）
+     * @return bool
+     */
+    function auth_can_manage_company(int $urbanRenewalId, ?array $user = null): bool
+    {
+        if (!$user) {
+            $user = auth_get_current_user();
+        }
+
+        if (!$user) {
+            return false;
+        }
+
+        // 系統管理員可以管理所有企業
+        if ($user['role'] === 'admin') {
+            return true;
+        }
+
+        // 企業管理者只能管理自己的企業
+        return auth_is_company_manager($user)
+            && ($user['urban_renewal_id'] ?? null) == $urbanRenewalId;
+    }
+}
+
+if (!function_exists('auth_can_manage_user')) {
+    /**
+     * 檢查使用者是否可以管理指定的使用者
+     *
+     * @param array $targetUser 目標使用者資料
+     * @param array|null $user 操作者資料（若未提供則取得當前使用者）
+     * @return bool
+     */
+    function auth_can_manage_user(array $targetUser, ?array $user = null): bool
+    {
+        if (!$user) {
+            $user = auth_get_current_user();
+        }
+
+        if (!$user) {
+            return false;
+        }
+
+        // 不能管理自己
+        if ($user['id'] === $targetUser['id']) {
+            return false;
+        }
+
+        // 系統管理員可以管理所有使用者
+        if ($user['role'] === 'admin') {
+            return true;
+        }
+
+        // 企業管理者只能管理同企業的使用者
+        if (auth_is_company_manager($user)) {
+            // 不能管理系統管理員
+            if ($targetUser['role'] === 'admin') {
+                return false;
+            }
+
+            // 必須是同一個企業
+            return ($user['urban_renewal_id'] ?? null) === ($targetUser['urban_renewal_id'] ?? null);
+        }
+
+        return false;
+    }
+}
