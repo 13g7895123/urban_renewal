@@ -181,7 +181,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 definePageMeta({
   layout: false,
@@ -190,9 +190,11 @@ definePageMeta({
 
 const { getCompanyProfile, updateCompanyProfile, getAllCompanyMembers, setAsCompanyUser, setAsCompanyManager, deleteUser: deleteUserApi } = useCompany()
 const { $swal } = useNuxtApp()
+const authStore = useAuthStore()
 
-// TODO: Get company ID from auth or route params
-const companyId = ref(1)
+// 從登入使用者取得企業 ID
+const companyId = computed(() => authStore.user?.urban_renewal_id)
+const hasCompanyAccess = computed(() => !!companyId.value)
 
 const form = ref({
   companyName: '',
@@ -208,6 +210,19 @@ const loading = ref(false)
 
 // Load company profile and members
 const loadCompanyData = async () => {
+  // 檢查使用者是否有企業權限
+  if (!hasCompanyAccess.value) {
+    await $swal.fire({
+      title: '無法存取',
+      text: '您的帳號未關聯任何企業，無法使用此功能',
+      icon: 'warning',
+      confirmButtonText: '確定',
+      confirmButtonColor: '#f59e0b'
+    })
+    navigateTo('/dashboard')
+    return
+  }
+
   loading.value = true
   try {
     // Load company profile
@@ -221,15 +236,17 @@ const loadCompanyData = async () => {
         maxRenewalCount: data.max_renewal_count || 1,
         maxIssueCount: data.max_issue_count || 8
       }
+    } else {
+      throw new Error(profileResult.error?.message || '載入企業資料失敗')
     }
 
     // Load company members
     await loadMembers()
   } catch (error) {
     console.error('Failed to load company data:', error)
-    $swal.fire({
+    await $swal.fire({
       title: '錯誤',
-      text: '載入企業資料失敗',
+      text: error.message || '載入企業資料失敗',
       icon: 'error',
       confirmButtonText: '確定',
       confirmButtonColor: '#ef4444'

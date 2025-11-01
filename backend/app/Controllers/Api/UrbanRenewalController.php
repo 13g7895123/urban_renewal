@@ -84,6 +84,37 @@ class UrbanRenewalController extends BaseController
                 ]);
             }
 
+            // 權限驗證：檢查用戶是否有權存取此企業資料
+            $user = $this->request->user ?? null;
+            if (!$user) {
+                return $this->response->setStatusCode(401)->setJSON([
+                    'status' => 'error',
+                    'message' => '未授權：無法識別用戶身份'
+                ]);
+            }
+
+            // 系統管理員可以存取所有資料
+            $isAdmin = isset($user['role']) && $user['role'] === 'admin';
+
+            // 非管理員只能存取自己所屬企業的資料
+            if (!$isAdmin) {
+                $userUrbanRenewalId = $user['urban_renewal_id'] ?? null;
+
+                if (!$userUrbanRenewalId) {
+                    return $this->response->setStatusCode(403)->setJSON([
+                        'status' => 'error',
+                        'message' => '權限不足：您的帳號未關聯任何企業'
+                    ]);
+                }
+
+                if ((int)$userUrbanRenewalId !== (int)$id) {
+                    return $this->response->setStatusCode(403)->setJSON([
+                        'status' => 'error',
+                        'message' => '權限不足：您無權存取其他企業的資料'
+                    ]);
+                }
+            }
+
             $data = $this->urbanRenewalModel->getUrbanRenewal($id);
 
             if (!$data) {
@@ -174,6 +205,37 @@ class UrbanRenewalController extends BaseController
                     'status' => 'error',
                     'message' => '缺少ID參數'
                 ]);
+            }
+
+            // 權限驗證：檢查用戶是否有權修改此企業資料
+            $user = $this->request->user ?? null;
+            if (!$user) {
+                return $this->response->setStatusCode(401)->setJSON([
+                    'status' => 'error',
+                    'message' => '未授權：無法識別用戶身份'
+                ]);
+            }
+
+            // 系統管理員可以修改所有資料
+            $isAdmin = isset($user['role']) && $user['role'] === 'admin';
+
+            // 非管理員只能修改自己所屬企業的資料
+            if (!$isAdmin) {
+                $userUrbanRenewalId = $user['urban_renewal_id'] ?? null;
+
+                if (!$userUrbanRenewalId) {
+                    return $this->response->setStatusCode(403)->setJSON([
+                        'status' => 'error',
+                        'message' => '權限不足：您的帳號未關聯任何企業'
+                    ]);
+                }
+
+                if ((int)$userUrbanRenewalId !== (int)$id) {
+                    return $this->response->setStatusCode(403)->setJSON([
+                        'status' => 'error',
+                        'message' => '權限不足：您無權修改其他企業的資料'
+                    ]);
+                }
             }
 
             $existing = $this->urbanRenewalModel->find($id);

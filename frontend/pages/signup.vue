@@ -179,6 +179,7 @@
 
 <script setup>
 const { $swal } = useNuxtApp()
+const { post } = useApi()
 const currentStep = ref(1)
 const selectedAccountType = ref('')
 const loading = ref(false)
@@ -221,14 +222,46 @@ const handleRegister = async () => {
 
   loading.value = true
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    currentStep.value = 3
+    // 準備 API 資料
+    const registerData = {
+      account: formData.value.account,
+      nickname: formData.value.nickname,
+      password: formData.value.password,
+      fullName: formData.value.fullName,
+      email: formData.value.email,
+      phone: formData.value.phone,
+      lineId: formData.value.lineId,
+      jobTitle: formData.value.jobTitle,
+      accountType: selectedAccountType.value
+    }
+
+    // 如果是企業帳號，加入企業相關欄位
+    if (selectedAccountType.value === 'business') {
+      registerData.businessName = formData.value.businessName
+      registerData.taxId = formData.value.taxId
+      registerData.businessPhone = formData.value.businessPhone
+    }
+
+    // 呼叫註冊 API
+    const response = await post('/auth/register', registerData)
+
+    if (response.success) {
+      currentStep.value = 3
+    } else {
+      await $swal.fire({
+        title: '註冊失敗',
+        text: response.message || '請稍後再試',
+        icon: 'error',
+        confirmButtonText: '確定',
+        confirmButtonColor: '#ef4444'
+      })
+    }
   } catch (error) {
     console.error('Registration error:', error)
+    const errorMessage = error.response?.data?.message || error.message || '請稍後再試'
     await $swal.fire({
       title: '註冊失敗',
-      text: '請稍後再試',
+      text: errorMessage,
       icon: 'error',
       confirmButtonText: '確定',
       confirmButtonColor: '#ef4444'

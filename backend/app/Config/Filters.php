@@ -109,5 +109,40 @@ class Filters extends BaseFilters
      *
      * @var array<string, array<string, list<string>>>
      */
-    public array $filters = [];
+    public array $filters = [
+        'jwtauth' => [
+            'before' => [
+                'api/urban-renewals',
+                'api/urban-renewals/*',
+                'api/users',
+                'api/users/*',
+                'api/meetings',
+                'api/meetings/*',
+                'api/voting',
+                'api/voting/*',
+                'api/voting-topics',
+                'api/voting-topics/*',
+                'api/documents',
+                'api/documents/*',
+                'api/notifications',
+                'api/notifications/*',
+                'api/system-settings',
+                'api/system-settings/*',
+                'api/land-plots',
+                'api/land-plots/*',
+                'api/property-owners',
+                'api/property-owners/*',
+                'api/attendances',
+                'api/attendances/*',
+            ],
+            'except' => [
+                'api/auth/login',
+                'api/auth/register',
+                'api/auth/refresh',
+                'api/auth/logout',
+                'api/system-settings/public',
+                'api/system-settings/public/*',
+            ]
+        ]
+    ];
 }

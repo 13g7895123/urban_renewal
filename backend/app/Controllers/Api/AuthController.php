@@ -292,6 +292,115 @@ class AuthController extends ResourceController
     }
 
     /**
+     * 使用者註冊
+     * POST /api/auth/register
+     */
+    public function register()
+    {
+        try {
+            $data = $this->request->getJSON(true);
+
+            // 基本驗證規則
+            $rules = [
+                'account' => 'required|max_length[100]|is_unique[users.username]',
+                'nickname' => 'required|max_length[100]',
+                'password' => 'required|min_length[6]',
+                'fullName' => 'required|max_length[100]',
+                'email' => 'required|valid_email|is_unique[users.email]',
+                'phone' => 'required|max_length[20]',
+                'accountType' => 'required|in_list[personal,business]'
+            ];
+
+            // 企業帳號額外驗證
+            if (isset($data['accountType']) && $data['accountType'] === 'business') {
+                $rules['businessName'] = 'required|max_length[255]';
+                $rules['taxId'] = 'required|max_length[20]';
+            }
+
+            if (!$this->validate($rules)) {
+                return response_validation_error('驗證失敗', $this->validator->getErrors());
+            }
+
+            $db = \Config\Database::connect();
+            $db->transStart();
+
+            $urbanRenewalId = null;
+
+            // 如果是企業帳號，先建立 urban_renewal 記錄
+            if ($data['accountType'] === 'business') {
+                $urbanRenewalModel = new \App\Models\UrbanRenewalModel();
+
+                $urbanRenewalData = [
+                    'name' => $data['businessName'],
+                    'tax_id' => $data['taxId'] ?? null,
+                    'company_phone' => $data['businessPhone'] ?? null,
+                    // 設定預設值以通過驗證（area 必須大於 0）
+                    'area' => 1.0,
+                    'member_count' => 1,
+                    'chairman_name' => $data['fullName'],
+                    'chairman_phone' => $data['phone']
+                ];
+
+                $urbanRenewalId = $urbanRenewalModel->insert($urbanRenewalData);
+
+                if (!$urbanRenewalId) {
+                    $db->transRollback();
+                    return response_error('企業資料建立失敗', 500);
+                }
+            }
+
+            // 建立使用者記錄
+            $userData = [
+                'username' => $data['account'],
+                'password_hash' => password_hash($data['password'], PASSWORD_DEFAULT),
+                'full_name' => $data['fullName'],
+                'nickname' => $data['nickname'],
+                'email' => $data['email'],
+                'phone' => $data['phone'],
+                'line_account' => $data['lineId'] ?? null,
+                'position' => $data['jobTitle'] ?? null,
+                'user_type' => $data['accountType'] === 'business' ? 'enterprise' : 'general',
+                'is_company_manager' => $data['accountType'] === 'business' ? 1 : 0,
+                'urban_renewal_id' => $urbanRenewalId,
+                'role' => 'member', // 預設角色
+                'is_active' => 1
+            ];
+
+            $userId = $this->userModel->insert($userData);
+
+            if (!$userId) {
+                $db->transRollback();
+                return response_error('使用者建立失敗: ' . implode(', ', $this->userModel->errors()), 500);
+            }
+
+            $db->transComplete();
+
+            if ($db->transStatus() === false) {
+                return response_error('註冊失敗，請稍後再試', 500);
+            }
+
+            // 記錄註冊事件
+            log_auth_event('register', $userId, $data['account'], null, [
+                'user_type' => $userData['user_type'],
+                'urban_renewal_id' => $urbanRenewalId
+            ]);
+
+            return $this->respond([
+                'success' => true,
+                'data' => [
+                    'user_id' => $userId,
+                    'username' => $data['account']
+                ],
+                'message' => '註冊成功'
+            ], 201);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Registration error: ' . $e->getMessage());
+            return response_error('註冊處理失敗: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
      * 忘記密碼
      * POST /api/auth/forgot-password
      */
@@ -426,11 +535,13 @@ class AuthController extends ResourceController
      */
     private function generateJWT($user)
     {
+        $jwtConfig = config('JWT');
+        
         $payload = [
-            'iss' => 'urban-renewal-system',
-            'aud' => 'urban-renewal-users',
+            'iss' => $jwtConfig->issuer,
+            'aud' => $jwtConfig->audience,
             'iat' => time(),
-            'exp' => time() + 86400, // 24小時
+            'exp' => time() + $jwtConfig->expiry,
             'user_id' => $user['id'],
             'username' => $user['username'],
             'role' => $user['role'],
@@ -439,8 +550,7 @@ class AuthController extends ResourceController
             'urban_renewal_id' => $user['urban_renewal_id']
         ];
 
-        $key = $_ENV['JWT_SECRET'] ?? 'urban_renewal_secret_key_2025';
-        return JWT::encode($payload, $key, 'HS256');
+        return JWT::encode($payload, $jwtConfig->key, $jwtConfig->algorithm);
     }
 
     /**
@@ -501,8 +611,8 @@ class AuthController extends ResourceController
         }
 
         try {
-            $key = $_ENV['JWT_SECRET'] ?? 'urban_renewal_secret_key_2025';
-            $decoded = JWT::decode($token, new Key($key, 'HS256'));
+            $jwtConfig = config('JWT');
+            $decoded = JWT::decode($token, new Key($jwtConfig->key, $jwtConfig->algorithm));
 
             return $this->userModel->find($decoded->user_id);
         } catch (\Exception $e) {

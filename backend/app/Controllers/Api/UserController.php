@@ -572,9 +572,20 @@ class UserController extends ResourceController
                 return response_error('企業ID為必填', 400);
             }
 
-            // 檢查是否有權限管理此企業（admin 或該企業的企業管理員）
-            if (!auth_can_manage_company($companyId)) {
-                return $this->failForbidden('無權限查看此企業資料');
+            // 權限驗證：系統管理員可以查看所有企業管理者
+            $isAdmin = isset($user['role']) && $user['role'] === 'admin';
+
+            // 非管理員只能查看自己所屬企業的管理者
+            if (!$isAdmin) {
+                $userUrbanRenewalId = $user['urban_renewal_id'] ?? null;
+
+                if (!$userUrbanRenewalId) {
+                    return $this->failForbidden('您的帳號未關聯任何企業');
+                }
+
+                if ((int)$userUrbanRenewalId !== (int)$companyId) {
+                    return $this->failForbidden('無權限查看其他企業的管理者資料');
+                }
             }
 
             $page = $this->request->getGet('page') ?? 1;
@@ -615,9 +626,20 @@ class UserController extends ResourceController
                 return response_error('企業ID為必填', 400);
             }
 
-            // 檢查是否有權限管理此企業（admin 或該企業的企業管理員）
-            if (!auth_can_manage_company($companyId)) {
-                return $this->failForbidden('無權限查看此企業資料');
+            // 權限驗證：系統管理員可以查看所有企業使用者
+            $isAdmin = isset($user['role']) && $user['role'] === 'admin';
+
+            // 非管理員只能查看自己所屬企業的使用者
+            if (!$isAdmin) {
+                $userUrbanRenewalId = $user['urban_renewal_id'] ?? null;
+
+                if (!$userUrbanRenewalId) {
+                    return $this->failForbidden('您的帳號未關聯任何企業');
+                }
+
+                if ((int)$userUrbanRenewalId !== (int)$companyId) {
+                    return $this->failForbidden('無權限查看其他企業的使用者資料');
+                }
             }
 
             $page = $this->request->getGet('page') ?? 1;
@@ -658,9 +680,20 @@ class UserController extends ResourceController
                 return response_error('企業ID為必填', 400);
             }
 
-            // 檢查是否有權限管理此企業（admin 或該企業的企業管理員）
-            if (!auth_can_manage_company($companyId)) {
-                return $this->failForbidden('無權限查看此企業資料');
+            // 權限驗證：系統管理員可以查看所有企業成員
+            $isAdmin = isset($user['role']) && $user['role'] === 'admin';
+
+            // 非管理員只能查看自己所屬企業的成員
+            if (!$isAdmin) {
+                $userUrbanRenewalId = $user['urban_renewal_id'] ?? null;
+
+                if (!$userUrbanRenewalId) {
+                    return $this->failForbidden('您的帳號未關聯任何企業');
+                }
+
+                if ((int)$userUrbanRenewalId !== (int)$companyId) {
+                    return $this->failForbidden('無權限查看其他企業的成員資料');
+                }
             }
 
             $page = $this->request->getGet('page') ?? 1;

@@ -15,6 +15,7 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
 
     // Authentication API
     $routes->group('auth', function ($routes) {
+        $routes->post('register', 'AuthController::register');                   // POST /api/auth/register
         $routes->post('login', 'AuthController::login');                         // POST /api/auth/login
         $routes->post('logout', 'AuthController::logout');                       // POST /api/auth/logout
         $routes->post('refresh', 'AuthController::refresh');                     // POST /api/auth/refresh
@@ -235,5 +236,16 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
 
         // Handle OPTIONS for specific routes
         $routes->options('(:any)', 'LocationController::options');
+    });
+
+    // JWT Debug API (Admin only)
+    $routes->group('admin/jwt-debug', ['namespace' => 'App\Controllers\Api\Admin'], function ($routes) {
+        $routes->get('/', 'JwtDebugController::index');                                    // GET /api/admin/jwt-debug
+        $routes->get('stats', 'JwtDebugController::stats');                                // GET /api/admin/jwt-debug/stats
+        $routes->get('(:segment)', 'JwtDebugController::show/$1');                         // GET /api/admin/jwt-debug/{request_id}
+        $routes->post('cleanup', 'JwtDebugController::cleanup');                           // POST /api/admin/jwt-debug/cleanup
+
+        // Handle OPTIONS for specific routes
+        $routes->options('(:any)', 'JwtDebugController::options');
     });
 });

@@ -48,7 +48,10 @@
       "Bash(/home/jarvis/project/bonus/urban_renewal/test-login.sh:*)",
       "Bash(sudo chown:*)",
       "Bash(npm install:*)",
-      "Bash(npx playwright install chromium)"
+      "Bash(npx playwright install chromium)",
+      "Bash(npm run test:e2e:*)",
+      "Bash(grep:*)",
+      "Bash(npm run test:e2e:ui:*)"
     ],
     "deny": [],
     "ask": []
