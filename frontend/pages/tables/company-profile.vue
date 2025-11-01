@@ -301,15 +301,369 @@ const saveCompanyProfile = async () => {
   }
 }
 
-const addNewManager = () => {
-  console.log('Adding new manager')
-  $swal.fire({
-    title: '提示',
-    text: '新增使用者功能開發中',
-    icon: 'info',
-    confirmButtonText: '確定',
-    confirmButtonColor: '#3b82f6'
+const addNewManager = async () => {
+  const { value: formValues } = await $swal.fire({
+    title: '<div style="color: #000000; font-size: 24px; font-weight: 600; position: relative;">新增使用者<button type="button" id="fill-test-data-btn" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.2s; font-weight: 500;">📝 填入測試資料</button></div>',
+    html: `
+      <style>
+        #fill-test-data-btn:hover {
+          background: #2563eb;
+          transform: translateY(-50%) scale(1.05);
+        }
+        .user-form-container {
+          padding: 20px;
+          padding-bottom: 40px;
+          text-align: left;
+        }
+        .form-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 16px;
+        }
+        .form-field {
+          display: flex;
+          flex-direction: column;
+        }
+        .form-field.full-width {
+          grid-column: span 2;
+        }
+        .form-label {
+          font-size: 14px;
+          font-weight: 500;
+          color: #4b5563;
+          margin-bottom: 6px;
+          display: flex;
+          align-items: center;
+        }
+        .required-mark {
+          color: #ef4444;
+          margin-left: 4px;
+          font-weight: 600;
+        }
+        .password-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+        .form-input {
+          width: 100%;
+          padding: 10px 12px;
+          border: 1.5px solid #d1d5db;
+          border-radius: 8px;
+          font-size: 14px;
+          transition: all 0.2s;
+          background: white;
+        }
+        .form-input.with-icon {
+          padding-right: 40px;
+        }
+        .form-input:focus {
+          outline: none;
+          border-color: #10b981;
+          box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+        .form-input:disabled,
+        .form-input:read-only {
+          background: #f3f4f6;
+          color: #6b7280;
+          cursor: not-allowed;
+        }
+        .form-input::placeholder {
+          color: #9ca3af;
+        }
+        .password-toggle {
+          position: absolute;
+          right: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 4px;
+          color: #6b7280;
+          font-size: 18px;
+          line-height: 1;
+          transition: color 0.2s;
+        }
+        .password-toggle:hover {
+          color: #10b981;
+        }
+        .info-badge {
+          display: inline-block;
+          background: #dbeafe;
+          color: #1e40af;
+          padding: 2px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+          margin-left: 8px;
+          font-weight: 500;
+        }
+      </style>
+      <div class="user-form-container">
+        <div class="form-grid">
+          <!-- 帳號 -->
+          <div class="form-field full-width">
+            <label class="form-label">
+              帳號<span class="required-mark">*</span>
+            </label>
+            <input id="swal-username" class="form-input" placeholder="請輸入登入帳號">
+          </div>
+
+          <!-- 姓名 -->
+          <div class="form-field">
+            <label class="form-label">
+              姓名<span class="required-mark">*</span>
+            </label>
+            <input id="swal-fullname" class="form-input" placeholder="請輸入真實姓名">
+          </div>
+
+          <!-- 暱稱 -->
+          <div class="form-field">
+            <label class="form-label">
+              暱稱
+            </label>
+            <input id="swal-nickname" class="form-input" placeholder="選填，顯示用暱稱">
+          </div>
+
+          <!-- 密碼 -->
+          <div class="form-field">
+            <label class="form-label">
+              密碼<span class="required-mark">*</span>
+              <span class="info-badge">至少6個字元</span>
+            </label>
+            <div class="password-wrapper">
+              <input id="swal-password" type="password" class="form-input with-icon" placeholder="••••••••">
+              <button type="button" class="password-toggle" onclick="
+                const input = document.getElementById('swal-password');
+                const icon = this;
+                if (input.type === 'password') {
+                  input.type = 'text';
+                  icon.textContent = '👁️';
+                } else {
+                  input.type = 'password';
+                  icon.textContent = '👁️‍🗨️';
+                }
+              ">👁️‍🗨️</button>
+            </div>
+          </div>
+
+          <!-- 確認密碼 -->
+          <div class="form-field">
+            <label class="form-label">
+              確認密碼<span class="required-mark">*</span>
+            </label>
+            <div class="password-wrapper">
+              <input id="swal-password-confirm" type="password" class="form-input with-icon" placeholder="••••••••">
+              <button type="button" class="password-toggle" onclick="
+                const input = document.getElementById('swal-password-confirm');
+                const icon = this;
+                if (input.type === 'password') {
+                  input.type = 'text';
+                  icon.textContent = '👁️';
+                } else {
+                  input.type = 'password';
+                  icon.textContent = '👁️‍🗨️';
+                }
+              ">👁️‍🗨️</button>
+            </div>
+          </div>
+
+          <!-- 信箱 -->
+          <div class="form-field">
+            <label class="form-label">
+              信箱
+            </label>
+            <input id="swal-email" type="email" class="form-input" placeholder="example@email.com">
+          </div>
+
+          <!-- 手機號碼 -->
+          <div class="form-field">
+            <label class="form-label">
+              手機號碼
+            </label>
+            <input id="swal-phone" class="form-input" placeholder="0912-345-678">
+          </div>
+
+          <!-- LINE 帳號 -->
+          <div class="form-field">
+            <label class="form-label">
+              LINE 帳號
+            </label>
+            <input id="swal-line" class="form-input" placeholder="@example">
+          </div>
+
+          <!-- 職稱 -->
+          <div class="form-field">
+            <label class="form-label">
+              職稱
+            </label>
+            <input id="swal-position" class="form-input" placeholder="例：經理、專員">
+          </div>
+
+          <!-- 公司名稱 -->
+          <div class="form-field full-width">
+            <label class="form-label">
+              所屬企業
+              <span class="info-badge">自動帶入</span>
+            </label>
+            <input id="swal-company" class="form-input" value="${form.value.companyName || '未設定'}" readonly>
+          </div>
+        </div>
+      </div>
+    `,
+    didOpen: () => {
+      // 填入測試資料的功能
+      const fillTestDataBtn = document.getElementById('fill-test-data-btn')
+      if (fillTestDataBtn) {
+        fillTestDataBtn.addEventListener('click', () => {
+          // 生成隨機資料
+          const randomNum = Math.floor(Math.random() * 1000)
+          const randomNames = ['張小明', '李小華', '王大同', '陳小美', '林建國', '黃志明', '劉佳玲', '吳文德']
+          const randomNicknames = ['小明', '小華', '阿同', '小美', '阿國', '志明', '佳玲', '阿德']
+          const randomPositions = ['經理', '專員', '主任', '副理', '組長', '襄理', '課長', '部長']
+          const randomName = randomNames[Math.floor(Math.random() * randomNames.length)]
+          const randomNickname = randomNicknames[Math.floor(Math.random() * randomNicknames.length)]
+          const randomPosition = randomPositions[Math.floor(Math.random() * randomPositions.length)]
+
+          // 填入表單
+          document.getElementById('swal-username').value = `user${randomNum}`
+          document.getElementById('swal-fullname').value = randomName
+          document.getElementById('swal-nickname').value = randomNickname
+          document.getElementById('swal-password').value = 'Test123456'
+          document.getElementById('swal-password-confirm').value = 'Test123456'
+          document.getElementById('swal-email').value = `user${randomNum}@example.com`
+          document.getElementById('swal-phone').value = `09${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`
+          document.getElementById('swal-line').value = `@user${randomNum}`
+          document.getElementById('swal-position').value = randomPosition
+
+          // 顯示提示
+          const toast = document.createElement('div')
+          toast.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 12px 20px; border-radius: 8px; font-size: 14px; z-index: 99999; animation: slideIn 0.3s ease-out;'
+          toast.textContent = '✓ 已填入測試資料'
+          document.body.appendChild(toast)
+          setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease-out'
+            setTimeout(() => toast.remove(), 300)
+          }, 2000)
+        })
+      }
+    },
+    focusConfirm: false,
+    showCancelButton: true,
+    confirmButtonText: '✓ 確認新增',
+    cancelButtonText: '✕ 取消',
+    confirmButtonColor: '#10b981',
+    cancelButtonColor: '#6b7280',
+    width: '800px',
+    padding: '0 0 30px 0',
+    customClass: {
+      popup: 'rounded-xl',
+      confirmButton: 'px-6 py-2.5 rounded-lg font-medium',
+      cancelButton: 'px-6 py-2.5 rounded-lg font-medium',
+      actions: 'mt-6'
+    },
+    preConfirm: () => {
+      const username = document.getElementById('swal-username').value
+      const fullName = document.getElementById('swal-fullname').value
+      const nickname = document.getElementById('swal-nickname').value
+      const password = document.getElementById('swal-password').value
+      const passwordConfirm = document.getElementById('swal-password-confirm').value
+      const email = document.getElementById('swal-email').value
+      const phone = document.getElementById('swal-phone').value
+      const lineAccount = document.getElementById('swal-line').value
+      const position = document.getElementById('swal-position').value
+
+      // 驗證必填欄位
+      if (!username) {
+        $swal.showValidationMessage('請輸入帳號')
+        return false
+      }
+      if (!fullName) {
+        $swal.showValidationMessage('請輸入姓名')
+        return false
+      }
+      if (!password) {
+        $swal.showValidationMessage('請輸入密碼')
+        return false
+      }
+      if (password.length < 6) {
+        $swal.showValidationMessage('密碼至少需要6個字元')
+        return false
+      }
+      if (!passwordConfirm) {
+        $swal.showValidationMessage('請輸入確認密碼')
+        return false
+      }
+      if (password !== passwordConfirm) {
+        $swal.showValidationMessage('密碼與確認密碼不相符')
+        return false
+      }
+
+      // 驗證信箱格式（如有填寫）
+      if (email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        if (!emailRegex.test(email)) {
+          $swal.showValidationMessage('信箱格式不正確')
+          return false
+        }
+      }
+
+      return {
+        username,
+        full_name: fullName,
+        nickname,
+        password,
+        email,
+        phone,
+        line_account: lineAccount,
+        position
+      }
+    }
   })
+
+  if (formValues) {
+    try {
+      loading.value = true
+
+      // 新增系統欄位
+      const userData = {
+        ...formValues,
+        role: 'member',
+        user_type: 'enterprise',
+        urban_renewal_id: companyId.value
+      }
+
+      const { createUser } = useCompany()
+      const result = await createUser(userData)
+
+      if (result.success) {
+        await $swal.fire({
+          title: '成功',
+          text: '使用者已成功新增',
+          icon: 'success',
+          confirmButtonText: '確定',
+          confirmButtonColor: '#10b981'
+        })
+
+        // 重新載入成員列表
+        await loadMembers()
+      } else {
+        throw new Error(result.error?.message || '新增失敗')
+      }
+    } catch (error) {
+      console.error('Failed to create user:', error)
+      await $swal.fire({
+        icon: 'error',
+        title: '新增失敗',
+        text: error.message || '新增使用者失敗',
+        showConfirmButton: false,
+        timer: 1500,
+        timerProgressBar: true
+      })
+    } finally {
+      loading.value = false
+    }
+  }
 }
 
 const setAsUser = async (manager) => {

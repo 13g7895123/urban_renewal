@@ -135,7 +135,10 @@ class UserController extends ResourceController
                 'password' => 'required|min_length[6]',
                 'role' => 'required|in_list[admin,chairman,member,observer]',
                 'full_name' => 'permit_empty|max_length[100]',
-                'phone' => 'permit_empty|max_length[20]'
+                'phone' => 'permit_empty|max_length[20]',
+                'nickname' => 'permit_empty|max_length[100]',
+                'line_account' => 'permit_empty|max_length[100]',
+                'position' => 'permit_empty|max_length[100]'
             ]);
 
             if (!$validation->run($data)) {
