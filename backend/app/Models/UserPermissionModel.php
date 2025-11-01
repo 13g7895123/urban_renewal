@@ -51,10 +51,10 @@ class UserPermissionModel extends Model
     public function getUserPermissions($userId)
     {
         $permissions = $this->where('user_id', $userId)
-            ->where(function($builder) {
-                $builder->where('expires_at IS NULL')
-                        ->orWhere('expires_at >', date('Y-m-d H:i:s'));
-            })
+            ->groupStart()
+                ->where('expires_at IS NULL')
+                ->orWhere('expires_at >', date('Y-m-d H:i:s'))
+            ->groupEnd()
             ->findAll();
 
         // 返回權限類型陣列
@@ -73,10 +73,10 @@ class UserPermissionModel extends Model
     {
         $builder = $this->where('user_id', $userId)
             ->where('permission_type', $permissionType)
-            ->where(function($builder) {
-                $builder->where('expires_at IS NULL')
-                        ->orWhere('expires_at >', date('Y-m-d H:i:s'));
-            });
+            ->groupStart()
+                ->where('expires_at IS NULL')
+                ->orWhere('expires_at >', date('Y-m-d H:i:s'))
+            ->groupEnd();
 
         if ($resourceId !== null) {
             $builder->where('resource_id', $resourceId);
@@ -165,10 +165,10 @@ class UserPermissionModel extends Model
     {
         $builder = $this->select('user_id')
             ->where('permission_type', $permissionType)
-            ->where(function($builder) {
-                $builder->where('expires_at IS NULL')
-                        ->orWhere('expires_at >', date('Y-m-d H:i:s'));
-            });
+            ->groupStart()
+                ->where('expires_at IS NULL')
+                ->orWhere('expires_at >', date('Y-m-d H:i:s'))
+            ->groupEnd();
 
         if ($resourceId !== null) {
             $builder->where('resource_id', $resourceId);
