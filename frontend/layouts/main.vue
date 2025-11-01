@@ -70,9 +70,17 @@
 const authStore = useAuthStore()
 const router = useRouter()
 
+// Watch for user state changes - redirect if user becomes null
+watchEffect(() => {
+  if (process.client && !authStore.user && !authStore.isLoading) {
+    console.warn('[Main Layout] User state is null, redirecting to login')
+    navigateTo('/login')
+  }
+})
+
 // User display name
 const userName = computed(() => {
-  return authStore.user?.full_name || authStore.user?.username || '用戶'
+  return authStore.user?.full_name || authStore.user?.username || ''
 })
 
 // Role label
@@ -83,7 +91,7 @@ const roleLabel = computed(() => {
     'member': '地主成員',
     'observer': '觀察員'
   }
-  return roleMap[authStore.user?.role] || authStore.user?.role || '未知'
+  return roleMap[authStore.user?.role] || authStore.user?.role || ''
 })
 
 // Menu items configuration with role restrictions

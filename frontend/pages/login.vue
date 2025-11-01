@@ -37,6 +37,8 @@
 </template>
 
 <script setup>
+import Swal from 'sweetalert2'
+
 const username = ref('')
 const password = ref('')
 const showPassword = ref(false)
@@ -96,11 +98,15 @@ const handleLogin = async () => {
     }
   } catch (error) {
     console.error('Login error:', error)
-    const toast = useToast()
-    toast.add({
+
+    // 使用 SweetAlert2 顯示錯誤訊息
+    await Swal.fire({
+      icon: 'error',
       title: '登入失敗',
-      description: error.message || '帳號或密碼錯誤',
-      color: 'red'
+      text: error.message || '帳號或密碼錯誤',
+      showConfirmButton: false,
+      timer: 1500,
+      timerProgressBar: true
     })
   } finally {
     loading.value = false
