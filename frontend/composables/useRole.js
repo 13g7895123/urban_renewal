@@ -48,7 +48,10 @@ export const useRole = () => {
    * Check if user is company manager
    * @returns {boolean}
    */
-  const isCompanyManager = computed(() => authStore.isCompanyManager)
+  const isCompanyManager = computed(() => {
+    // 使用 authStore 的 computed 屬性，已經處理了型別轉換
+    return authStore.isCompanyManager
+  })
 
   /**
    * Check if user can manage urban renewals

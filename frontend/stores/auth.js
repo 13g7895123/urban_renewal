@@ -6,7 +6,11 @@ export const useAuthStore = defineStore('auth', () => {
   const tokenExpiresAt = ref(null)
   const isLoggedIn = computed(() => !!user.value && !!token.value)
   const isAdmin = computed(() => user.value?.role === 'admin')
-  const isCompanyManager = computed(() => user.value?.is_company_manager === 1)
+  const isCompanyManager = computed(() => {
+    // 後端返回的可能是字串 "1" 或數字 1，都要處理
+    const value = user.value?.is_company_manager
+    return value === 1 || value === '1' || value === true
+  })
   const userType = computed(() => user.value?.user_type || 'general')
   const isLoading = ref(false)
 

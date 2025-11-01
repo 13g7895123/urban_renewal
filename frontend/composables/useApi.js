@@ -67,11 +67,31 @@ export const useApi = () => {
   // Get authentication token
   const getAuthToken = () => {
     if (process.client) {
-      return localStorage.getItem('auth_token')
+      // 優先從 Pinia store 取得 token（使用 sessionStorage 持久化）
+      try {
+        const authStore = useAuthStore()
+        if (authStore.token) {
+          return authStore.token
+        }
+      } catch (error) {
+        // 如果 store 未初始化，從 sessionStorage 讀取
+        console.warn('[API] Could not access auth store, falling back to sessionStorage')
+      }
+
+      // 回退方案：從 sessionStorage 讀取（Pinia 持久化的資料）
+      const persistedAuth = sessionStorage.getItem('auth')
+      if (persistedAuth) {
+        try {
+          const authData = JSON.parse(persistedAuth)
+          return authData.token
+        } catch (e) {
+          console.error('[API] Failed to parse auth from sessionStorage:', e)
+        }
+      }
     }
     return null
   }
-  
+
   // Get authentication headers
   const getAuthHeaders = () => {
     const token = getAuthToken()
@@ -122,7 +142,23 @@ export const useApi = () => {
                                endpoint.includes('/auth/logout')
 
         if (!isAuthEndpoint) {
-          const refreshToken = localStorage.getItem('auth_refresh_token')
+          // 從 Pinia store 或 sessionStorage 取得 refresh token
+          let refreshToken = null
+          try {
+            const authStore = useAuthStore()
+            refreshToken = authStore.refreshToken
+          } catch (e) {
+            // 從 sessionStorage 讀取
+            const persistedAuth = sessionStorage.getItem('auth')
+            if (persistedAuth) {
+              try {
+                const authData = JSON.parse(persistedAuth)
+                refreshToken = authData.refreshToken
+              } catch (parseError) {
+                console.error('[API] Failed to parse auth from sessionStorage:', parseError)
+              }
+            }
+          }
 
           if (refreshToken) {
             console.log('[API] 401 error detected, attempting token refresh...')
@@ -146,10 +182,18 @@ export const useApi = () => {
                   })
 
                   if (response?.data?.token) {
-                    localStorage.setItem('auth_token', response.data.token)
-                    localStorage.setItem('auth_refresh_token', response.data.refresh_token)
-                    const expiresAt = new Date(Date.now() + (response.data.expires_in * 1000))
-                    localStorage.setItem('auth_token_expires_at', expiresAt.toISOString())
+                    // 更新 Pinia store
+                    try {
+                      const authStore = useAuthStore()
+                      authStore.token = response.data.token
+                      authStore.refreshToken = response.data.refresh_token
+                      if (response.data.expires_in) {
+                        const expiresAt = new Date(Date.now() + (response.data.expires_in * 1000))
+                        authStore.tokenExpiresAt = expiresAt.toISOString()
+                      }
+                    } catch (storeError) {
+                      console.error('[API] Failed to update auth store:', storeError)
+                    }
                   }
 
                   return response
@@ -188,11 +232,15 @@ export const useApi = () => {
         // Token refresh failed or not available, clear auth and redirect
         console.warn('[API] Authentication error - clearing auth state')
 
-        // Clear authentication data
-        localStorage.removeItem('auth_token')
-        localStorage.removeItem('auth_refresh_token')
-        localStorage.removeItem('auth_token_expires_at')
-        localStorage.removeItem('auth_user')
+        // Clear authentication data from sessionStorage and Pinia store
+        try {
+          const authStore = useAuthStore()
+          authStore.logout(true) // skipApiCall = true 避免再次呼叫 logout API
+        } catch (storeError) {
+          console.error('[API] Failed to access auth store for logout:', storeError)
+          // 手動清除 sessionStorage
+          sessionStorage.removeItem('auth')
+        }
 
         // Redirect to login page (only if not already on login page)
         if (!window.location.pathname.includes('/login')) {
@@ -290,14 +338,25 @@ export const useApi = () => {
   // Token management utilities
   const setAuthToken = (token) => {
     if (process.client) {
-      localStorage.setItem('auth_token', token)
+      try {
+        const authStore = useAuthStore()
+        authStore.token = token
+      } catch (error) {
+        console.error('[API] Failed to set auth token in store:', error)
+      }
     }
   }
-  
+
   const clearAuthToken = () => {
     if (process.client) {
-      localStorage.removeItem('auth_token')
-      localStorage.removeItem('auth_user')
+      try {
+        const authStore = useAuthStore()
+        authStore.logout(true)
+      } catch (error) {
+        console.error('[API] Failed to clear auth token from store:', error)
+        // 手動清除 sessionStorage
+        sessionStorage.removeItem('auth')
+      }
     }
   }
   

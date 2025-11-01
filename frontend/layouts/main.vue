@@ -143,7 +143,13 @@ const menuItems = [
     icon: 'heroicons:building-office',
     label: '企業管理',
     roles: ['admin'],
-    customCheck: (user) => user?.role === 'admin' || user?.is_company_manager === 1
+    customCheck: (user) => {
+      // 後端返回的可能是字串 "1" 或數字 1
+      const isManager = user?.is_company_manager === 1 ||
+                        user?.is_company_manager === '1' ||
+                        user?.is_company_manager === true
+      return user?.role === 'admin' || isManager
+    }
   }
 ]
 
