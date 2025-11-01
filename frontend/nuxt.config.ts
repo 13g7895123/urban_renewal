@@ -6,11 +6,15 @@ export default defineNuxtConfig({
     port: parseInt(process.env.FRONTEND_PORT || '4001'),
     host: 'localhost'
   },
-  ssr: true,
+  ssr: false, // 改為 SPA 模式
   modules: [
     '@nuxt/ui',
-    '@pinia/nuxt'
+    '@pinia/nuxt',
+    '@pinia-plugin-persistedstate/nuxt'
   ],
+  piniaPersistedstate: {
+    storage: 'sessionStorage'
+  },
   ui: {
     global: true,
     icons: ['heroicons'],

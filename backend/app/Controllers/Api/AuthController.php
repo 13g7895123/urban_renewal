@@ -113,13 +113,13 @@ class AuthController extends ResourceController
                 'urban_renewal_id' => $user['urban_renewal_id']
             ]);
 
-            // 移除敏感資料
+            // 移除敏感資料（保留 is_company_manager 和 user_type 等必要欄位）
             unset($user['password_hash'], $user['password_reset_token'], $user['login_attempts']);
 
             return $this->respond([
                 'success' => true,
                 'data' => [
-                    'user' => $user,
+                    'user' => $user, // 包含 is_company_manager, user_type 等所有使用者欄位
                     'token' => $token,
                     'refresh_token' => $refreshToken,
                     'expires_in' => 86400 // 24小時
@@ -270,12 +270,12 @@ class AuthController extends ResourceController
                 ], 401);
             }
 
-            // 移除敏感資料
+            // 移除敏感資料（保留 is_company_manager 和 user_type 等必要欄位）
             unset($user['password_hash'], $user['password_reset_token'], $user['login_attempts']);
 
             return $this->respond([
                 'success' => true,
-                'data' => $user,
+                'data' => $user, // 包含 is_company_manager, user_type 等所有使用者欄位
                 'message' => '取得使用者資訊成功'
             ]);
 

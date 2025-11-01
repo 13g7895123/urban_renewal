@@ -184,7 +184,8 @@
 import { ref, onMounted } from 'vue'
 
 definePageMeta({
-  layout: false
+  layout: false,
+  middleware: ['auth', 'company-manager']
 })
 
 const { getCompanyProfile, updateCompanyProfile, getAllCompanyMembers, setAsCompanyUser, setAsCompanyManager, deleteUser: deleteUserApi } = useCompany()

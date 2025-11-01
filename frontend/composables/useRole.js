@@ -45,6 +45,12 @@ export const useRole = () => {
   const isObserver = computed(() => hasRole('observer'))
 
   /**
+   * Check if user is company manager
+   * @returns {boolean}
+   */
+  const isCompanyManager = computed(() => authStore.isCompanyManager)
+
+  /**
    * Check if user can manage urban renewals
    * Admin and chairman can manage
    * @returns {boolean}
@@ -99,6 +105,24 @@ export const useRole = () => {
   })
 
   /**
+   * Check if user can access company profile
+   * Admin and company managers can access
+   * @returns {boolean}
+   */
+  const canAccessCompanyProfile = computed(() => {
+    return isAdmin.value || isCompanyManager.value
+  })
+
+  /**
+   * Check if user can manage company users
+   * Admin and company managers can manage company users
+   * @returns {boolean}
+   */
+  const canManageCompanyUsers = computed(() => {
+    return isAdmin.value || isCompanyManager.value
+  })
+
+  /**
    * Get user role display name
    * @returns {string}
    */
@@ -134,6 +158,7 @@ export const useRole = () => {
     isChairman,
     isMember,
     isObserver,
+    isCompanyManager,
 
     // Permission checks
     canManageUrbanRenewal,
@@ -142,6 +167,8 @@ export const useRole = () => {
     canViewResults,
     canManageUsers,
     canManageSettings,
+    canAccessCompanyProfile,
+    canManageCompanyUsers,
     canAccessUrbanRenewal,
 
     // Utilities

@@ -20,6 +20,7 @@
   "dependencies": {
     "@heroicons/vue": "^2.1.5",
     "@nuxt/ui": "^2.18.7",
+    "@pinia-plugin-persistedstate/nuxt": "^1.2.1",
     "@pinia/nuxt": "^0.5.5",
     "apexcharts": "^5.3.3",
     "nuxt": "^3.13.0",

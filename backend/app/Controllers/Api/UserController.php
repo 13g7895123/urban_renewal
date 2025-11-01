@@ -562,8 +562,8 @@ class UserController extends ResourceController
     public function getCompanyManagers($companyId = null)
     {
         try {
-            // 驗證用戶權限
-            $user = auth_validate_request(['admin', 'chairman']);
+            // 驗證用戶已登入
+            $user = auth_validate_request();
             if (!$user) {
                 return $this->failUnauthorized('請重新登入');
             }
@@ -572,8 +572,8 @@ class UserController extends ResourceController
                 return response_error('企業ID為必填', 400);
             }
 
-            // 檢查權限
-            if ($user['role'] === 'chairman' && $user['urban_renewal_id'] != $companyId) {
+            // 檢查是否有權限管理此企業（admin 或該企業的企業管理員）
+            if (!auth_can_manage_company($companyId)) {
                 return $this->failForbidden('無權限查看此企業資料');
             }
 
@@ -605,8 +605,8 @@ class UserController extends ResourceController
     public function getCompanyUsers($companyId = null)
     {
         try {
-            // 驗證用戶權限
-            $user = auth_validate_request(['admin', 'chairman']);
+            // 驗證用戶已登入
+            $user = auth_validate_request();
             if (!$user) {
                 return $this->failUnauthorized('請重新登入');
             }
@@ -615,8 +615,8 @@ class UserController extends ResourceController
                 return response_error('企業ID為必填', 400);
             }
 
-            // 檢查權限
-            if ($user['role'] === 'chairman' && $user['urban_renewal_id'] != $companyId) {
+            // 檢查是否有權限管理此企業（admin 或該企業的企業管理員）
+            if (!auth_can_manage_company($companyId)) {
                 return $this->failForbidden('無權限查看此企業資料');
             }
 
@@ -648,8 +648,8 @@ class UserController extends ResourceController
     public function getAllCompanyMembers($companyId = null)
     {
         try {
-            // 驗證用戶權限
-            $user = auth_validate_request(['admin', 'chairman']);
+            // 驗證用戶已登入
+            $user = auth_validate_request();
             if (!$user) {
                 return $this->failUnauthorized('請重新登入');
             }
@@ -658,8 +658,8 @@ class UserController extends ResourceController
                 return response_error('企業ID為必填', 400);
             }
 
-            // 檢查權限
-            if ($user['role'] === 'chairman' && $user['urban_renewal_id'] != $companyId) {
+            // 檢查是否有權限管理此企業（admin 或該企業的企業管理員）
+            if (!auth_can_manage_company($companyId)) {
                 return $this->failForbidden('無權限查看此企業資料');
             }
 
@@ -691,8 +691,8 @@ class UserController extends ResourceController
     public function setAsCompanyUser($id = null)
     {
         try {
-            // 驗證用戶權限
-            $user = auth_validate_request(['admin', 'chairman']);
+            // 驗證用戶已登入
+            $user = auth_validate_request();
             if (!$user) {
                 return $this->failUnauthorized('請重新登入');
             }
@@ -706,14 +706,9 @@ class UserController extends ResourceController
                 return response_error('找不到該使用者', 404);
             }
 
-            // 檢查權限
-            if ($user['role'] === 'chairman') {
-                if ($user['urban_renewal_id'] !== $targetUser['urban_renewal_id']) {
-                    return $this->failForbidden('只能操作同企業的使用者');
-                }
-                if ($targetUser['role'] === 'admin') {
-                    return $this->failForbidden('無權限操作管理員帳號');
-                }
+            // 檢查是否有權限管理此使用者（admin 或該企業的企業管理員）
+            if (!auth_can_manage_user($id)) {
+                return $this->failForbidden('無權限操作此使用者');
             }
 
             // 不能操作自己
@@ -743,8 +738,8 @@ class UserController extends ResourceController
     public function setAsCompanyManager($id = null)
     {
         try {
-            // 驗證用戶權限
-            $user = auth_validate_request(['admin', 'chairman']);
+            // 驗證用戶已登入
+            $user = auth_validate_request();
             if (!$user) {
                 return $this->failUnauthorized('請重新登入');
             }
@@ -758,11 +753,9 @@ class UserController extends ResourceController
                 return response_error('找不到該使用者', 404);
             }
 
-            // 檢查權限
-            if ($user['role'] === 'chairman') {
-                if ($user['urban_renewal_id'] !== $targetUser['urban_renewal_id']) {
-                    return $this->failForbidden('只能操作同企業的使用者');
-                }
+            // 檢查是否有權限管理此使用者（admin 或該企業的企業管理員）
+            if (!auth_can_manage_user($id)) {
+                return $this->failForbidden('無權限操作此使用者');
             }
 
             $success = $this->model->setAsCompanyManager($id);

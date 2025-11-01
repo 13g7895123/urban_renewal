@@ -1,15 +1,8 @@
 import { useAuthStore } from '~/stores/auth'
 
 export default defineNuxtRouteMiddleware(async (to) => {
-  // Skip middleware on server-side for better SSR handling
-  if (process.server) {
-    return
-  }
-
+  // SPA 模式下都在客戶端執行，Pinia 持久化插件會自動從 sessionStorage 恢復狀態
   const authStore = useAuthStore()
-
-  // 初始化認證狀態 (只在客戶端運行)
-  await authStore.initializeAuth()
 
   console.log('[Auth Middleware] Checking authentication:', {
     isLoggedIn: authStore.isLoggedIn,
@@ -24,7 +17,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return navigateTo('/login')
   }
 
-  // 嘗試驗證token是否仍然有效 (但不要太頻繁)
+  // 嘗試驗證token是否仍然有效
   try {
     // 只有當用戶數據不存在時才重新獲取
     if (!authStore.user) {

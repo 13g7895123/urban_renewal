@@ -6,7 +6,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // 檢查是否已登入
   if (!authStore.isLoggedIn) {
-    console.log('[Admin Middleware] User not authenticated, redirecting to login')
+    console.log('[Company Manager Middleware] User not authenticated, redirecting to login')
     return navigateTo('/login')
   }
 
@@ -17,16 +17,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
       await authStore.fetchUser()
     }
   } catch (error) {
-    console.warn('[Admin Middleware] Token validation failed:', error.message)
+    console.warn('[Company Manager Middleware] Token validation failed:', error.message)
     return navigateTo('/login')
   }
 
-  // 檢查是否有管理員權限
-  if (!authStore.isAdmin) {
-    console.log('[Admin Middleware] User is not admin, access denied')
-    throw createError({
-      statusCode: 403,
-      statusMessage: 'Access denied. Administrator privileges required.'
-    })
+  // 檢查是否有企業管理權限（系統管理員或企業管理者）
+  const hasAccess = authStore.isAdmin || authStore.isCompanyManager
+
+  if (!hasAccess) {
+    console.log('[Company Manager Middleware] User does not have company management privileges')
+    return navigateTo('/unauthorized')
   }
 })

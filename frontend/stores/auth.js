@@ -6,13 +6,9 @@ export const useAuthStore = defineStore('auth', () => {
   const tokenExpiresAt = ref(null)
   const isLoggedIn = computed(() => !!user.value && !!token.value)
   const isAdmin = computed(() => user.value?.role === 'admin')
+  const isCompanyManager = computed(() => user.value?.is_company_manager === 1)
+  const userType = computed(() => user.value?.user_type || 'general')
   const isLoading = ref(false)
-
-  // Token storage keys
-  const TOKEN_KEY = 'auth_token'
-  const REFRESH_TOKEN_KEY = 'auth_refresh_token'
-  const TOKEN_EXPIRES_AT_KEY = 'auth_token_expires_at'
-  const USER_KEY = 'auth_user'
 
   /**
    * 解碼 JWT Token
@@ -106,24 +102,12 @@ export const useAuthStore = defineStore('auth', () => {
         tokenExpiresAt.value = expiresAt.toISOString()
       }
 
-      // 儲存到 localStorage
-      if (process.client && userData && userToken) {
-        localStorage.setItem(TOKEN_KEY, userToken)
-        if (refresh_token) {
-          localStorage.setItem(REFRESH_TOKEN_KEY, refresh_token)
-        }
-        if (tokenExpiresAt.value) {
-          localStorage.setItem(TOKEN_EXPIRES_AT_KEY, tokenExpiresAt.value)
-        }
-        localStorage.setItem(USER_KEY, JSON.stringify(userData))
-        
-        console.log('[Auth Store] Login successful, data saved:', {
-          hasUser: !!user.value,
-          hasToken: !!token.value,
-          isLoggedIn: isLoggedIn.value,
-          userData
-        })
-      }
+      console.log('[Auth Store] Login successful:', {
+        hasUser: !!user.value,
+        hasToken: !!token.value,
+        isLoggedIn: isLoggedIn.value,
+        userData
+      })
 
       return { success: true, user: userData, token: userToken }
     } catch (error) {
@@ -147,20 +131,12 @@ export const useAuthStore = defineStore('auth', () => {
       console.error('Logout API error:', error)
       // 即使API調用失敗，仍然清除本地狀態
     } finally {
-      // 清除所有認證狀態
+      // 清除所有認證狀態（Pinia 持久化插件會自動清除 sessionStorage）
       user.value = null
       token.value = null
       refreshToken.value = null
       tokenExpiresAt.value = null
 
-      // 清除 localStorage
-      if (process.client) {
-        localStorage.removeItem(TOKEN_KEY)
-        localStorage.removeItem(REFRESH_TOKEN_KEY)
-        localStorage.removeItem(TOKEN_EXPIRES_AT_KEY)
-        localStorage.removeItem(USER_KEY)
-      }
-      
       // 重定向到登入頁面
       await navigateTo('/login')
     }
@@ -170,22 +146,17 @@ export const useAuthStore = defineStore('auth', () => {
   const fetchUser = async () => {
     try {
       if (!token.value) return null
-      
+
       const { get } = useApi()
       const response = await get('/auth/me')
-      
+
       if (!response.success) {
         throw new Error('Failed to fetch user data')
       }
-      
+
       const userData = response.data
       user.value = userData
 
-      // 更新 localStorage 中的用戶資料
-      if (process.client && userData) {
-        localStorage.setItem(USER_KEY, JSON.stringify(userData))
-      }
-      
       return userData
     } catch (error) {
       console.error('Fetch user error:', error)
@@ -195,37 +166,11 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
   
-  // 初始化用戶狀態 (改善SSR處理)
+  // 初始化用戶狀態（使用 Pinia 持久化插件後不再需要手動處理）
   const initializeAuth = async () => {
-    if (process.client) {
-      const savedToken = localStorage.getItem(TOKEN_KEY)
-      const savedRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
-      const savedExpiresAt = localStorage.getItem(TOKEN_EXPIRES_AT_KEY)
-      const savedUser = localStorage.getItem(USER_KEY)
-
-      if (savedToken && savedUser && savedUser !== 'undefined' && savedUser !== 'null') {
-        try {
-          token.value = savedToken
-          refreshToken.value = savedRefreshToken
-          tokenExpiresAt.value = savedExpiresAt
-          user.value = JSON.parse(savedUser)
-
-          // 不要在初始化時立即驗證token，避免頁面刷新時的重定向問題
-          // token驗證會在middleware中按需進行
-        } catch (error) {
-          console.error('Failed to parse saved auth data:', error)
-          // 清除無效的儲存數據
-          localStorage.removeItem(TOKEN_KEY)
-          localStorage.removeItem(REFRESH_TOKEN_KEY)
-          localStorage.removeItem(TOKEN_EXPIRES_AT_KEY)
-          localStorage.removeItem(USER_KEY)
-          user.value = null
-          token.value = null
-          refreshToken.value = null
-          tokenExpiresAt.value = null
-        }
-      }
-    }
+    // Pinia 持久化插件會自動從 sessionStorage 恢復狀態
+    // 這個方法保留是為了向後相容，但不需要做任何事情
+    console.log('[Auth Store] Auth initialized from sessionStorage')
   }
 
   // 更新用戶資料
@@ -233,19 +178,14 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const { put } = useApi()
       const response = await put('/profile', profileData)
-      
+
       if (!response.success) {
         throw new Error(response.error?.message || '更新失敗')
       }
-      
+
       const updatedUser = response.data
       user.value = updatedUser
 
-      // 更新 localStorage
-      if (process.client && updatedUser) {
-        localStorage.setItem(USER_KEY, JSON.stringify(updatedUser))
-      }
-      
       return { success: true, user: updatedUser }
     } catch (error) {
       console.error('Update profile error:', error)
@@ -300,13 +240,6 @@ export const useAuthStore = defineStore('auth', () => {
         tokenExpiresAt.value = expiresAt.toISOString()
       }
 
-      // 更新 localStorage
-      if (process.client) {
-        localStorage.setItem(TOKEN_KEY, newToken)
-        localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken)
-        localStorage.setItem(TOKEN_EXPIRES_AT_KEY, tokenExpiresAt.value)
-      }
-
       return newToken
     } catch (error) {
       console.error('Refresh token error:', error)
@@ -323,6 +256,8 @@ export const useAuthStore = defineStore('auth', () => {
     tokenExpiresAt: readonly(tokenExpiresAt),
     isLoggedIn,
     isAdmin,
+    isCompanyManager,
+    userType,
     isLoading: readonly(isLoading),
 
     // Token 輔助函數
@@ -340,5 +275,10 @@ export const useAuthStore = defineStore('auth', () => {
     updateProfile,
     changePassword,
     refreshAuthToken
+  }
+}, {
+  persist: {
+    storage: typeof window !== 'undefined' ? sessionStorage : null,
+    paths: ['user', 'token', 'refreshToken', 'tokenExpiresAt']
   }
 })

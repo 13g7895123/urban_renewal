@@ -142,16 +142,24 @@ const menuItems = [
     path: '/tables/company-profile',
     icon: 'heroicons:building-office',
     label: '企業管理',
-    roles: ['admin']
+    roles: ['admin'],
+    customCheck: (user) => user?.role === 'admin' || user?.is_company_manager === 1
   }
 ]
 
-// Filter menu items based on user role
+// Filter menu items based on user role and custom checks
 const visibleMenuItems = computed(() => {
-  const userRole = authStore.user?.role
-  if (!userRole) return []
-  
-  return menuItems.filter(item => item.roles.includes(userRole))
+  const currentUser = authStore.user
+  if (!currentUser) return []
+
+  return menuItems.filter(item => {
+    // 如果有自訂檢查函數，優先使用
+    if (item.customCheck) {
+      return item.customCheck(currentUser)
+    }
+    // 否則使用角色檢查
+    return item.roles.includes(currentUser.role)
+  })
 })
 
 // Logout handler
