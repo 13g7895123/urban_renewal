@@ -70,6 +70,16 @@
           <!-- New Manager Section -->
           <div class="mt-8 flex items-end justify-end gap-4">
             <UButton
+              color="primary"
+              size="sm"
+              variant="outline"
+              @click="reloadMembers"
+              :loading="loading"
+            >
+              <Icon name="heroicons:arrow-path" class="w-4 h-4 mr-1" />
+              重新載入
+            </UButton>
+            <UButton
               color="green"
               size="sm"
               @click="addNewManager"
@@ -265,14 +275,24 @@ const loadMembers = async () => {
       const members = membersResult.data.data.users || []
 
       // Separate managers and users based on is_company_manager field
-      managers.value = members.filter(m => m.is_company_manager == 1 || m.is_company_manager === '1').map(m => ({
+      // 確保正確處理 is_company_manager 的各種可能值 (可能是數字、字串或布林值)
+      managers.value = members.filter(m => {
+        const isManager = m.is_company_manager
+        // 明確檢查管理者的條件
+        return isManager == 1 || isManager === '1' || isManager === true || isManager === 'true'
+      }).map(m => ({
         id: m.id,
         username: m.username,
         name: m.full_name || m.username,
         company: m.urban_renewal_name || ''
       }))
 
-      users.value = members.filter(m => m.is_company_manager == 0 || m.is_company_manager === '0' || !m.is_company_manager).map(m => ({
+      users.value = members.filter(m => {
+        const isManager = m.is_company_manager
+        // 明確檢查非管理者的條件 (包含 null, undefined, 0, '0', false 等)
+        return isManager == 0 || isManager === '0' || isManager === false || isManager === 'false' ||
+               isManager === null || isManager === undefined || isManager === ''
+      }).map(m => ({
         id: m.id,
         username: m.username,
         name: m.full_name || m.username,
@@ -282,11 +302,41 @@ const loadMembers = async () => {
       console.log('[Company Profile] Loaded members:', {
         total: members.length,
         managers: managers.value.length,
-        users: users.value.length
+        users: users.value.length,
+        rawData: members // 輸出原始資料以便調試
       })
     }
   } catch (error) {
     console.error('Failed to load members:', error)
+  }
+}
+
+// 重新載入成員資料
+const reloadMembers = async () => {
+  loading.value = true
+  try {
+    await loadMembers()
+    await $swal.fire({
+      title: '成功',
+      text: '已重新載入企業成員資料',
+      icon: 'success',
+      confirmButtonText: '確定',
+      confirmButtonColor: '#10b981',
+      timer: 1500,
+      timerProgressBar: true,
+      showConfirmButton: false
+    })
+  } catch (error) {
+    console.error('Failed to reload members:', error)
+    await $swal.fire({
+      title: '錯誤',
+      text: '重新載入失敗，請稍後再試',
+      icon: 'error',
+      confirmButtonText: '確定',
+      confirmButtonColor: '#ef4444'
+    })
+  } finally {
+    loading.value = false
   }
 }
 
@@ -663,16 +713,18 @@ const addNewManager = async () => {
       const result = await createUser(userData)
 
       if (result.success) {
+        // 重新載入成員列表
+        await loadMembers()
+
+        // 顯示成功訊息 1.5 秒後自動關閉
         await $swal.fire({
           title: '成功',
           text: '使用者已成功新增',
           icon: 'success',
-          confirmButtonText: '確定',
-          confirmButtonColor: '#10b981'
+          showConfirmButton: false,
+          timer: 1500,
+          timerProgressBar: true
         })
-
-        // 重新載入成員列表
-        await loadMembers()
       } else {
         throw new Error(result.error?.message || '新增失敗')
       }
@@ -697,16 +749,18 @@ const setAsUser = async (manager) => {
     const result = await setAsCompanyUser(manager.id)
 
     if (result.success) {
-      $swal.fire({
+      // Reload members list
+      await loadMembers()
+
+      // 顯示成功訊息 1.5 秒後自動關閉
+      await $swal.fire({
         title: '成功',
         text: `已將 ${manager.name || manager.username} 設為企業使用者`,
         icon: 'success',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#10b981'
+        showConfirmButton: false,
+        timer: 1500,
+        timerProgressBar: true
       })
-
-      // Reload members list
-      await loadMembers()
     } else {
       throw new Error(result.error?.message || '設定失敗')
     }
@@ -716,8 +770,9 @@ const setAsUser = async (manager) => {
       title: '錯誤',
       text: error.message || '設定企業使用者失敗',
       icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
+      showConfirmButton: false,
+      timer: 1500,
+      timerProgressBar: true
     })
   }
 }
@@ -727,16 +782,18 @@ const setAsManager = async (user) => {
     const result = await setAsCompanyManager(user.id)
 
     if (result.success) {
-      $swal.fire({
+      // Reload members list
+      await loadMembers()
+
+      // 顯示成功訊息 1.5 秒後自動關閉
+      await $swal.fire({
         title: '成功',
         text: `已將 ${user.name || user.username} 設為企業管理者`,
         icon: 'success',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#10b981'
+        showConfirmButton: false,
+        timer: 1500,
+        timerProgressBar: true
       })
-
-      // Reload members list
-      await loadMembers()
     } else {
       throw new Error(result.error?.message || '設定失敗')
     }
@@ -746,8 +803,9 @@ const setAsManager = async (user) => {
       title: '錯誤',
       text: error.message || '設定企業管理者失敗',
       icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
+      showConfirmButton: false,
+      timer: 1500,
+      timerProgressBar: true
     })
   }
 }
@@ -769,16 +827,18 @@ const deleteManager = (index) => {
         const deleteResult = await deleteUserApi(manager.id)
 
         if (deleteResult.success) {
+          // Reload members list
+          await loadMembers()
+
+          // 顯示成功訊息 1.5 秒後自動關閉
           $swal.fire({
             title: '已刪除',
             text: '管理者已被刪除',
             icon: 'success',
-            confirmButtonText: '確定',
-            confirmButtonColor: '#10b981'
+            showConfirmButton: false,
+            timer: 1500,
+            timerProgressBar: true
           })
-
-          // Reload members list
-          await loadMembers()
         } else {
           throw new Error(deleteResult.error?.message || '刪除失敗')
         }
@@ -788,8 +848,9 @@ const deleteManager = (index) => {
           title: '錯誤',
           text: error.message || '刪除管理者失敗',
           icon: 'error',
-          confirmButtonText: '確定',
-          confirmButtonColor: '#ef4444'
+          showConfirmButton: false,
+          timer: 1500,
+          timerProgressBar: true
         })
       }
     }
@@ -813,16 +874,18 @@ const deleteUser = (index) => {
         const deleteResult = await deleteUserApi(user.id)
 
         if (deleteResult.success) {
+          // Reload members list
+          await loadMembers()
+
+          // 顯示成功訊息 1.5 秒後自動關閉
           $swal.fire({
             title: '已刪除',
             text: '使用者已被刪除',
             icon: 'success',
-            confirmButtonText: '確定',
-            confirmButtonColor: '#10b981'
+            showConfirmButton: false,
+            timer: 1500,
+            timerProgressBar: true
           })
-
-          // Reload members list
-          await loadMembers()
         } else {
           throw new Error(deleteResult.error?.message || '刪除失敗')
         }
@@ -832,8 +895,9 @@ const deleteUser = (index) => {
           title: '錯誤',
           text: error.message || '刪除使用者失敗',
           icon: 'error',
-          confirmButtonText: '確定',
-          confirmButtonColor: '#ef4444'
+          showConfirmButton: false,
+          timer: 1500,
+          timerProgressBar: true
         })
       }
     }

@@ -252,17 +252,18 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // 確保返回響應式引用
   return {
-    // 狀態
-    user: readonly(user),
-    token: readonly(token),
-    refreshToken: readonly(refreshToken),
-    tokenExpiresAt: readonly(tokenExpiresAt),
+    // 狀態 - 直接返回 ref
+    user,
+    token,
+    refreshToken,
+    tokenExpiresAt,
     isLoggedIn,
     isAdmin,
     isCompanyManager,
     userType,
-    isLoading: readonly(isLoading),
+    isLoading,
 
     // Token 輔助函數
     decodeToken,

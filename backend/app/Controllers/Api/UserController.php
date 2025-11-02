@@ -791,14 +791,30 @@ class UserController extends ResourceController
                 return response_error('找不到該使用者', 404);
             }
 
-            // 檢查是否有權限管理此使用者（admin 或該企業的企業管理員）
-            if (!auth_can_manage_user($targetUser, $user)) {
-                return $this->failForbidden('無權限操作此使用者');
-            }
-
             // 不能操作自己
             if ($user['id'] === (int)$id) {
                 return response_error('不能移除自己的管理者權限', 400);
+            }
+
+            // 檢查權限
+            $isAdmin = $user['role'] === 'admin';
+            $isCompanyManager = isset($user['is_company_manager']) && ($user['is_company_manager'] == 1 || $user['is_company_manager'] === '1');
+
+            if (!$isAdmin && !$isCompanyManager) {
+                return $this->failForbidden('您沒有權限設定企業使用者');
+            }
+
+            // 企業管理者只能管理同企業的使用者
+            if ($isCompanyManager && !$isAdmin) {
+                if ($targetUser['role'] === 'admin' || $targetUser['role'] === 'chairman') {
+                    return $this->failForbidden('無權限操作管理員或主席帳號');
+                }
+                if (($user['urban_renewal_id'] ?? null) !== ($targetUser['urban_renewal_id'] ?? null)) {
+                    return $this->failForbidden('只能管理同企業的使用者');
+                }
+                if (($targetUser['user_type'] ?? '') !== 'enterprise') {
+                    return $this->failForbidden('只能管理企業類型的使用者');
+                }
             }
 
             $success = $this->model->setAsCompanyUser($id);
@@ -838,9 +854,25 @@ class UserController extends ResourceController
                 return response_error('找不到該使用者', 404);
             }
 
-            // 檢查是否有權限管理此使用者（admin 或該企業的企業管理員）
-            if (!auth_can_manage_user($targetUser, $user)) {
-                return $this->failForbidden('無權限操作此使用者');
+            // 檢查權限
+            $isAdmin = $user['role'] === 'admin';
+            $isCompanyManager = isset($user['is_company_manager']) && ($user['is_company_manager'] == 1 || $user['is_company_manager'] === '1');
+
+            if (!$isAdmin && !$isCompanyManager) {
+                return $this->failForbidden('您沒有權限設定企業管理者');
+            }
+
+            // 企業管理者只能管理同企業的使用者
+            if ($isCompanyManager && !$isAdmin) {
+                if ($targetUser['role'] === 'admin' || $targetUser['role'] === 'chairman') {
+                    return $this->failForbidden('無權限操作管理員或主席帳號');
+                }
+                if (($user['urban_renewal_id'] ?? null) !== ($targetUser['urban_renewal_id'] ?? null)) {
+                    return $this->failForbidden('只能管理同企業的使用者');
+                }
+                if (($targetUser['user_type'] ?? '') !== 'enterprise') {
+                    return $this->failForbidden('只能管理企業類型的使用者');
+                }
             }
 
             $success = $this->model->setAsCompanyManager($id);
