@@ -28,11 +28,14 @@ class VotingTopicController extends ResourceController
     public function index()
     {
         try {
-            // 驗證用戶
-            $user = auth_validate_request();
+            // Get authenticated user
+            $user = $_SERVER['AUTH_USER'] ?? null;
             if (!$user) {
                 return $this->failUnauthorized('請重新登入');
             }
+
+            $isAdmin = isset($user['role']) && $user['role'] === 'admin';
+            $isCompanyManager = isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
 
             $page = $this->request->getGet('page') ?? 1;
             $perPage = $this->request->getGet('per_page') ?? 10;
@@ -40,16 +43,53 @@ class VotingTopicController extends ResourceController
             $status = $this->request->getGet('status');
             $keyword = $this->request->getGet('search');
 
-            if ($keyword) {
-                $filters = [
-                    'meeting_id' => $meetingId,
-                    'voting_status' => $status
-                ];
-                $topics = $this->model->searchTopics($keyword, $page, $perPage, $filters);
-            } elseif ($meetingId) {
-                $topics = $this->model->getTopicsByMeeting($meetingId, $page, $perPage, $status);
+            // For company managers, need to filter by their urban_renewal_id
+            // This requires checking the meeting's urban_renewal_id
+            if (!$isAdmin && $isCompanyManager && isset($user['urban_renewal_id'])) {
+                // Get all meetings for this urban_renewal
+                $meetingModel = model('MeetingModel');
+                $allowedMeetings = $meetingModel->where('urban_renewal_id', $user['urban_renewal_id'])->findAll();
+                $allowedMeetingIds = array_column($allowedMeetings, 'id');
+
+                // If specific meetingId requested, verify permission
+                if ($meetingId && !in_array($meetingId, $allowedMeetingIds)) {
+                    return $this->fail([
+                        'success' => false,
+                        'error' => [
+                            'code' => 'FORBIDDEN',
+                            'message' => '您沒有權限存取此會議的投票議題'
+                        ]
+                    ], 403);
+                }
+
+                // Filter topics by allowed meetings
+                if ($keyword) {
+                    $filters = [
+                        'meeting_id' => $meetingId,
+                        'voting_status' => $status,
+                        'allowed_meeting_ids' => $allowedMeetingIds
+                    ];
+                    $topics = $this->model->searchTopics($keyword, $page, $perPage, $filters);
+                } elseif ($meetingId) {
+                    $topics = $this->model->getTopicsByMeeting($meetingId, $page, $perPage, $status);
+                } else {
+                    // Get all topics for allowed meetings
+                    $this->model->whereIn('meeting_id', $allowedMeetingIds);
+                    $topics = $this->model->paginate($perPage, 'default', $page);
+                }
             } else {
-                $topics = $this->model->paginate($perPage, 'default', $page);
+                // Admin can see all
+                if ($keyword) {
+                    $filters = [
+                        'meeting_id' => $meetingId,
+                        'voting_status' => $status
+                    ];
+                    $topics = $this->model->searchTopics($keyword, $page, $perPage, $filters);
+                } elseif ($meetingId) {
+                    $topics = $this->model->getTopicsByMeeting($meetingId, $page, $perPage, $status);
+                } else {
+                    $topics = $this->model->paginate($perPage, 'default', $page);
+                }
             }
 
             return response_success('投票議題列表', [
@@ -69,8 +109,8 @@ class VotingTopicController extends ResourceController
     public function show($id = null)
     {
         try {
-            // 驗證用戶
-            $user = auth_validate_request();
+            // Get authenticated user
+            $user = $_SERVER['AUTH_USER'] ?? null;
             if (!$user) {
                 return $this->failUnauthorized('請重新登入');
             }
@@ -84,9 +124,23 @@ class VotingTopicController extends ResourceController
                 return response_error('找不到該投票議題', 404);
             }
 
-            // 檢查用戶權限（根據更新會ID）
-            if ($user['role'] !== 'admin' && $user['urban_renewal_id'] !== $topic['urban_renewal_id']) {
-                return $this->failForbidden('無權限查看此議題');
+            // Check permission - need to get meeting's urban_renewal_id
+            $isAdmin = isset($user['role']) && $user['role'] === 'admin';
+            $isCompanyManager = isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
+
+            if (!$isAdmin && $isCompanyManager) {
+                $meetingModel = model('MeetingModel');
+                $meeting = $meetingModel->find($topic['meeting_id']);
+                
+                if (!$meeting || $user['urban_renewal_id'] != $meeting['urban_renewal_id']) {
+                    return $this->fail([
+                        'success' => false,
+                        'error' => [
+                            'code' => 'FORBIDDEN',
+                            'message' => '您沒有權限查看此投票議題'
+                        ]
+                    ], 403);
+                }
             }
 
             return response_success('投票議題詳情', $topic);
@@ -103,11 +157,14 @@ class VotingTopicController extends ResourceController
     public function create()
     {
         try {
-            // 驗證用戶權限
-            $user = auth_validate_request(['admin', 'chairman']);
+            // Get authenticated user
+            $user = $_SERVER['AUTH_USER'] ?? null;
             if (!$user) {
                 return $this->failUnauthorized('請重新登入');
             }
+
+            $isAdmin = isset($user['role']) && $user['role'] === 'admin';
+            $isCompanyManager = isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
 
             $data = $this->request->getJSON(true);
 
@@ -131,8 +188,17 @@ class VotingTopicController extends ResourceController
                 return response_error('找不到該會議', 404);
             }
 
-            if ($user['role'] !== 'admin' && $user['urban_renewal_id'] !== $meeting['urban_renewal_id']) {
-                return $this->failForbidden('無權限在此會議建立議題');
+            // Check permission for company managers
+            if (!$isAdmin && $isCompanyManager) {
+                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $meeting['urban_renewal_id']) {
+                    return $this->fail([
+                        'success' => false,
+                        'error' => [
+                            'code' => 'FORBIDDEN',
+                            'message' => '您沒有權限在此會議建立投票議題'
+                        ]
+                    ], 403);
+                }
             }
 
             // 檢查議題編號是否重複
@@ -179,11 +245,14 @@ class VotingTopicController extends ResourceController
     public function update($id = null)
     {
         try {
-            // 驗證用戶權限
-            $user = auth_validate_request(['admin', 'chairman']);
+            // Get authenticated user
+            $user = $_SERVER['AUTH_USER'] ?? null;
             if (!$user) {
                 return $this->failUnauthorized('請重新登入');
             }
+
+            $isAdmin = isset($user['role']) && $user['role'] === 'admin';
+            $isCompanyManager = isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
 
             if (!$id) {
                 return response_error('議題ID為必填', 400);
@@ -194,11 +263,20 @@ class VotingTopicController extends ResourceController
                 return response_error('找不到該投票議題', 404);
             }
 
-            // 檢查用戶權限
+            // Check permission for company managers
             $meetingModel = model('MeetingModel');
             $meeting = $meetingModel->find($topic['meeting_id']);
-            if ($user['role'] !== 'admin' && $user['urban_renewal_id'] !== $meeting['urban_renewal_id']) {
-                return $this->failForbidden('無權限修改此議題');
+            
+            if (!$isAdmin && $isCompanyManager) {
+                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $meeting['urban_renewal_id']) {
+                    return $this->fail([
+                        'success' => false,
+                        'error' => [
+                            'code' => 'FORBIDDEN',
+                            'message' => '您沒有權限修改此投票議題'
+                        ]
+                    ], 403);
+                }
             }
 
             // 檢查議題狀態（只有草稿狀態可以修改）
@@ -241,11 +319,14 @@ class VotingTopicController extends ResourceController
     public function delete($id = null)
     {
         try {
-            // 驗證用戶權限
-            $user = auth_validate_request(['admin', 'chairman']);
+            // Get authenticated user
+            $user = $_SERVER['AUTH_USER'] ?? null;
             if (!$user) {
                 return $this->failUnauthorized('請重新登入');
             }
+
+            $isAdmin = isset($user['role']) && $user['role'] === 'admin';
+            $isCompanyManager = isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
 
             if (!$id) {
                 return response_error('議題ID為必填', 400);
@@ -256,11 +337,20 @@ class VotingTopicController extends ResourceController
                 return response_error('找不到該投票議題', 404);
             }
 
-            // 檢查用戶權限
+            // Check permission for company managers
             $meetingModel = model('MeetingModel');
             $meeting = $meetingModel->find($topic['meeting_id']);
-            if ($user['role'] !== 'admin' && $user['urban_renewal_id'] !== $meeting['urban_renewal_id']) {
-                return $this->failForbidden('無權限刪除此議題');
+            
+            if (!$isAdmin && $isCompanyManager) {
+                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $meeting['urban_renewal_id']) {
+                    return $this->fail([
+                        'success' => false,
+                        'error' => [
+                            'code' => 'FORBIDDEN',
+                            'message' => '您沒有權限刪除此投票議題'
+                        ]
+                    ], 403);
+                }
             }
 
             // 檢查議題狀態（只有草稿狀態可以刪除）

@@ -119,7 +119,14 @@ const menuItems = [
     path: '/tables/meeting',
     icon: 'heroicons:document-text',
     label: '會議管理',
-    roles: ['admin', 'chairman', 'member']
+    roles: ['admin'],
+    customCheck: (user) => {
+      // Admin 或企業管理者都可以訪問
+      const isManager = user?.is_company_manager === 1 ||
+                        user?.is_company_manager === '1' ||
+                        user?.is_company_manager === true
+      return user?.role === 'admin' || isManager
+    }
   },
   {
     path: '/tables/issue',

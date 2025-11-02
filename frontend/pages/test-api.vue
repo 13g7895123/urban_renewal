@@ -155,9 +155,11 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useAuthStore } from '~/stores/auth'
 
 const config = useRuntimeConfig()
 const { get } = useApi()
+const authStore = useAuthStore()
 
 const isClient = ref(false)
 const testEndpoint = ref('/urban-renewals')
@@ -239,10 +241,15 @@ const testDirectUrl = async () => {
   console.log('=== Direct URL Test Started ===')
   console.log('Testing URL:', directUrl)
 
+  // Get token for authentication (if available)
+  const token = authStore.token || sessionStorage.getItem('token')
+  const headers = token ? { 'Authorization': `Bearer ${token}` } : {}
+  console.log('Using headers:', headers)
+
   const startTime = Date.now()
 
   try {
-    const response = await $fetch(directUrl)
+    const response = await $fetch(directUrl, { headers })
     const responseTime = Date.now() - startTime
 
     console.log('=== Direct URL Test Success ===')

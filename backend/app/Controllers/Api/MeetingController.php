@@ -42,6 +42,11 @@ class MeetingController extends BaseController
     public function index()
     {
         try {
+            // Get authenticated user
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
+            $isCompanyManager = $user && isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
+
             $page = $this->request->getGet('page') ?? 1;
             $perPage = $this->request->getGet('per_page') ?? 10;
             $urbanRenewalId = $this->request->getGet('urban_renewal_id');
@@ -49,7 +54,14 @@ class MeetingController extends BaseController
             $search = $this->request->getGet('search');
 
             $filters = [];
-            if ($urbanRenewalId) $filters['urban_renewal_id'] = $urbanRenewalId;
+            
+            // For company managers, filter by their urban_renewal_id
+            if (!$isAdmin && $isCompanyManager && isset($user['urban_renewal_id'])) {
+                $filters['urban_renewal_id'] = $user['urban_renewal_id'];
+            } elseif ($urbanRenewalId) {
+                $filters['urban_renewal_id'] = $urbanRenewalId;
+            }
+            
             if ($status) $filters['meeting_status'] = $status;
             if ($search) $filters['search'] = $search;
 
@@ -87,6 +99,24 @@ class MeetingController extends BaseController
     public function getByUrbanRenewal($urbanRenewalId)
     {
         try {
+            // Get authenticated user
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
+            $isCompanyManager = $user && isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
+
+            // Check permission for company managers
+            if (!$isAdmin && $isCompanyManager) {
+                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $urbanRenewalId) {
+                    return $this->fail([
+                        'success' => false,
+                        'error' => [
+                            'code' => 'FORBIDDEN',
+                            'message' => '您沒有權限存取此更新會的會議資料'
+                        ]
+                    ], 403);
+                }
+            }
+
             // 檢查更新會是否存在
             if (!$this->urbanRenewalModel->find($urbanRenewalId)) {
                 return $this->fail([
@@ -148,6 +178,24 @@ class MeetingController extends BaseController
                 ], 404);
             }
 
+            // Get authenticated user and check permission
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
+            $isCompanyManager = $user && isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
+
+            // Check permission for company managers
+            if (!$isAdmin && $isCompanyManager) {
+                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $meeting['urban_renewal_id']) {
+                    return $this->fail([
+                        'success' => false,
+                        'error' => [
+                            'code' => 'FORBIDDEN',
+                            'message' => '您沒有權限存取此會議'
+                        ]
+                    ], 403);
+                }
+            }
+
             return $this->respond([
                 'success' => true,
                 'data' => $meeting,
@@ -194,6 +242,24 @@ class MeetingController extends BaseController
             }
 
             $data = $this->request->getJSON(true);
+
+            // Get authenticated user and check permission
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
+            $isCompanyManager = $user && isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
+
+            // Check permission for company managers
+            if (!$isAdmin && $isCompanyManager) {
+                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $data['urban_renewal_id']) {
+                    return $this->fail([
+                        'success' => false,
+                        'error' => [
+                            'code' => 'FORBIDDEN',
+                            'message' => '您只能為自己的更新會建立會議'
+                        ]
+                    ], 403);
+                }
+            }
 
             // 檢查更新會是否存在
             if (!$this->urbanRenewalModel->find($data['urban_renewal_id'])) {
@@ -277,6 +343,24 @@ class MeetingController extends BaseController
                         'message' => '會議不存在'
                     ]
                 ], 404);
+            }
+
+            // Get authenticated user and check permission
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
+            $isCompanyManager = $user && isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
+
+            // Check permission for company managers
+            if (!$isAdmin && $isCompanyManager) {
+                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $meeting['urban_renewal_id']) {
+                    return $this->fail([
+                        'success' => false,
+                        'error' => [
+                            'code' => 'FORBIDDEN',
+                            'message' => '您沒有權限修改此會議'
+                        ]
+                    ], 403);
+                }
             }
 
             $rules = [
@@ -372,6 +456,24 @@ class MeetingController extends BaseController
                         'message' => '會議不存在'
                     ]
                 ], 404);
+            }
+
+            // Get authenticated user and check permission
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
+            $isCompanyManager = $user && isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
+
+            // Check permission for company managers
+            if (!$isAdmin && $isCompanyManager) {
+                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $meeting['urban_renewal_id']) {
+                    return $this->fail([
+                        'success' => false,
+                        'error' => [
+                            'code' => 'FORBIDDEN',
+                            'message' => '您沒有權限刪除此會議'
+                        ]
+                    ], 403);
+                }
             }
 
             // 檢查會議狀態，已進行中或已完成的會議不能刪除

@@ -42,8 +42,16 @@ class PropertyOwnerController extends ResourceController
             }
 
             // 權限驗證：檢查用戶身份
-            $user = $this->request->user ?? null;
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            
+            // Debug logging
+            if (ENVIRONMENT !== 'production') {
+                log_message('debug', 'PropertyOwnerController::getByUrbanRenewal - Request ID: ' . $urbanRenewalId);
+                log_message('debug', 'PropertyOwnerController::getByUrbanRenewal - User: ' . json_encode($user));
+            }
+            
             if (!$user) {
+                log_message('error', 'PropertyOwnerController::getByUrbanRenewal - No user found in $_SERVER[AUTH_USER]');
                 return $this->respond([
                     'status' => 'error',
                     'message' => '未授權：無法識別用戶身份'
@@ -148,7 +156,7 @@ class PropertyOwnerController extends ResourceController
             }
 
             // 權限驗證：檢查用戶身份
-            $user = $this->request->user ?? null;
+            $user = $_SERVER['AUTH_USER'] ?? null;
             if (!$user) {
                 return $this->respond([
                     'status' => 'error',
@@ -250,7 +258,7 @@ class PropertyOwnerController extends ResourceController
             }
 
             // 權限驗證：檢查用戶身份
-            $user = $this->request->user ?? null;
+            $user = $_SERVER['AUTH_USER'] ?? null;
             if (!$user) {
                 return $this->respond([
                     'status' => 'error',
@@ -477,7 +485,7 @@ class PropertyOwnerController extends ResourceController
             }
 
             // 權限驗證：檢查用戶身份
-            $user = $this->request->user ?? null;
+            $user = $_SERVER['AUTH_USER'] ?? null;
             if (!$user) {
                 return $this->respond([
                     'status' => 'error',
@@ -666,7 +674,7 @@ class PropertyOwnerController extends ResourceController
             }
 
             // 權限驗證：檢查用戶身份
-            $user = $this->request->user ?? null;
+            $user = $_SERVER['AUTH_USER'] ?? null;
             if (!$user) {
                 return $this->respond([
                     'status' => 'error',
@@ -763,7 +771,7 @@ class PropertyOwnerController extends ResourceController
             }
 
             // 權限驗證：檢查用戶身份
-            $user = $this->request->user ?? null;
+            $user = $_SERVER['AUTH_USER'] ?? null;
             if (!$user) {
                 return $this->respond([
                     'status' => 'error',
@@ -966,7 +974,7 @@ class PropertyOwnerController extends ResourceController
             }
 
             // 權限驗證：檢查用戶身份
-            $user = $this->request->user ?? null;
+            $user = $_SERVER['AUTH_USER'] ?? null;
             if (!$user) {
                 return $this->respond([
                     'status' => 'error',

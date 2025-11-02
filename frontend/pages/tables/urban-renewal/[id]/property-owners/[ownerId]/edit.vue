@@ -535,6 +535,9 @@ const route = useRoute()
 const router = useRouter()
 const runtimeConfig = useRuntimeConfig()
 
+// Use API composable for authenticated requests
+const { get, put } = useApi()
+
 // Get API base URL for development vs production
 const getApiBaseUrl = () => {
   const isDev = process.dev || process.env.NODE_ENV === 'development'
@@ -599,11 +602,10 @@ const buildingForm = reactive({
 // Fetch property owner data
 const fetchPropertyOwner = async () => {
   try {
-    const response = await $fetch(`http://localhost:9228/api/property-owners/${ownerId.value}`, {
-    })
+    const response = await get(`/property-owners/${ownerId.value}`)
 
-    if (response.status === 'success') {
-      const data = response.data
+    if (response.data?.status === 'success') {
+      const data = response.data.data
       Object.assign(formData, {
         id: data.id,
         urban_renewal_id: data.urban_renewal_id,
@@ -637,11 +639,9 @@ const fetchPropertyOwner = async () => {
 // Fetch counties
 const fetchCounties = async () => {
   try {
-    const response = await $fetch('/api/locations/counties', {
-      baseURL: apiBaseUrl
-    })
-    if (response.status === 'success') {
-      counties.value = response.data
+    const response = await get('/locations/counties')
+    if (response.data?.status === 'success') {
+      counties.value = response.data.data
     }
   } catch (err) {
     console.error('Failed to fetch counties:', err)
@@ -651,12 +651,10 @@ const fetchCounties = async () => {
 // Fetch urban renewal info
 const fetchUrbanRenewalInfo = async () => {
   try {
-    const response = await $fetch(`/api/urban-renewals/${urbanRenewalId.value}`, {
-      baseURL: apiBaseUrl
-    })
+    const response = await get(`/urban-renewals/${urbanRenewalId.value}`)
 
-    if (response.status === 'success') {
-      urbanRenewalName.value = response.data.name
+    if (response.data?.status === 'success') {
+      urbanRenewalName.value = response.data.data.name
     }
   } catch (err) {
     console.error('Failed to fetch urban renewal info:', err)
@@ -666,12 +664,10 @@ const fetchUrbanRenewalInfo = async () => {
 // Fetch available land plots
 const fetchAvailablePlots = async () => {
   try {
-    const response = await $fetch(`/api/urban-renewals/${urbanRenewalId.value}/land-plots`, {
-      baseURL: apiBaseUrl
-    })
+    const response = await get(`/urban-renewals/${urbanRenewalId.value}/land-plots`)
 
-    if (response.status === 'success') {
-      availablePlots.value = response.data || []
+    if (response.data?.status === 'success') {
+      availablePlots.value = response.data.data || []
     }
   } catch (err) {
     console.error('Failed to fetch land plots:', err)
@@ -707,11 +703,9 @@ const onBuildingCountyChange = async () => {
   if (!buildingForm.county) return
 
   try {
-    const response = await $fetch(`/api/locations/districts/${buildingForm.county}`, {
-      baseURL: apiBaseUrl
-    })
-    if (response.status === 'success') {
-      buildingDistricts.value = response.data
+    const response = await get(`/locations/districts/${buildingForm.county}`)
+    if (response.data?.status === 'success') {
+      buildingDistricts.value = response.data.data
     }
   } catch (error) {
     console.error('Error fetching districts:', error)
@@ -727,11 +721,9 @@ const onBuildingDistrictChange = async () => {
   if (!buildingForm.district) return
 
   try {
-    const response = await $fetch(`/api/locations/sections/${buildingForm.county}/${buildingForm.district}`, {
-      baseURL: apiBaseUrl
-    })
-    if (response.status === 'success') {
-      buildingSections.value = response.data
+    const response = await get(`/locations/sections/${buildingForm.county}/${buildingForm.district}`)
+    if (response.data?.status === 'success') {
+      buildingSections.value = response.data.data
     }
   } catch (error) {
     console.error('Error fetching sections:', error)
@@ -807,15 +799,9 @@ const onSubmit = async () => {
 
   try {
     // Send formData as-is - backend expects owner_name, identity_number, registered_address
-    const response = await $fetch(`http://localhost:9228/api/property-owners/${ownerId.value}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: formData
-    })
+    const response = await put(`/property-owners/${ownerId.value}`, formData)
 
-    if (response.status === 'success') {
+    if (response.data?.status === 'success') {
       $swal.fire({
         title: '更新成功！',
         text: '所有權人資料已成功更新',
@@ -828,7 +814,7 @@ const onSubmit = async () => {
     } else {
       $swal.fire({
         title: '更新失敗',
-        text: response.message || '更新失敗',
+        text: response.data?.message || '更新失敗',
         icon: 'error',
         confirmButtonText: '確定',
         confirmButtonColor: '#ef4444'

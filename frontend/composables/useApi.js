@@ -70,26 +70,36 @@ export const useApi = () => {
       // 優先從 Pinia store 取得 token（使用 sessionStorage 持久化）
       try {
         const authStore = useAuthStore()
+        console.log('[API] Checking authStore.token:', authStore.token ? 'Token exists' : 'No token')
         if (authStore.token) {
+          console.log('[API] Using token from authStore:', authStore.token.substring(0, 20) + '...')
           return authStore.token
         }
       } catch (error) {
         // 如果 store 未初始化，從 sessionStorage 讀取
-        console.warn('[API] Could not access auth store, falling back to sessionStorage')
+        console.warn('[API] Could not access auth store, falling back to sessionStorage', error)
       }
 
       // 回退方案：從 sessionStorage 讀取（Pinia 持久化的資料）
       // Pinia 使用 store id 'auth' 作為 key
       const persistedAuth = sessionStorage.getItem('auth')
+      console.log('[API] SessionStorage auth data:', persistedAuth ? 'Data exists' : 'No data')
       if (persistedAuth) {
         try {
           const authData = JSON.parse(persistedAuth)
+          console.log('[API] Parsed auth data:', authData)
           // Pinia 持久化會保存整個 store 的指定 paths
-          return authData.token || null
+          const token = authData.token || null
+          if (token) {
+            console.log('[API] Using token from sessionStorage:', token.substring(0, 20) + '...')
+          }
+          return token
         } catch (e) {
           console.error('[API] Failed to parse auth from sessionStorage:', e)
         }
       }
+      
+      console.warn('[API] No token found in authStore or sessionStorage')
     }
     return null
   }
@@ -97,11 +107,14 @@ export const useApi = () => {
   // Get authentication headers
   const getAuthHeaders = () => {
     const token = getAuthToken()
+    console.log('[API] getAuthHeaders - token:', token ? 'Token exists' : 'No token')
     if (token) {
+      console.log('[API] Adding Authorization header')
       return {
         'Authorization': `Bearer ${token}`
       }
     }
+    console.warn('[API] No Authorization header added - token is missing')
     return {}
   }
 

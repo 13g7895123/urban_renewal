@@ -195,6 +195,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 definePageMeta({
+  middleware: ['auth', 'company-manager'],
   layout: false
 })
 

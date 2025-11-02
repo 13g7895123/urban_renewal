@@ -112,6 +112,18 @@ export const useAuthStore = defineStore('auth', () => {
         isLoggedIn: isLoggedIn.value,
         userData
       })
+      
+      // 驗證 sessionStorage 是否成功保存
+      if (process.client) {
+        setTimeout(() => {
+          const stored = sessionStorage.getItem('auth')
+          console.log('[Auth Store] SessionStorage after login:', stored ? 'Data saved' : 'No data')
+          if (stored) {
+            const parsed = JSON.parse(stored)
+            console.log('[Auth Store] Stored token:', parsed.token ? 'Token exists' : 'No token')
+          }
+        }, 100)
+      }
 
       return { success: true, user: userData, token: userToken }
     } catch (error) {

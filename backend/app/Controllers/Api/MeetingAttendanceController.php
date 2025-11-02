@@ -46,6 +46,11 @@ class MeetingAttendanceController extends BaseController
     public function index($meetingId = null)
     {
         try {
+            // Get authenticated user
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
+            $isCompanyManager = $user && isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
+
             // 檢查會議是否存在
             $meeting = $this->meetingModel->find($meetingId);
             if (!$meeting) {
@@ -56,6 +61,19 @@ class MeetingAttendanceController extends BaseController
                         'message' => '會議不存在'
                     ]
                 ], 404);
+            }
+
+            // Check permission for company managers
+            if (!$isAdmin && $isCompanyManager) {
+                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $meeting['urban_renewal_id']) {
+                    return $this->fail([
+                        'success' => false,
+                        'error' => [
+                            'code' => 'FORBIDDEN',
+                            'message' => '您沒有權限查看此會議的出席記錄'
+                        ]
+                    ], 403);
+                }
             }
 
             $page = $this->request->getGet('page') ?? 1;
@@ -101,6 +119,11 @@ class MeetingAttendanceController extends BaseController
     public function checkIn($meetingId = null, $ownerId = null)
     {
         try {
+            // Get authenticated user
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
+            $isCompanyManager = $user && isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
+
             // 檢查會議是否存在
             $meeting = $this->meetingModel->find($meetingId);
             if (!$meeting) {
@@ -111,6 +134,19 @@ class MeetingAttendanceController extends BaseController
                         'message' => '會議不存在'
                     ]
                 ], 404);
+            }
+
+            // Check permission for company managers
+            if (!$isAdmin && $isCompanyManager) {
+                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $meeting['urban_renewal_id']) {
+                    return $this->fail([
+                        'success' => false,
+                        'error' => [
+                            'code' => 'FORBIDDEN',
+                            'message' => '您沒有權限為此會議進行報到'
+                        ]
+                    ], 403);
+                }
             }
 
             // 檢查所有權人是否存在且屬於該更新會
@@ -228,6 +264,36 @@ class MeetingAttendanceController extends BaseController
     public function update($meetingId = null, $ownerId = null)
     {
         try {
+            // Get authenticated user
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
+            $isCompanyManager = $user && isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
+
+            // 檢查會議是否存在並驗證權限
+            $meeting = $this->meetingModel->find($meetingId);
+            if (!$meeting) {
+                return $this->fail([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'NOT_FOUND',
+                        'message' => '會議不存在'
+                    ]
+                ], 404);
+            }
+
+            // Check permission for company managers
+            if (!$isAdmin && $isCompanyManager) {
+                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $meeting['urban_renewal_id']) {
+                    return $this->fail([
+                        'success' => false,
+                        'error' => [
+                            'code' => 'FORBIDDEN',
+                            'message' => '您沒有權限修改此會議的出席記錄'
+                        ]
+                    ], 403);
+                }
+            }
+
             // 檢查出席記錄是否存在
             $attendance = $this->attendanceModel->where('meeting_id', $meetingId)
                                                 ->where('property_owner_id', $ownerId)

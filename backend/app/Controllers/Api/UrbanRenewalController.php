@@ -44,7 +44,7 @@ class UrbanRenewalController extends BaseController
             $search = $this->request->getGet('search');
 
             // 權限驗證：檢查用戶身份
-            $user = $this->request->user ?? null;
+            $user = $_SERVER['AUTH_USER'] ?? null;
             if (!$user) {
                 return $this->response->setStatusCode(401)->setJSON([
                     'status' => 'error',

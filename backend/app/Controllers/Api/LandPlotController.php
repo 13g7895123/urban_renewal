@@ -36,12 +36,17 @@ class LandPlotController extends BaseController
     }
 
     /**
-     * Get land plots by urban renewal ID
+     * Get all land plots for a specific urban renewal
      * GET /api/urban-renewals/{urbanRenewalId}/land-plots
      */
     public function index($urbanRenewalId = null)
     {
         try {
+            // Get authenticated user
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
+            $isCompanyManager = $user && isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
+
             if (!$urbanRenewalId) {
                 return $this->response->setStatusCode(400)->setJSON([
                     'status' => 'error',
@@ -58,9 +63,17 @@ class LandPlotController extends BaseController
                 ]);
             }
 
-            $landPlots = $this->landPlotModel->getLandPlotsByUrbanRenewal($urbanRenewalId);
+            // Check permission for company managers
+            if (!$isAdmin && $isCompanyManager) {
+                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $urbanRenewalId) {
+                    return $this->response->setStatusCode(403)->setJSON([
+                        'status' => 'error',
+                        'message' => '您沒有權限查看此更新會的地號資料'
+                    ]);
+                }
+            }
 
-            // Format land plots for frontend
+            $landPlots = $this->landPlotModel->getLandPlotsByUrbanRenewal($urbanRenewalId);            // Format land plots for frontend
             $formattedPlots = array_map(function($plot) {
                 return [
                     'id' => $plot['id'],
@@ -98,6 +111,11 @@ class LandPlotController extends BaseController
     public function show($id = null)
     {
         try {
+            // Get authenticated user
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
+            $isCompanyManager = $user && isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
+
             if (!$id) {
                 return $this->response->setStatusCode(400)->setJSON([
                     'status' => 'error',
@@ -112,6 +130,16 @@ class LandPlotController extends BaseController
                     'status' => 'error',
                     'message' => '找不到指定的地號'
                 ]);
+            }
+
+            // Check permission for company managers
+            if (!$isAdmin && $isCompanyManager) {
+                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $landPlot['urban_renewal_id']) {
+                    return $this->response->setStatusCode(403)->setJSON([
+                        'status' => 'error',
+                        'message' => '您沒有權限查看此地號'
+                    ]);
+                }
             }
 
             return $this->response->setJSON([
@@ -134,6 +162,11 @@ class LandPlotController extends BaseController
     public function create($urbanRenewalId = null)
     {
         try {
+            // Get authenticated user
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
+            $isCompanyManager = $user && isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
+
             if (!$urbanRenewalId) {
                 return $this->response->setStatusCode(400)->setJSON([
                     'status' => 'error',
@@ -148,6 +181,16 @@ class LandPlotController extends BaseController
                     'status' => 'error',
                     'message' => '找不到指定的更新會'
                 ]);
+            }
+
+            // Check permission for company managers
+            if (!$isAdmin && $isCompanyManager) {
+                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $urbanRenewalId) {
+                    return $this->response->setStatusCode(403)->setJSON([
+                        'status' => 'error',
+                        'message' => '您沒有權限為此更新會新增地號'
+                    ]);
+                }
             }
 
             // Get data from request
@@ -224,6 +267,11 @@ class LandPlotController extends BaseController
     public function update($id = null)
     {
         try {
+            // Get authenticated user
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
+            $isCompanyManager = $user && isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
+
             if (!$id) {
                 return $this->response->setStatusCode(400)->setJSON([
                     'status' => 'error',
@@ -237,6 +285,16 @@ class LandPlotController extends BaseController
                     'status' => 'error',
                     'message' => '找不到指定的地號'
                 ]);
+            }
+
+            // Check permission for company managers
+            if (!$isAdmin && $isCompanyManager) {
+                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $existing['urban_renewal_id']) {
+                    return $this->response->setStatusCode(403)->setJSON([
+                        'status' => 'error',
+                        'message' => '您沒有權限修改此地號'
+                    ]);
+                }
             }
 
             // Get data from request
@@ -290,6 +348,11 @@ class LandPlotController extends BaseController
     public function delete($id = null)
     {
         try {
+            // Get authenticated user
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
+            $isCompanyManager = $user && isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
+
             if (!$id) {
                 return $this->response->setStatusCode(400)->setJSON([
                     'status' => 'error',
@@ -303,6 +366,16 @@ class LandPlotController extends BaseController
                     'status' => 'error',
                     'message' => '找不到指定的地號'
                 ]);
+            }
+
+            // Check permission for company managers
+            if (!$isAdmin && $isCompanyManager) {
+                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $existing['urban_renewal_id']) {
+                    return $this->response->setStatusCode(403)->setJSON([
+                        'status' => 'error',
+                        'message' => '您沒有權限刪除此地號'
+                    ]);
+                }
             }
 
             // TODO: Check if any owners are linked to this land plot

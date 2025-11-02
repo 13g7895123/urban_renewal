@@ -158,6 +158,7 @@
 import { ref } from 'vue'
 
 definePageMeta({
+  middleware: ['auth', 'company-manager'],
   layout: false
 })
 

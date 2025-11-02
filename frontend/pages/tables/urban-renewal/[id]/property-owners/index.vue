@@ -148,6 +148,9 @@ const route = useRoute()
 const router = useRouter()
 const runtimeConfig = useRuntimeConfig()
 
+// Use API composable for authenticated requests
+const { get, post, delete: del } = useApi()
+
 // Get urban renewal ID from route (reactive)
 const urbanRenewalId = computed(() => route.params.id)
 
@@ -160,21 +163,16 @@ const fetchPropertyOwners = async () => {
   loading.value = true
 
   try {
-    // Use direct URL for development - check multiple conditions
-    const isDev = process.dev || process.env.NODE_ENV === 'development'
-    const baseURL = isDev ? 'http://localhost:9228' : (runtimeConfig.public.apiBaseUrl || '')
+    console.log('[Property Owners] Fetching from:', `/urban-renewals/${urbanRenewalId.value}/property-owners`)
 
-    console.log('[Property Owners] Fetching from:', `${baseURL}/api/urban-renewals/${urbanRenewalId.value}/property-owners`)
+    // Use useApi() composable which automatically adds Authorization header
+    const response = await get(`/urban-renewals/${urbanRenewalId.value}/property-owners`)
 
-    const response = await $fetch(`/api/urban-renewals/${urbanRenewalId.value}/property-owners`, {
-      baseURL
-    })
-
-    if (response.status === 'success') {
-      propertyOwners.value = response.data || []
+    if (response.success && response.data.status === 'success') {
+      propertyOwners.value = response.data.data || []
       console.log('[Property Owners] Data loaded:', propertyOwners.value.length, 'records')
     } else {
-      console.error('Failed to fetch property owners:', response.message)
+      console.error('Failed to fetch property owners:', response.data?.message || response.error?.message)
       propertyOwners.value = []
     }
   } catch (err) {
@@ -203,15 +201,8 @@ const refreshData = async () => {
 
 const deletePropertyOwner = async (id) => {
   try {
-    // Use direct URL for development - check multiple conditions
-    const isDev = process.dev || process.env.NODE_ENV === 'development'
-    const baseURL = isDev ? 'http://localhost:9228' : (runtimeConfig.public.apiBaseUrl || '')
-
-    const response = await $fetch(`/api/property-owners/${id}`, {
-      method: 'DELETE',
-      baseURL
-    })
-
+    // Use useApi() composable which automatically adds Authorization header
+    const response = await del(`/property-owners/${id}`)
     return response
   } catch (err) {
     console.error('Delete error:', err)
@@ -226,14 +217,46 @@ const goBack = () => {
 
 const exportOwners = async () => {
   try {
+    const authStore = useAuthStore()
+    const token = authStore.token
+    
+    if (!token) {
+      $swal.fire({
+        title: '未授權',
+        text: '請先登入',
+        icon: 'error',
+        confirmButtonText: '確定',
+        confirmButtonColor: '#ef4444'
+      })
+      return
+    }
+
     const isDev = process.dev || process.env.NODE_ENV === 'development'
     const baseURL = isDev ? 'http://localhost:9228' : (runtimeConfig.public.apiBaseUrl || '')
     const exportUrl = `${baseURL}/api/urban-renewals/${urbanRenewalId.value}/property-owners/export`
 
     console.log('[Export] Downloading from:', exportUrl)
 
-    // Open in new window to trigger download
-    window.open(exportUrl, '_blank')
+    // Create a temporary link with authorization header using fetch + blob
+    const response = await fetch(exportUrl, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    
+    if (!response.ok) {
+      throw new Error('匯出失敗')
+    }
+    
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `所有權人清單_${urbanRenewalId.value}_${new Date().toISOString().split('T')[0]}.xlsx`
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
 
     $swal.fire({
       title: '匯出成功！',
@@ -255,15 +278,58 @@ const exportOwners = async () => {
   }
 }
 
-const downloadTemplate = () => {
-  const isDev = process.dev || process.env.NODE_ENV === 'development'
-  const baseURL = isDev ? 'http://localhost:9228' : (runtimeConfig.public.apiBaseUrl || '')
-  const templateUrl = `${baseURL}/api/property-owners/template`
+const downloadTemplate = async () => {
+  try {
+    const authStore = useAuthStore()
+    const token = authStore.token
+    
+    if (!token) {
+      $swal.fire({
+        title: '未授權',
+        text: '請先登入',
+        icon: 'error',
+        confirmButtonText: '確定',
+        confirmButtonColor: '#ef4444'
+      })
+      return
+    }
 
-  console.log('[Template] Downloading from:', templateUrl)
+    const isDev = process.dev || process.env.NODE_ENV === 'development'
+    const baseURL = isDev ? 'http://localhost:9228' : (runtimeConfig.public.apiBaseUrl || '')
+    const templateUrl = `${baseURL}/api/property-owners/template`
 
-  // Open in new window to trigger download
-  window.open(templateUrl, '_blank')
+    console.log('[Template] Downloading from:', templateUrl)
+
+    // Download with authorization header
+    const response = await fetch(templateUrl, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    
+    if (!response.ok) {
+      throw new Error('下載失敗')
+    }
+    
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `所有權人匯入範本_${new Date().toISOString().split('T')[0]}.xlsx`
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+  } catch (err) {
+    console.error('[Template] Error:', err)
+    $swal.fire({
+      title: '下載失敗',
+      text: err.message || '下載失敗，請稍後再試',
+      icon: 'error',
+      confirmButtonText: '確定',
+      confirmButtonColor: '#ef4444'
+    })
+  }
 }
 
 const importOwners = async () => {
@@ -366,17 +432,12 @@ const importOwners = async () => {
       })
 
       const isDev = process.dev || process.env.NODE_ENV === 'development'
-      const baseURL = isDev ? 'http://localhost:9228' : (runtimeConfig.public.apiBaseUrl || '')
-
       // Create form data
       const formData = new FormData()
       formData.append('file', file)
 
-      const response = await $fetch(`/api/urban-renewals/${urbanRenewalId.value}/property-owners/import`, {
-        method: 'POST',
-        baseURL,
-        body: formData
-      })
+      // Use post() from useApi() composable for automatic authentication
+      const response = await post(`/urban-renewals/${urbanRenewalId.value}/property-owners/import`, formData)
 
       console.log('[Import] Response:', response)
 

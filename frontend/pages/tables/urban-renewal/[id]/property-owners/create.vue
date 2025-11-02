@@ -545,6 +545,9 @@ const route = useRoute()
 const router = useRouter()
 const runtimeConfig = useRuntimeConfig()
 
+// Use API composable for authenticated requests
+const { get, post } = useApi()
+
 // Get API base URL for development vs production
 const getApiBaseUrl = () => {
   const isDev = process.dev || process.env.NODE_ENV === 'development'
@@ -643,11 +646,9 @@ const getChineseLandNumber = async (plot) => {
       districtName = locationMappings.value.districts.get(districtKey)
     } else {
       try {
-        const response = await $fetch(`/api/locations/districts/${plot.county}`, {
-          baseURL: apiBaseUrl
-        })
-        if (response.status === 'success') {
-          const district = response.data.find(d => d.code === plot.district)
+        const response = await get(`/locations/districts/${plot.county}`)
+        if (response.data?.status === 'success') {
+          const district = response.data.data.find(d => d.code === plot.district)
           if (district) {
             districtName = district.name
             locationMappings.value.districts.set(districtKey, district.name)
@@ -664,11 +665,9 @@ const getChineseLandNumber = async (plot) => {
       sectionName = locationMappings.value.sections.get(sectionKey)
     } else {
       try {
-        const response = await $fetch(`/api/locations/sections/${plot.county}/${plot.district}`, {
-          baseURL: apiBaseUrl
-        })
-        if (response.status === 'success') {
-          const section = response.data.find(s => s.code === plot.section)
+        const response = await get(`/locations/sections/${plot.county}/${plot.district}`)
+        if (response.data?.status === 'success') {
+          const section = response.data.data.find(s => s.code === plot.section)
           if (section) {
             sectionName = section.name
             locationMappings.value.sections.set(sectionKey, section.name)
@@ -688,11 +687,9 @@ const getChineseLandNumber = async (plot) => {
 // 獲取縣市資料
 const fetchCounties = async () => {
   try {
-    const response = await $fetch('/api/locations/counties', {
-      baseURL: apiBaseUrl
-    })
-    if (response.status === 'success') {
-      counties.value = response.data
+    const response = await get('/locations/counties')
+    if (response.data?.status === 'success') {
+      counties.value = response.data.data
     }
   } catch (err) {
     console.error('Failed to fetch counties:', err)
@@ -710,12 +707,10 @@ const generateOwnerCode = () => {
 const fetchUrbanRenewalInfo = async () => {
   try {
     loadingProgress.value = 25
-    const response = await $fetch(`/api/urban-renewals/${urbanRenewalId.value}`, {
-      baseURL: apiBaseUrl
-    })
+    const response = await get(`/urban-renewals/${urbanRenewalId.value}`)
 
-    if (response.status === 'success') {
-      urbanRenewalName.value = response.data.name
+    if (response.data?.status === 'success') {
+      urbanRenewalName.value = response.data.data.name
       loadingProgress.value = 50
     }
   } catch (err) {
@@ -727,14 +722,12 @@ const fetchUrbanRenewalInfo = async () => {
 const fetchAvailablePlots = async () => {
   try {
     loadingProgress.value = 75
-    const response = await $fetch(`/api/urban-renewals/${urbanRenewalId.value}/land-plots`, {
-      baseURL: apiBaseUrl
-    })
+    const response = await get(`/urban-renewals/${urbanRenewalId.value}/land-plots`)
 
-    if (response.status === 'success') {
+    if (response.data?.status === 'success') {
       // 將地號轉換為中文格式
       const plotsWithChineseNames = await Promise.all(
-        (response.data || []).map(async (plot) => {
+        (response.data.data || []).map(async (plot) => {
           const chineseFullLandNumber = await getChineseLandNumber(plot)
           return {
             ...plot,
@@ -786,11 +779,9 @@ const onBuildingCountyChange = async () => {
   if (!buildingForm.county) return
 
   try {
-    const response = await $fetch(`/api/locations/districts/${buildingForm.county}`, {
-      baseURL: apiBaseUrl
-    })
-    if (response.status === 'success') {
-      buildingDistricts.value = response.data
+    const response = await get(`/locations/districts/${buildingForm.county}`)
+    if (response.data?.status === 'success') {
+      buildingDistricts.value = response.data.data
     }
   } catch (error) {
     console.error('Error fetching districts:', error)
@@ -806,11 +797,9 @@ const onBuildingDistrictChange = async () => {
   if (!buildingForm.district) return
 
   try {
-    const response = await $fetch(`/api/locations/sections/${buildingForm.county}/${buildingForm.district}`, {
-      baseURL: apiBaseUrl
-    })
-    if (response.status === 'success') {
-      buildingSections.value = response.data
+    const response = await get(`/locations/sections/${buildingForm.county}/${buildingForm.district}`)
+    if (response.data?.status === 'success') {
+      buildingSections.value = response.data.data
     }
   } catch (error) {
     console.error('Error fetching sections:', error)
@@ -914,18 +903,9 @@ const onSubmit = async () => {
 
   try {
 
-    const response = await $fetch('/api/property-owners', {
-      method: 'POST',
-      baseURL: apiBaseUrl,
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Accept': 'application/json',
-        'Accept-Charset': 'utf-8'
-      },
-      body: JSON.stringify(submitData)
-    })
+    const response = await post('/property-owners', submitData)
 
-    if (response.status === 'success') {
+    if (response.data?.status === 'success') {
       $swal.fire({
         title: '新增成功！',
         text: '所有權人已成功建立',
@@ -938,7 +918,7 @@ const onSubmit = async () => {
     } else {
       $swal.fire({
         title: '新增失敗',
-        text: response.message || '新增失敗',
+        text: response.data?.message || '新增失敗',
         icon: 'error',
         confirmButtonText: '確定',
         confirmButtonColor: '#ef4444'

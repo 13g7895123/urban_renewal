@@ -33,8 +33,17 @@ class JWTAuthFilter implements FilterInterface
             return response_error('未授權存取，請先登入', 401);
         }
 
-        // 將使用者資訊儲存到請求中，供後續使用
-        $request->user = $user;
+        // 將使用者資訊儲存到全域變數中，供控制器使用
+        // 使用 CI4 推薦的方式：透過 header 或自訂屬性
+        $_SERVER['AUTH_USER'] = $user;
+        
+        // 記錄除錯資訊（開發環境）
+        if (ENVIRONMENT !== 'production') {
+            log_message('debug', 'JWTAuthFilter: User authenticated - ID: ' . ($user['id'] ?? 'unknown') . 
+                                ', Role: ' . ($user['role'] ?? 'unknown') . 
+                                ', Is Company Manager: ' . ($user['is_company_manager'] ?? '0') .
+                                ', Urban Renewal ID: ' . ($user['urban_renewal_id'] ?? 'null'));
+        }
     }
 
     /**
