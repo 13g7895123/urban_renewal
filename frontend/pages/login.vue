@@ -51,17 +51,6 @@ const handleLogin = async () => {
 
   loading.value = true
   try {
-    // Clear any invalid localStorage data first
-    if (process.client) {
-      const savedUser = localStorage.getItem('auth_user')
-      if (savedUser === 'undefined' || savedUser === 'null') {
-        localStorage.removeItem('auth_user')
-        localStorage.removeItem('auth_token')
-        localStorage.removeItem('auth_refresh_token')
-        localStorage.removeItem('auth_token_expires_at')
-      }
-    }
-
     const authStore = useAuthStore()
 
     // Use authStore login method

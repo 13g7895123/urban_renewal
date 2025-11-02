@@ -36,6 +36,8 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         $routes->delete('(:num)', 'UserController::delete/$1');                 // DELETE /api/users/{id}
         $routes->patch('(:num)/toggle-status', 'UserController::toggleStatus/$1'); // PATCH /api/users/{id}/toggle-status
         $routes->patch('(:num)/reset-login-attempts', 'UserController::resetLoginAttempts/$1'); // PATCH /api/users/{id}/reset-login-attempts
+        $routes->post('(:num)/set-as-company-user', 'UserController::setAsCompanyUser/$1'); // POST /api/users/{id}/set-as-company-user
+        $routes->post('(:num)/set-as-company-manager', 'UserController::setAsCompanyManager/$1'); // POST /api/users/{id}/set-as-company-manager
         $routes->get('search', 'UserController::search');                       // GET /api/users/search
         $routes->get('role-statistics', 'UserController::roleStatistics');      // GET /api/users/role-statistics
         $routes->get('profile', 'UserController::profile');                     // GET /api/users/profile

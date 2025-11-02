@@ -51,7 +51,9 @@
       "Bash(npx playwright install chromium)",
       "Bash(npm run test:e2e:*)",
       "Bash(grep:*)",
-      "Bash(npm run test:e2e:ui:*)"
+      "Bash(npm run test:e2e:ui:*)",
+      "Bash(node test-session-storage.mjs:*)",
+      "Bash(./test-login.sh:*)"
     ],
     "deny": [],
     "ask": []

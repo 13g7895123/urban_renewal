@@ -104,6 +104,10 @@ class UserModel extends Model
             $builder->where('users.role', $filters['role']);
         }
 
+        if (!empty($filters['user_type'])) {
+            $builder->where('users.user_type', $filters['user_type']);
+        }
+
         if (!empty($filters['urban_renewal_id'])) {
             $builder->where('users.urban_renewal_id', $filters['urban_renewal_id']);
         }
@@ -250,7 +254,11 @@ class UserModel extends Model
      */
     public function getUserWithPermissions($userId)
     {
-        $user = $this->find($userId);
+        // 使用 JOIN 查詢取得使用者資料及所屬都更案資訊
+        $user = $this->select('users.*, urban_renewals.name as urban_renewal_name')
+            ->join('urban_renewals', 'urban_renewals.id = users.urban_renewal_id', 'left')
+            ->find($userId);
+
         if (!$user) {
             return null;
         }

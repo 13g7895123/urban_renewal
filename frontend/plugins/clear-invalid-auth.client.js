@@ -1,35 +1,43 @@
 /**
- * Plugin to clear invalid authentication data from localStorage
+ * Plugin to clear invalid authentication data and migrate from old localStorage
  * This runs once when the app initializes on the client side
  */
 export default defineNuxtPlugin(() => {
   if (process.client) {
-    // Check and clean invalid localStorage data
-    const authKeys = [
+    // 1. 清理舊的 localStorage 數據（從舊版本遷移）
+    const oldLocalStorageKeys = [
       'auth_user',
       'auth_token',
       'auth_refresh_token',
       'auth_token_expires_at'
     ]
 
-    authKeys.forEach(key => {
+    oldLocalStorageKeys.forEach(key => {
       const value = localStorage.getItem(key)
-
-      // Remove if value is literally 'undefined' or 'null' strings
-      if (value === 'undefined' || value === 'null' || value === '') {
-        console.log(`[Auth Cleanup] Removing invalid ${key} from localStorage`)
+      if (value) {
+        console.log(`[Auth Cleanup] Removing old localStorage key: ${key}`)
         localStorage.removeItem(key)
       }
-
-      // For auth_user, also check if it's valid JSON
-      if (key === 'auth_user' && value) {
-        try {
-          JSON.parse(value)
-        } catch (e) {
-          console.log(`[Auth Cleanup] Removing invalid JSON for ${key} from localStorage`)
-          localStorage.removeItem(key)
-        }
-      }
     })
+
+    // 2. 驗證 sessionStorage 中的 Pinia 持久化數據
+    const persistedAuth = sessionStorage.getItem('auth')
+    if (persistedAuth) {
+      try {
+        const authData = JSON.parse(persistedAuth)
+
+        // 檢查是否有無效的值
+        if (authData.token === 'undefined' ||
+            authData.token === 'null' ||
+            authData.user === 'undefined' ||
+            authData.user === 'null') {
+          console.log('[Auth Cleanup] Removing invalid auth data from sessionStorage')
+          sessionStorage.removeItem('auth')
+        }
+      } catch (e) {
+        console.log('[Auth Cleanup] Removing corrupted auth data from sessionStorage')
+        sessionStorage.removeItem('auth')
+      }
+    }
   }
 })

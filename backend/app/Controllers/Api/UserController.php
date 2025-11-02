@@ -28,23 +28,33 @@ class UserController extends ResourceController
     public function index()
     {
         try {
-            // 驗證用戶權限（只有管理員和主席可以查看使用者列表）
-            $user = auth_validate_request(['admin', 'chairman']);
+            // 驗證用戶已登入
+            $user = auth_validate_request();
             if (!$user) {
                 return $this->failUnauthorized('請重新登入');
+            }
+
+            // 檢查權限：只有管理員、主席、或企業管理者可以查看使用者列表
+            $isAdmin = $user['role'] === 'admin';
+            $isChairman = $user['role'] === 'chairman';
+            $isCompanyManager = isset($user['is_company_manager']) && ($user['is_company_manager'] == 1 || $user['is_company_manager'] === '1');
+
+            if (!$isAdmin && !$isChairman && !$isCompanyManager) {
+                return $this->failForbidden('您沒有權限查看使用者列表');
             }
 
             $page = $this->request->getGet('page') ?? 1;
             $perPage = $this->request->getGet('per_page') ?? 10;
             $filters = [
                 'role' => $this->request->getGet('role'),
+                'user_type' => $this->request->getGet('user_type'),
                 'urban_renewal_id' => $this->request->getGet('urban_renewal_id'),
                 'is_active' => $this->request->getGet('is_active'),
                 'search' => $this->request->getGet('search')
             ];
 
-            // 如果是主席，只能查看自己更新會的使用者
-            if ($user['role'] === 'chairman') {
+            // 如果是主席或企業管理者，只能查看自己更新會/企業的使用者
+            if ($isChairman || $isCompanyManager) {
                 $filters['urban_renewal_id'] = $user['urban_renewal_id'];
             }
 
@@ -119,10 +129,19 @@ class UserController extends ResourceController
     public function create()
     {
         try {
-            // 驗證用戶權限（只有管理員和主席可以建立使用者）
-            $user = auth_validate_request(['admin', 'chairman']);
+            // 驗證用戶已登入
+            $user = auth_validate_request();
             if (!$user) {
                 return $this->failUnauthorized('請重新登入');
+            }
+
+            // 檢查權限：只有管理員、主席、或企業管理者可以建立使用者
+            $isAdmin = $user['role'] === 'admin';
+            $isChairman = $user['role'] === 'chairman';
+            $isCompanyManager = isset($user['is_company_manager']) && ($user['is_company_manager'] == 1 || $user['is_company_manager'] === '1');
+
+            if (!$isAdmin && !$isChairman && !$isCompanyManager) {
+                return $this->failForbidden('您沒有權限建立使用者');
             }
 
             $data = $this->request->getJSON(true);
@@ -161,6 +180,20 @@ class UserController extends ResourceController
                 // 主席不能建立管理員
                 if ($data['role'] === 'admin') {
                     return $this->failForbidden('無權限建立管理員帳號');
+                }
+            }
+
+            // 權限檢查：企業管理者只能建立同企業的使用者
+            if ($isCompanyManager && !$isAdmin) {
+                if (isset($data['urban_renewal_id']) && $data['urban_renewal_id'] !== $user['urban_renewal_id']) {
+                    return $this->failForbidden('只能建立同企業的使用者');
+                }
+                $data['urban_renewal_id'] = $user['urban_renewal_id'];
+                $data['user_type'] = 'enterprise'; // 企業管理者創建的使用者必須是企業類型
+
+                // 企業管理者不能建立管理員或主席
+                if ($data['role'] === 'admin' || $data['role'] === 'chairman') {
+                    return $this->failForbidden('無權限建立管理員或主席帳號');
                 }
             }
 
@@ -272,10 +305,19 @@ class UserController extends ResourceController
     public function delete($id = null)
     {
         try {
-            // 驗證用戶權限（只有管理員和主席可以刪除使用者）
-            $user = auth_validate_request(['admin', 'chairman']);
+            // 驗證用戶已登入
+            $user = auth_validate_request();
             if (!$user) {
                 return $this->failUnauthorized('請重新登入');
+            }
+
+            // 檢查權限：只有管理員、主席、或企業管理者可以刪除使用者
+            $isAdmin = $user['role'] === 'admin';
+            $isChairman = $user['role'] === 'chairman';
+            $isCompanyManager = isset($user['is_company_manager']) && ($user['is_company_manager'] == 1 || $user['is_company_manager'] === '1');
+
+            if (!$isAdmin && !$isChairman && !$isCompanyManager) {
+                return $this->failForbidden('您沒有權限刪除使用者');
             }
 
             if (!$id) {
@@ -299,6 +341,16 @@ class UserController extends ResourceController
                 }
                 if ($user['urban_renewal_id'] !== $targetUser['urban_renewal_id']) {
                     return $this->failForbidden('只能刪除同更新會的使用者');
+                }
+            }
+
+            // 企業管理者不能刪除管理員或主席，也不能刪除其他企業的使用者
+            if ($isCompanyManager && !$isAdmin) {
+                if ($targetUser['role'] === 'admin' || $targetUser['role'] === 'chairman') {
+                    return $this->failForbidden('無權限刪除管理員或主席帳號');
+                }
+                if ($user['urban_renewal_id'] !== $targetUser['urban_renewal_id']) {
+                    return $this->failForbidden('只能刪除同企業的使用者');
                 }
             }
 
@@ -740,7 +792,7 @@ class UserController extends ResourceController
             }
 
             // 檢查是否有權限管理此使用者（admin 或該企業的企業管理員）
-            if (!auth_can_manage_user($id)) {
+            if (!auth_can_manage_user($targetUser, $user)) {
                 return $this->failForbidden('無權限操作此使用者');
             }
 
@@ -787,7 +839,7 @@ class UserController extends ResourceController
             }
 
             // 檢查是否有權限管理此使用者（admin 或該企業的企業管理員）
-            if (!auth_can_manage_user($id)) {
+            if (!auth_can_manage_user($targetUser, $user)) {
                 return $this->failForbidden('無權限操作此使用者');
             }
 

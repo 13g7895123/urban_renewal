@@ -79,11 +79,13 @@ export const useApi = () => {
       }
 
       // 回退方案：從 sessionStorage 讀取（Pinia 持久化的資料）
+      // Pinia 使用 store id 'auth' 作為 key
       const persistedAuth = sessionStorage.getItem('auth')
       if (persistedAuth) {
         try {
           const authData = JSON.parse(persistedAuth)
-          return authData.token
+          // Pinia 持久化會保存整個 store 的指定 paths
+          return authData.token || null
         } catch (e) {
           console.error('[API] Failed to parse auth from sessionStorage:', e)
         }
@@ -148,12 +150,12 @@ export const useApi = () => {
             const authStore = useAuthStore()
             refreshToken = authStore.refreshToken
           } catch (e) {
-            // 從 sessionStorage 讀取
+            // 從 sessionStorage 讀取（Pinia 持久化使用 'auth' 作為 key）
             const persistedAuth = sessionStorage.getItem('auth')
             if (persistedAuth) {
               try {
                 const authData = JSON.parse(persistedAuth)
-                refreshToken = authData.refreshToken
+                refreshToken = authData.refreshToken || null
               } catch (parseError) {
                 console.error('[API] Failed to parse auth from sessionStorage:', parseError)
               }

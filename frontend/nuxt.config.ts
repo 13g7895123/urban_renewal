@@ -34,7 +34,9 @@ export default defineNuxtConfig({
     }
   },
   plugins: [
-    '~/plugins/auth.client.js',
+    '~/plugins/clear-invalid-auth.client.js', // 先清理無效數據
+    '~/plugins/auth.client.js',                // 再初始化認證
+    '~/plugins/token-refresh.client.js',        // 設定 token 自動刷新
     '~/plugins/apexcharts.client.js',
     '~/plugins/force-light-mode.client.js',
     '~/plugins/sweetalert.client.js'

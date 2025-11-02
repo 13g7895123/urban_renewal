@@ -36,7 +36,12 @@ export const useCompany = () => {
    * Get all company members (managers + users)
    */
   const getAllCompanyMembers = async (companyId, params = {}) => {
-    return await get(`/companies/${companyId}/members`, params)
+    // 使用 /users API 並篩選特定企業的成員
+    return await get('/users', {
+      ...params,
+      urban_renewal_id: companyId,
+      user_type: 'enterprise'
+    })
   }
 
   /**

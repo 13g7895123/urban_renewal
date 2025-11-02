@@ -261,22 +261,29 @@ const loadMembers = async () => {
   try {
     const membersResult = await getAllCompanyMembers(companyId.value, { per_page: 100 })
     if (membersResult.success && membersResult.data?.data) {
-      const members = membersResult.data.data.members || []
+      // API 返回格式: { users: [...], pager: {...} }
+      const members = membersResult.data.data.users || []
 
-      // Separate managers and users
-      managers.value = members.filter(m => m.is_company_manager == 1).map(m => ({
+      // Separate managers and users based on is_company_manager field
+      managers.value = members.filter(m => m.is_company_manager == 1 || m.is_company_manager === '1').map(m => ({
         id: m.id,
         username: m.username,
         name: m.full_name || m.username,
         company: m.urban_renewal_name || ''
       }))
 
-      users.value = members.filter(m => m.is_company_manager == 0).map(m => ({
+      users.value = members.filter(m => m.is_company_manager == 0 || m.is_company_manager === '0' || !m.is_company_manager).map(m => ({
         id: m.id,
         username: m.username,
         name: m.full_name || m.username,
         company: m.urban_renewal_name || ''
       }))
+
+      console.log('[Company Profile] Loaded members:', {
+        total: members.length,
+        managers: managers.value.length,
+        users: users.value.length
+      })
     }
   } catch (error) {
     console.error('Failed to load members:', error)
@@ -648,7 +655,8 @@ const addNewManager = async () => {
         ...formValues,
         role: 'member',
         user_type: 'enterprise',
-        urban_renewal_id: companyId.value
+        urban_renewal_id: companyId.value,
+        is_company_manager: 1  // 新註冊的企業帳號預設為企業管理者
       }
 
       const { createUser } = useCompany()
