@@ -106,7 +106,14 @@ const menuItems = [
     path: '/tables/urban-renewal',
     icon: 'heroicons:building-office-2',
     label: '更新會管理',
-    roles: ['admin']
+    roles: ['admin'],
+    customCheck: (user) => {
+      // Admin 或企業管理者都可以訪問
+      const isManager = user?.is_company_manager === 1 ||
+                        user?.is_company_manager === '1' ||
+                        user?.is_company_manager === true
+      return user?.role === 'admin' || isManager
+    }
   },
   {
     path: '/tables/meeting',

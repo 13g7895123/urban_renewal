@@ -41,6 +41,50 @@ class PropertyOwnerController extends ResourceController
                 ], 400);
             }
 
+            // 權限驗證：檢查用戶身份
+            $user = $this->request->user ?? null;
+            if (!$user) {
+                return $this->respond([
+                    'status' => 'error',
+                    'message' => '未授權：無法識別用戶身份'
+                ], 401);
+            }
+
+            // 系統管理員可以查看所有資料
+            $isAdmin = isset($user['role']) && $user['role'] === 'admin';
+            
+            // 非管理員需要驗證 urban_renewal_id
+            if (!$isAdmin) {
+                // 檢查是否為企業管理者
+                $isCompanyManager = isset($user['is_company_manager']) && 
+                                   ($user['is_company_manager'] === 1 || 
+                                    $user['is_company_manager'] === '1' || 
+                                    $user['is_company_manager'] === true);
+                
+                if (!$isCompanyManager) {
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => '權限不足：您沒有管理所有權人的權限'
+                    ], 403);
+                }
+
+                $userUrbanRenewalId = $user['urban_renewal_id'] ?? null;
+                if (!$userUrbanRenewalId) {
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => '權限不足：您的帳號未關聯任何更新會'
+                    ], 403);
+                }
+
+                // 檢查是否訪問自己企業的資料
+                if ((int)$userUrbanRenewalId !== (int)$urbanRenewalId) {
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => '權限不足：您無權存取其他企業的資料'
+                    ], 403);
+                }
+            }
+
             $propertyOwners = $this->propertyOwnerModel->getByUrbanRenewalId((int)$urbanRenewalId);
 
             return $this->respond([
@@ -103,6 +147,49 @@ class PropertyOwnerController extends ResourceController
                 ], 404);
             }
 
+            // 權限驗證：檢查用戶身份
+            $user = $this->request->user ?? null;
+            if (!$user) {
+                return $this->respond([
+                    'status' => 'error',
+                    'message' => '未授權：無法識別用戶身份'
+                ], 401);
+            }
+
+            // 系統管理員可以查看所有資料
+            $isAdmin = isset($user['role']) && $user['role'] === 'admin';
+            
+            // 非管理員需要驗證 urban_renewal_id
+            if (!$isAdmin) {
+                $isCompanyManager = isset($user['is_company_manager']) && 
+                                   ($user['is_company_manager'] === 1 || 
+                                    $user['is_company_manager'] === '1' || 
+                                    $user['is_company_manager'] === true);
+                
+                if (!$isCompanyManager) {
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => '權限不足：您沒有查看所有權人的權限'
+                    ], 403);
+                }
+
+                $userUrbanRenewalId = $user['urban_renewal_id'] ?? null;
+                if (!$userUrbanRenewalId) {
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => '權限不足：您的帳號未關聯任何更新會'
+                    ], 403);
+                }
+
+                // 檢查所有權人是否屬於用戶的企業
+                if ((int)$propertyOwner['urban_renewal_id'] !== (int)$userUrbanRenewalId) {
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => '權限不足：您無權存取其他企業的資料'
+                    ], 403);
+                }
+            }
+
             return $this->respond([
                 'status' => 'success',
                 'data' => $propertyOwner,
@@ -160,6 +247,49 @@ class PropertyOwnerController extends ResourceController
                     'status' => 'error',
                     'message' => 'Missing required fields: urban_renewal_id, owner_name'
                 ], 400);
+            }
+
+            // 權限驗證：檢查用戶身份
+            $user = $this->request->user ?? null;
+            if (!$user) {
+                return $this->respond([
+                    'status' => 'error',
+                    'message' => '未授權：無法識別用戶身份'
+                ], 401);
+            }
+
+            // 系統管理員可以操作所有資料
+            $isAdmin = isset($user['role']) && $user['role'] === 'admin';
+            
+            // 非管理員需要驗證 urban_renewal_id
+            if (!$isAdmin) {
+                $isCompanyManager = isset($user['is_company_manager']) && 
+                                   ($user['is_company_manager'] === 1 || 
+                                    $user['is_company_manager'] === '1' || 
+                                    $user['is_company_manager'] === true);
+                
+                if (!$isCompanyManager) {
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => '權限不足：您沒有新增所有權人的權限'
+                    ], 403);
+                }
+
+                $userUrbanRenewalId = $user['urban_renewal_id'] ?? null;
+                if (!$userUrbanRenewalId) {
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => '權限不足：您的帳號未關聯任何更新會'
+                    ], 403);
+                }
+
+                // 檢查是否為自己企業新增所有權人
+                if ((int)$data['urban_renewal_id'] !== (int)$userUrbanRenewalId) {
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => '權限不足：您只能為自己的企業新增所有權人'
+                    ], 403);
+                }
             }
 
             // Start transaction
@@ -346,6 +476,49 @@ class PropertyOwnerController extends ResourceController
                 ], 404);
             }
 
+            // 權限驗證：檢查用戶身份
+            $user = $this->request->user ?? null;
+            if (!$user) {
+                return $this->respond([
+                    'status' => 'error',
+                    'message' => '未授權：無法識別用戶身份'
+                ], 401);
+            }
+
+            // 系統管理員可以操作所有資料
+            $isAdmin = isset($user['role']) && $user['role'] === 'admin';
+            
+            // 非管理員需要驗證 urban_renewal_id
+            if (!$isAdmin) {
+                $isCompanyManager = isset($user['is_company_manager']) && 
+                                   ($user['is_company_manager'] === 1 || 
+                                    $user['is_company_manager'] === '1' || 
+                                    $user['is_company_manager'] === true);
+                
+                if (!$isCompanyManager) {
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => '權限不足：您沒有編輯所有權人的權限'
+                    ], 403);
+                }
+
+                $userUrbanRenewalId = $user['urban_renewal_id'] ?? null;
+                if (!$userUrbanRenewalId) {
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => '權限不足：您的帳號未關聯任何更新會'
+                    ], 403);
+                }
+
+                // 檢查所有權人是否屬於用戶的企業
+                if ((int)$existingOwner['urban_renewal_id'] !== (int)$userUrbanRenewalId) {
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => '權限不足：您只能編輯自己企業的所有權人'
+                    ], 403);
+                }
+            }
+
             // Start transaction
             $db = \Config\Database::connect();
             $db->transStart();
@@ -492,6 +665,49 @@ class PropertyOwnerController extends ResourceController
                 ], 404);
             }
 
+            // 權限驗證：檢查用戶身份
+            $user = $this->request->user ?? null;
+            if (!$user) {
+                return $this->respond([
+                    'status' => 'error',
+                    'message' => '未授權：無法識別用戶身份'
+                ], 401);
+            }
+
+            // 系統管理員可以操作所有資料
+            $isAdmin = isset($user['role']) && $user['role'] === 'admin';
+            
+            // 非管理員需要驗證 urban_renewal_id
+            if (!$isAdmin) {
+                $isCompanyManager = isset($user['is_company_manager']) && 
+                                   ($user['is_company_manager'] === 1 || 
+                                    $user['is_company_manager'] === '1' || 
+                                    $user['is_company_manager'] === true);
+                
+                if (!$isCompanyManager) {
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => '權限不足：您沒有刪除所有權人的權限'
+                    ], 403);
+                }
+
+                $userUrbanRenewalId = $user['urban_renewal_id'] ?? null;
+                if (!$userUrbanRenewalId) {
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => '權限不足：您的帳號未關聯任何更新會'
+                    ], 403);
+                }
+
+                // 檢查所有權人是否屬於用戶的企業
+                if ((int)$existingOwner['urban_renewal_id'] !== (int)$userUrbanRenewalId) {
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => '權限不足：您只能刪除自己企業的所有權人'
+                    ], 403);
+                }
+            }
+
             // Start transaction
             $db = \Config\Database::connect();
             $db->transStart();
@@ -544,6 +760,49 @@ class PropertyOwnerController extends ResourceController
                     'status' => 'error',
                     'message' => 'Invalid urban renewal ID'
                 ], 400);
+            }
+
+            // 權限驗證：檢查用戶身份
+            $user = $this->request->user ?? null;
+            if (!$user) {
+                return $this->respond([
+                    'status' => 'error',
+                    'message' => '未授權：無法識別用戶身份'
+                ], 401);
+            }
+
+            // 系統管理員可以匯出所有資料
+            $isAdmin = isset($user['role']) && $user['role'] === 'admin';
+            
+            // 非管理員需要驗證 urban_renewal_id
+            if (!$isAdmin) {
+                $isCompanyManager = isset($user['is_company_manager']) && 
+                                   ($user['is_company_manager'] === 1 || 
+                                    $user['is_company_manager'] === '1' || 
+                                    $user['is_company_manager'] === true);
+                
+                if (!$isCompanyManager) {
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => '權限不足：您沒有匯出所有權人的權限'
+                    ], 403);
+                }
+
+                $userUrbanRenewalId = $user['urban_renewal_id'] ?? null;
+                if (!$userUrbanRenewalId) {
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => '權限不足：您的帳號未關聯任何更新會'
+                    ], 403);
+                }
+
+                // 檢查是否匯出自己企業的資料
+                if ((int)$urbanRenewalId !== (int)$userUrbanRenewalId) {
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => '權限不足：您只能匯出自己企業的所有權人資料'
+                    ], 403);
+                }
             }
 
             // Get property owners
@@ -704,6 +963,49 @@ class PropertyOwnerController extends ResourceController
                     'status' => 'error',
                     'message' => 'Invalid urban renewal ID'
                 ], 400);
+            }
+
+            // 權限驗證：檢查用戶身份
+            $user = $this->request->user ?? null;
+            if (!$user) {
+                return $this->respond([
+                    'status' => 'error',
+                    'message' => '未授權：無法識別用戶身份'
+                ], 401);
+            }
+
+            // 系統管理員可以匯入所有資料
+            $isAdmin = isset($user['role']) && $user['role'] === 'admin';
+            
+            // 非管理員需要驗證 urban_renewal_id
+            if (!$isAdmin) {
+                $isCompanyManager = isset($user['is_company_manager']) && 
+                                   ($user['is_company_manager'] === 1 || 
+                                    $user['is_company_manager'] === '1' || 
+                                    $user['is_company_manager'] === true);
+                
+                if (!$isCompanyManager) {
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => '權限不足：您沒有匯入所有權人的權限'
+                    ], 403);
+                }
+
+                $userUrbanRenewalId = $user['urban_renewal_id'] ?? null;
+                if (!$userUrbanRenewalId) {
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => '權限不足：您的帳號未關聯任何更新會'
+                    ], 403);
+                }
+
+                // 檢查是否匯入自己企業的資料
+                if ((int)$urbanRenewalId !== (int)$userUrbanRenewalId) {
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => '權限不足：您只能為自己的企業匯入所有權人資料'
+                    ], 403);
+                }
             }
 
             // Check if file was uploaded

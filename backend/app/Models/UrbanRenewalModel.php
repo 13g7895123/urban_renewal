@@ -73,11 +73,20 @@ class UrbanRenewalModel extends Model
 
     /**
      * Get all urban renewals with pagination
+     * @param int $page Page number
+     * @param int $perPage Items per page
+     * @param int|null $urbanRenewalId Filter by urban_renewal_id (for company managers)
      */
-    public function getUrbanRenewals($page = 1, $perPage = 10)
+    public function getUrbanRenewals($page = 1, $perPage = 10, $urbanRenewalId = null)
     {
-        return $this->orderBy('created_at', 'DESC')
-                   ->paginate($perPage, 'default', $page);
+        $builder = $this->orderBy('created_at', 'DESC');
+        
+        // 如果指定了 urban_renewal_id，只查詢該企業的資料
+        if ($urbanRenewalId !== null) {
+            $builder->where('id', $urbanRenewalId);
+        }
+        
+        return $builder->paginate($perPage, 'default', $page);
     }
 
     /**
@@ -114,11 +123,21 @@ class UrbanRenewalModel extends Model
 
     /**
      * Search urban renewals by name
+     * @param string $name Search keyword
+     * @param int $page Page number
+     * @param int $perPage Items per page
+     * @param int|null $urbanRenewalId Filter by urban_renewal_id (for company managers)
      */
-    public function searchByName($name, $page = 1, $perPage = 10)
+    public function searchByName($name, $page = 1, $perPage = 10, $urbanRenewalId = null)
     {
-        return $this->like('name', $name)
-                   ->orderBy('created_at', 'DESC')
-                   ->paginate($perPage, 'default', $page);
+        $builder = $this->like('name', $name)
+                        ->orderBy('created_at', 'DESC');
+        
+        // 如果指定了 urban_renewal_id，只查詢該企業的資料
+        if ($urbanRenewalId !== null) {
+            $builder->where('id', $urbanRenewalId);
+        }
+        
+        return $builder->paginate($perPage, 'default', $page);
     }
 }

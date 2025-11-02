@@ -275,8 +275,7 @@
 import { ref, reactive, onMounted } from 'vue'
 
 definePageMeta({
-  middleware: ['auth', 'role'],
-  role: 'admin',
+  middleware: ['auth', 'company-manager'],
   layout: false
 })
 

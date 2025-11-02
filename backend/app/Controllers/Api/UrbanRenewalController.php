@@ -43,10 +43,48 @@ class UrbanRenewalController extends BaseController
             $perPage = $this->request->getGet('per_page') ?? 10;
             $search = $this->request->getGet('search');
 
+            // 權限驗證：檢查用戶身份
+            $user = $this->request->user ?? null;
+            if (!$user) {
+                return $this->response->setStatusCode(401)->setJSON([
+                    'status' => 'error',
+                    'message' => '未授權：無法識別用戶身份'
+                ]);
+            }
+
+            // 系統管理員可以查看所有資料
+            $isAdmin = isset($user['role']) && $user['role'] === 'admin';
+            
+            // 企業管理者只能查看自己管理的企業資料
+            $urbanRenewalId = null;
+            if (!$isAdmin) {
+                // 檢查是否為企業管理者
+                $isCompanyManager = isset($user['is_company_manager']) && 
+                                   ($user['is_company_manager'] === 1 || 
+                                    $user['is_company_manager'] === '1' || 
+                                    $user['is_company_manager'] === true);
+                
+                if (!$isCompanyManager) {
+                    return $this->response->setStatusCode(403)->setJSON([
+                        'status' => 'error',
+                        'message' => '權限不足：您沒有管理更新會的權限'
+                    ]);
+                }
+
+                $urbanRenewalId = $user['urban_renewal_id'] ?? null;
+                if (!$urbanRenewalId) {
+                    return $this->response->setStatusCode(403)->setJSON([
+                        'status' => 'error',
+                        'message' => '權限不足：您的帳號未關聯任何更新會'
+                    ]);
+                }
+            }
+
+            // 根據權限查詢資料
             if ($search) {
-                $data = $this->urbanRenewalModel->searchByName($search, $page, $perPage);
+                $data = $this->urbanRenewalModel->searchByName($search, $page, $perPage, $urbanRenewalId);
             } else {
-                $data = $this->urbanRenewalModel->getUrbanRenewals($page, $perPage);
+                $data = $this->urbanRenewalModel->getUrbanRenewals($page, $perPage, $urbanRenewalId);
             }
 
             $pager = $this->urbanRenewalModel->pager;
