@@ -47,6 +47,15 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         $routes->options('(:any)', 'UserController::options');
     });
 
+    // Companies API
+    $routes->group('companies', function ($routes) {
+        $routes->get('me', 'CompanyController::me');                  // GET /api/companies/me
+        $routes->put('me', 'CompanyController::update');              // PUT /api/companies/me
+
+        // Handle OPTIONS for specific routes
+        $routes->options('me', 'CompanyController::options');
+    });
+
     // Urban Renewals API
     $routes->group('urban-renewals', function ($routes) {
         $routes->get('/', 'UrbanRenewalController::index');           // GET /api/urban-renewals

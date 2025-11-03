@@ -123,7 +123,7 @@ class UrbanRenewalController extends BaseController
             }
 
             // 權限驗證：檢查用戶是否有權存取此企業資料
-            $user = $this->request->user ?? null;
+            $user = $_SERVER['AUTH_USER'] ?? null;
             if (!$user) {
                 return $this->response->setStatusCode(401)->setJSON([
                     'status' => 'error',
@@ -246,7 +246,7 @@ class UrbanRenewalController extends BaseController
             }
 
             // 權限驗證：檢查用戶是否有權修改此企業資料
-            $user = $this->request->user ?? null;
+            $user = $_SERVER['AUTH_USER'] ?? null;
             if (!$user) {
                 return $this->response->setStatusCode(401)->setJSON([
                     'status' => 'error',

@@ -112,6 +112,8 @@ class Filters extends BaseFilters
     public array $filters = [
         'jwtauth' => [
             'before' => [
+                'api/companies',
+                'api/companies/*',
                 'api/urban-renewals',
                 'api/urban-renewals/*',
                 'api/users',

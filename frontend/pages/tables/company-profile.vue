@@ -202,9 +202,9 @@ const { getCompanyProfile, updateCompanyProfile, getAllCompanyMembers, setAsComp
 const { $swal } = useNuxtApp()
 const authStore = useAuthStore()
 
-// 從登入使用者取得企業 ID
+// 從登入使用者取得企業 ID (用於成員管理)
 const companyId = computed(() => authStore.user?.urban_renewal_id)
-const hasCompanyAccess = computed(() => !!companyId.value)
+const hasCompanyAccess = computed(() => authStore.user?.is_company_manager)
 
 const form = ref({
   companyName: '',
@@ -235,8 +235,8 @@ const loadCompanyData = async () => {
 
   loading.value = true
   try {
-    // Load company profile
-    const profileResult = await getCompanyProfile(companyId.value)
+    // Load company profile (使用新的 /companies/me API，不需要傳入 companyId)
+    const profileResult = await getCompanyProfile()
     if (profileResult.success && profileResult.data?.data) {
       const data = profileResult.data.data
       form.value = {
@@ -343,7 +343,8 @@ const reloadMembers = async () => {
 const saveCompanyProfile = async () => {
   loading.value = true
   try {
-    const result = await updateCompanyProfile(companyId.value, {
+    // 使用新的 /companies/me API，不需要傳入 companyId
+    const result = await updateCompanyProfile({
       name: form.value.companyName,
       tax_id: form.value.taxId,
       company_phone: form.value.companyPhone,

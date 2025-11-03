@@ -15,14 +15,10 @@ class UrbanRenewalModel extends Model
 
     protected $allowedFields = [
         'name',
-        'tax_id',
         'area',
         'member_count',
         'chairman_name',
         'chairman_phone',
-        'company_phone',
-        'max_renewal_count',
-        'max_issue_count',
         'address',
         'representative'
     ];
@@ -139,5 +135,16 @@ class UrbanRenewalModel extends Model
         }
         
         return $builder->paginate($perPage, 'default', $page);
+    }
+
+    /**
+     * Get the associated company for this urban renewal
+     * @param int $urbanRenewalId
+     * @return array|null
+     */
+    public function getCompany($urbanRenewalId)
+    {
+        $companyModel = new \App\Models\CompanyModel();
+        return $companyModel->where('urban_renewal_id', $urbanRenewalId)->first();
     }
 }

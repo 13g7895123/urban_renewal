@@ -57,6 +57,9 @@ class PropertyOwnerModel extends Model
             'required' => '所有權人編號為必填項目',
             'max_length' => '所有權人編號不能超過20字符',
             'is_unique' => '所有權人編號已存在'
+        ],
+        'exclusion_type' => [
+            'in_list' => '排除類型必須是以下其中之一：法院囑託查封、假扣押、假處分、破產登記、未經繼承'
         ]
     ];
 

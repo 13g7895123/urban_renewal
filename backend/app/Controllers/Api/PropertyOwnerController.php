@@ -603,10 +603,38 @@ class PropertyOwnerController extends ResourceController
                 // Add new lands
                 if (!empty($data['lands']) && is_array($data['lands'])) {
                     foreach ($data['lands'] as $landData) {
-                        // Find land plot by plot number
-                        $landPlot = $this->landPlotModel->where('land_number_main', $landData['plot_number'])
-                                                       ->where('urban_renewal_id', $existingOwner['urban_renewal_id'])
-                                                       ->first();
+                        // Find land plot by plot number - try multiple search methods
+                        $landPlot = null;
+
+                        // Method 1: Search by land_number_main directly
+                        if (!empty($landData['plot_number'])) {
+                            $landPlot = $this->landPlotModel->where('land_number_main', $landData['plot_number'])
+                                                           ->where('urban_renewal_id', $existingOwner['urban_renewal_id'])
+                                                           ->first();
+                        }
+
+                        // Method 2: If not found, try searching by combined land number (e.g., "123-4")
+                        if (!$landPlot && !empty($landData['plot_number']) && strpos($landData['plot_number'], '-') !== false) {
+                            $parts = explode('-', $landData['plot_number']);
+                            $landNumberMain = $parts[0];
+                            $landNumberSub = $parts[1] ?? '';
+                            
+                            $query = $this->landPlotModel->where('land_number_main', $landNumberMain)
+                                                        ->where('urban_renewal_id', $existingOwner['urban_renewal_id']);
+                            
+                            if (!empty($landNumberSub)) {
+                                $query->where('land_number_sub', $landNumberSub);
+                            }
+                            
+                            $landPlot = $query->first();
+                        }
+
+                        // Method 3: Try CONCAT search as fallback
+                        if (!$landPlot && !empty($landData['plot_number'])) {
+                            $landPlot = $this->landPlotModel->where("CONCAT(land_number_main, '-', land_number_sub)", $landData['plot_number'])
+                                                           ->where('urban_renewal_id', $existingOwner['urban_renewal_id'])
+                                                           ->first();
+                        }
 
                         if ($landPlot) {
                             // Create ownership relationship
@@ -1083,6 +1111,16 @@ class PropertyOwnerController extends ResourceController
                     $errors[] = "第 {$rowNumber} 列：所有權人名稱為必填項目";
                     $errorCount++;
                     continue;
+                }
+
+                // Validate exclusion_type if provided
+                if (!empty($data['exclusion_type'])) {
+                    $validExclusionTypes = ['法院囑託查封', '假扣押', '假處分', '破產登記', '未經繼承'];
+                    if (!in_array($data['exclusion_type'], $validExclusionTypes)) {
+                        $errors[] = "第 {$rowNumber} 列：排除類型 '{$data['exclusion_type']}' 無效，必須是以下其中之一：" . implode('、', $validExclusionTypes);
+                        $errorCount++;
+                        continue;
+                    }
                 }
 
                 // Check for duplicates within the import file

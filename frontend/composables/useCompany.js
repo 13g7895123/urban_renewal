@@ -5,17 +5,17 @@ export const useCompany = () => {
   const { get, post, put, delete: del } = useApi()
 
   /**
-   * Get company profile (urban renewal)
+   * Get company profile (current user's company)
    */
-  const getCompanyProfile = async (companyId) => {
-    return await get(`/urban-renewals/${companyId}`)
+  const getCompanyProfile = async () => {
+    return await get('/companies/me')
   }
 
   /**
-   * Update company profile
+   * Update company profile (current user's company)
    */
-  const updateCompanyProfile = async (companyId, data) => {
-    return await put(`/urban-renewals/${companyId}`, data)
+  const updateCompanyProfile = async (data) => {
+    return await put('/companies/me', data)
   }
 
   /**

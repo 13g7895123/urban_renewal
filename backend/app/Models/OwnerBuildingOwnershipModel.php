@@ -126,6 +126,7 @@ class OwnerBuildingOwnershipModel extends Model
      */
     public function createOrUpdate(array $data): bool
     {
+        // First check for active (non-deleted) records
         $existing = $this->where('property_owner_id', $data['property_owner_id'])
                          ->where('building_id', $data['building_id'])
                          ->where('deleted_at', null)
@@ -134,7 +135,21 @@ class OwnerBuildingOwnershipModel extends Model
         if ($existing) {
             return $this->update($existing['id'], $data);
         } else {
-            return $this->insert($data) !== false;
+            // Check if there's a soft-deleted record we can restore
+            $softDeleted = $this->withDeleted()
+                                ->where('property_owner_id', $data['property_owner_id'])
+                                ->where('building_id', $data['building_id'])
+                                ->first();
+
+            if ($softDeleted && $softDeleted['deleted_at'] !== null) {
+                // Restore the record first
+                $this->builder()->where('id', $softDeleted['id'])->update(['deleted_at' => null]);
+                
+                // Then update with new data
+                return $this->update($softDeleted['id'], $data);
+            } else {
+                return $this->insert($data) !== false;
+            }
         }
     }
 }
