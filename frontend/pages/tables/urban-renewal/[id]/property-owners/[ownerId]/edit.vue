@@ -171,8 +171,17 @@
 
         <!-- 建號列表 -->
         <div v-if="formData.buildings.length > 0" class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-          <div class="p-4 border-b border-gray-200">
+          <div class="p-4 border-b border-gray-200 flex justify-between items-center">
             <h3 class="text-lg font-semibold text-gray-900">建號列表</h3>
+            <button
+              type="button"
+              @click="reloadBuildings"
+              :disabled="isReloadingBuildings"
+              class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            >
+              <Icon name="heroicons:arrow-path" :class="['w-4 h-4 mr-1', { 'animate-spin': isReloadingBuildings }]" />
+              重新整理
+            </button>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full">
@@ -187,10 +196,10 @@
               </thead>
               <tbody>
                 <tr v-for="(building, index) in formData.buildings" :key="index" class="border-b border-gray-100">
-                  <td class="p-3 text-sm">{{ building.location }}</td>
-                  <td class="p-3 text-sm">{{ building.building_number_main }}-{{ building.building_number_sub }}</td>
-                  <td class="p-3 text-sm">{{ building.building_area }}</td>
-                  <td class="p-3 text-sm">{{ building.ownership_numerator }}/{{ building.ownership_denominator }}</td>
+                  <td class="p-3 text-sm">{{ building.location || '-' }}</td>
+                  <td class="p-3 text-sm">{{ formatBuildingNumber(building) }}</td>
+                  <td class="p-3 text-sm">{{ building.building_area || building.area || '-' }}</td>
+                  <td class="p-3 text-sm">{{ building.ownership_numerator || 0 }}/{{ building.ownership_denominator || 1 }}</td>
                   <td class="p-3 text-center">
                     <button
                       type="button"
@@ -208,8 +217,17 @@
 
         <!-- 地號列表 -->
         <div v-if="formData.lands.length > 0" class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-          <div class="p-4 border-b border-gray-200">
+          <div class="p-4 border-b border-gray-200 flex justify-between items-center">
             <h3 class="text-lg font-semibold text-gray-900">地號列表</h3>
+            <button
+              type="button"
+              @click="reloadLands"
+              :disabled="isReloadingLands"
+              class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            >
+              <Icon name="heroicons:arrow-path" :class="['w-4 h-4 mr-1', { 'animate-spin': isReloadingLands }]" />
+              重新整理
+            </button>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full">
@@ -223,9 +241,9 @@
               </thead>
               <tbody>
                 <tr v-for="(land, index) in formData.lands" :key="index" class="border-b border-gray-100">
-                  <td class="p-3 text-sm">{{ land.plot_number }}</td>
-                  <td class="p-3 text-sm">{{ land.total_area }}</td>
-                  <td class="p-3 text-sm">{{ land.ownership_numerator }}/{{ land.ownership_denominator }}</td>
+                  <td class="p-3 text-sm">{{ formatLandNumber(land) }}</td>
+                  <td class="p-3 text-sm">{{ land.total_area || land.land_area || '-' }}</td>
+                  <td class="p-3 text-sm">{{ land.ownership_numerator || 0 }}/{{ land.ownership_denominator || 1 }}</td>
                   <td class="p-3 text-center">
                     <button
                       type="button"
@@ -555,6 +573,8 @@ const urbanRenewalName = ref('')
 const showAddLandModal = ref(false)
 const showAddBuildingModal = ref(false)
 const availablePlots = ref([])
+const isReloadingBuildings = ref(false)
+const isReloadingLands = ref(false)
 
 // Location data
 const counties = ref([])
@@ -917,6 +937,112 @@ const fillBuildingTestData = () => {
   buildingForm.building_address = `${randomCounty}${randomDistrict}測試路${Math.floor(Math.random() * 999) + 1}號`
 
   alert.success('測試建號已填入', '建號表單已自動填入測試資料')
+}
+
+// Format building number for display
+const formatBuildingNumber = (building) => {
+  const main = building.building_number_main || building.buildingNumberMain || ''
+  const sub = building.building_number_sub || building.buildingNumberSub || ''
+  
+  if (!main && !sub) return '-'
+  if (!sub || sub === '0' || sub === 0) return main
+  return `${main}-${sub}`
+}
+
+// Format land number for display
+const formatLandNumber = (land) => {
+  // Check if plot_number is already formatted
+  if (land.plot_number && land.plot_number.includes('-')) {
+    return land.plot_number
+  }
+  
+  // Try to construct from main and sub
+  const main = land.land_number_main || land.landNumberMain || ''
+  const sub = land.land_number_sub || land.landNumberSub || ''
+  
+  if (!main && !sub) return land.plot_number || '-'
+  if (!sub || sub === '0' || sub === 0) return main
+  return `${main}-${sub}`
+}
+
+// Reload buildings from server
+const reloadBuildings = async () => {
+  isReloadingBuildings.value = true
+  try {
+    const response = await get(`/property-owners/${ownerId.value}`)
+    
+    if (response.data?.status === 'success') {
+      const data = response.data.data
+      formData.buildings = data.buildings || []
+      
+      console.log('[Reload Buildings] Raw data:', data.buildings)
+      console.log('[Reload Buildings] Formatted:', formData.buildings.map(b => ({
+        location: b.location,
+        building_number_main: b.building_number_main,
+        building_number_sub: b.building_number_sub,
+        formatted: formatBuildingNumber(b)
+      })))
+      
+      $swal.fire({
+        title: '重新整理成功',
+        text: `已載入 ${formData.buildings.length} 筆建號資料`,
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false
+      })
+    }
+  } catch (err) {
+    console.error('Failed to reload buildings:', err)
+    $swal.fire({
+      title: '重新整理失敗',
+      text: '無法載入建號資料',
+      icon: 'error',
+      confirmButtonText: '確定',
+      confirmButtonColor: '#ef4444'
+    })
+  } finally {
+    isReloadingBuildings.value = false
+  }
+}
+
+// Reload lands from server
+const reloadLands = async () => {
+  isReloadingLands.value = true
+  try {
+    const response = await get(`/property-owners/${ownerId.value}`)
+    
+    if (response.data?.status === 'success') {
+      const data = response.data.data
+      formData.lands = data.lands || []
+      
+      console.log('[Reload Lands] Raw data:', data.lands)
+      console.log('[Reload Lands] Formatted:', formData.lands.map(l => ({
+        plot_number: l.plot_number,
+        land_number_main: l.land_number_main,
+        land_number_sub: l.land_number_sub,
+        formatted: formatLandNumber(l)
+      })))
+      
+      $swal.fire({
+        title: '重新整理成功',
+        text: `已載入 ${formData.lands.length} 筆地號資料`,
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false
+      })
+    }
+  } catch (err) {
+    console.error('Failed to reload lands:', err)
+    $swal.fire({
+      title: '重新整理失敗',
+      text: '無法載入地號資料',
+      icon: 'error',
+      confirmButtonText: '確定',
+      confirmButtonColor: '#ef4444'
+    })
+  } finally {
+    isReloadingLands.value = false
+  }
 }
 
 // Go back

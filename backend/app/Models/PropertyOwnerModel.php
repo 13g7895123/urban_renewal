@@ -147,6 +147,9 @@ class PropertyOwnerModel extends Model
                 $building['ownership_numerator'] = $ownership['ownership_numerator'];
                 $building['ownership_denominator'] = $ownership['ownership_denominator'];
                 $building['location'] = $building['county'] . '/' . $building['district'] . '/' . $building['section'];
+                // 確保建號欄位格式正確（前端相容性）
+                $building['building_number_main'] = (string)($building['building_number_main'] ?? '');
+                $building['building_number_sub'] = (string)($building['building_number_sub'] ?? '');
                 $buildings[] = $building;
             }
         }
@@ -162,6 +165,9 @@ class PropertyOwnerModel extends Model
             if ($land) {
                 $land['ownership_numerator'] = $ownership['ownership_numerator'];
                 $land['ownership_denominator'] = $ownership['ownership_denominator'];
+                // 確保地號欄位格式正確（前端相容性）
+                $land['land_number_main'] = (string)($land['land_number_main'] ?? '');
+                $land['land_number_sub'] = (string)($land['land_number_sub'] ?? '');
                 $land['plot_number'] = $land['land_number_main'] . '-' . $land['land_number_sub'];
                 $land['total_area'] = $land['land_area']; // 為前端相容性添加 total_area 別名
                 $lands[] = $land;
