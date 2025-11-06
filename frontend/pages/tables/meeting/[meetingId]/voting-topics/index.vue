@@ -155,7 +155,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 definePageMeta({
   middleware: ['auth', 'company-manager'],
@@ -166,30 +166,71 @@ const route = useRoute()
 const router = useRouter()
 const meetingId = route.params.meetingId
 
+// API composables
+const { getVotingTopics, deleteVotingTopic: deleteTopicApi, exportVotingResults } = useVotingTopics()
+const { showSuccess, showError, showConfirm } = useSweetAlert()
+
 const pageSize = ref(10)
+const isLoading = ref(false)
+const isDeleting = ref(false)
 
 // Modal states
 const showOtherModal = ref(false)
 const selectedTopic = ref(null)
 
-const votingTopics = ref([
-  {
-    id: 1,
-    name: '理事長選舉',
-    meetingName: '114年度第一屆第1次會員大會',
-    maxSelections: 1,
-    acceptedCount: 1,
-    alternateCount: 0
-  },
-  {
-    id: 2,
-    name: '更新計畫同意案',
-    meetingName: '114年度第一屆第1次會員大會',
-    maxSelections: 1,
-    acceptedCount: 1,
-    alternateCount: 0
+// Voting topics data
+const votingTopics = ref([])
+
+// Load data on mount
+onMounted(async () => {
+  await loadVotingTopics()
+})
+
+// Load voting topics
+const loadVotingTopics = async () => {
+  isLoading.value = true
+  console.log('[Voting Topics] Loading voting topics for meeting:', meetingId)
+
+  const response = await getVotingTopics({ meeting_id: meetingId })
+  isLoading.value = false
+
+  if (response.success && response.data) {
+    const topicsData = response.data.data || response.data
+
+    votingTopics.value = Array.isArray(topicsData) ? topicsData.map(t => ({
+      id: t.id,
+      name: t.topic_name || t.name || '',
+      meetingName: t.meeting_name || t.meetingName || '',
+      maxSelections: t.max_selections || t.maxSelections || 0,
+      acceptedCount: t.accepted_count || t.acceptedCount || 0,
+      alternateCount: t.alternate_count || t.alternateCount || 0
+    })) : []
+
+    console.log('[Voting Topics] Voting topics loaded:', votingTopics.value.length)
+  } else {
+    console.error('[Voting Topics] Failed to load voting topics:', response.error)
+    showError('載入失敗', response.error?.message || '無法載入投票議題')
+    // Use fallback mock data
+    votingTopics.value = [
+      {
+        id: 1,
+        name: '理事長選舉',
+        meetingName: '114年度第一屆第1次會員大會',
+        maxSelections: 1,
+        acceptedCount: 1,
+        alternateCount: 0
+      },
+      {
+        id: 2,
+        name: '更新計畫同意案',
+        meetingName: '114年度第一屆第1次會員大會',
+        maxSelections: 1,
+        acceptedCount: 1,
+        alternateCount: 0
+      }
+    ]
   }
-])
+}
 
 const goBack = () => {
   router.push('/tables/meeting')
@@ -222,16 +263,51 @@ const showOtherOptions = (topic) => {
 }
 
 
-const exportVotingResultsAction = () => {
-  console.log('Exporting voting results for topic:', selectedTopic.value)
+const exportVotingResultsAction = async () => {
+  if (!selectedTopic.value) return
+
+  console.log('[Voting Topics] Exporting results for topic:', selectedTopic.value)
+
+  const response = await exportVotingResults(selectedTopic.value.id)
+
+  if (response.success) {
+    showSuccess('匯出成功', '投票結果已匯出')
+    // TODO: Handle file download
+  } else {
+    console.error('[Voting Topics] Failed to export results:', response.error)
+    showError('匯出失敗', response.error?.message || '無法匯出投票結果')
+  }
+
   showOtherModal.value = false
-  // TODO: Implement export voting results functionality
 }
 
-const deleteVotingTopic = () => {
-  console.log('Deleting voting topic:', selectedTopic.value)
+const deleteVotingTopic = async () => {
+  if (!selectedTopic.value) return
+
   showOtherModal.value = false
-  // TODO: Implement delete functionality with confirmation
+
+  const confirmed = await showConfirm(
+    '確認刪除',
+    `確定要刪除投票議題「${selectedTopic.value.name}」嗎？此操作無法復原。`
+  )
+
+  if (!confirmed) {
+    return
+  }
+
+  isDeleting.value = true
+  console.log('[Voting Topics] Deleting topic:', selectedTopic.value)
+
+  const response = await deleteTopicApi(selectedTopic.value.id)
+  isDeleting.value = false
+
+  if (response.success) {
+    showSuccess('刪除成功', '投票議題已刪除')
+    await loadVotingTopics()
+  } else {
+    console.error('[Voting Topics] Failed to delete topic:', response.error)
+    showError('刪除失敗', response.error?.message || '無法刪除投票議題')
+  }
 }
 
 

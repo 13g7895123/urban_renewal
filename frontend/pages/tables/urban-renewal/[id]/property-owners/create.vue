@@ -538,8 +538,8 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 
-// Use SweetAlert2
-const { $swal } = useNuxtApp()
+// Use SweetAlert composable
+const { showSuccess, showError } = useSweetAlert()
 
 const route = useRoute()
 const router = useRouter()
@@ -861,13 +861,7 @@ const removeBuilding = (index) => {
 // Submit form
 const onSubmit = async () => {
   if (!formData.owner_name) {
-    $swal.fire({
-      title: '驗證失敗',
-      text: '請填寫所有權人名稱',
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    showError('驗證失敗', '請填寫所有權人名稱')
     return
   }
 
@@ -906,23 +900,10 @@ const onSubmit = async () => {
     const response = await post('/property-owners', submitData)
 
     if (response.data?.status === 'success') {
-      $swal.fire({
-        title: '新增成功！',
-        text: '所有權人已成功建立',
-        icon: 'success',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#10b981'
-      }).then(() => {
-        router.push(`/tables/urban-renewal/${urbanRenewalId.value}/property-owners`)
-      })
+      await showSuccess('新增成功！', '所有權人已成功建立')
+      router.push(`/tables/urban-renewal/${urbanRenewalId.value}/property-owners`)
     } else {
-      $swal.fire({
-        title: '新增失敗',
-        text: response.data?.message || '新增失敗',
-        icon: 'error',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#ef4444'
-      })
+      showError('新增失敗', response.data?.message || '新增失敗')
     }
   } catch (err) {
     console.error('Submit error:', err)
@@ -946,13 +927,7 @@ const onSubmit = async () => {
       console.log('提交的數據：', submitData)
     }
 
-    $swal.fire({
-      title: '新增失敗',
-      text: errorMessage,
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    showError('新增失敗', errorMessage)
   } finally {
     isSubmitting.value = false
   }
@@ -986,7 +961,7 @@ const previewSubmitData = () => {
     notes: formData.notes
   }
 
-  $swal.fire({
+  showCustom({
     title: '預覽提交資料',
     html: `
       <div class="text-left">
@@ -1002,8 +977,11 @@ const previewSubmitData = () => {
       </div>
     `,
     icon: 'info',
-    confirmButtonText: '確定',
-    confirmButtonColor: '#10b981'
+    timer: null,
+    showConfirmButton: true,
+    confirmButtonText: '關閉',
+    toast: false,
+    position: 'center'
   })
 
   console.log('預覽提交資料：', submitData)
@@ -1051,14 +1029,7 @@ const fillTestData = () => {
   formData.remarks = `${randomName}的測試資料，包含相關地號和建號資訊。`
 
   // Show notification
-  $swal.fire({
-    title: '測試資料已填入',
-    text: '所有表單欄位已自動填入測試資料',
-    icon: 'success',
-    confirmButtonText: '確定',
-    confirmButtonColor: '#10b981',
-    timer: 2000
-  })
+  showSuccess('測試資料已填入', '所有表單欄位已自動填入測試資料')
 }
 
 // Go back
@@ -1105,13 +1076,7 @@ const initializeData = async () => {
     console.error('[Property Owner Create] Error initializing data:', error)
 
     // Show user-friendly error message
-    $swal.fire({
-      title: '載入失敗',
-      text: '無法載入必要資料，請重新整理頁面或稍後再試',
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    showError('載入失敗', '無法載入必要資料，請重新整理頁面或稍後再試')
 
     // Stop loading state on error
     isLoading.value = false

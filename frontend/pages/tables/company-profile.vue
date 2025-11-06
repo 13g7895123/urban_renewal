@@ -200,6 +200,7 @@ definePageMeta({
 
 const { getCompanyProfile, updateCompanyProfile, getAllCompanyMembers, setAsCompanyUser, setAsCompanyManager, deleteUser: deleteUserApi } = useCompany()
 const { $swal } = useNuxtApp()
+const { showSuccess, showError, showConfirm, showDeleteConfirm, showCustom } = useSweetAlert()
 const authStore = useAuthStore()
 
 // 從登入使用者取得企業 ID (用於成員管理)
@@ -222,12 +223,15 @@ const loading = ref(false)
 const loadCompanyData = async () => {
   // 檢查使用者是否有企業權限
   if (!hasCompanyAccess.value) {
-    await $swal.fire({
+    await showCustom({
       title: '無法存取',
       text: '您的帳號未關聯任何企業，無法使用此功能',
       icon: 'warning',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#f59e0b'
+      timer: null,
+      showConfirmButton: true,
+      confirmButtonText: '關閉',
+      toast: false,
+      position: 'center'
     })
     navigateTo('/dashboard')
     return
@@ -254,13 +258,7 @@ const loadCompanyData = async () => {
     await loadMembers()
   } catch (error) {
     console.error('Failed to load company data:', error)
-    await $swal.fire({
-      title: '錯誤',
-      text: error.message || '載入企業資料失敗',
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    await showError('錯誤', error.message || '載入企業資料失敗')
   } finally {
     loading.value = false
   }
@@ -316,25 +314,10 @@ const reloadMembers = async () => {
   loading.value = true
   try {
     await loadMembers()
-    await $swal.fire({
-      title: '成功',
-      text: '已重新載入企業成員資料',
-      icon: 'success',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#10b981',
-      timer: 1500,
-      timerProgressBar: true,
-      showConfirmButton: false
-    })
+    await showSuccess('成功', '已重新載入企業成員資料')
   } catch (error) {
     console.error('Failed to reload members:', error)
-    await $swal.fire({
-      title: '錯誤',
-      text: '重新載入失敗，請稍後再試',
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    await showError('錯誤', '重新載入失敗，請稍後再試')
   } finally {
     loading.value = false
   }
@@ -353,25 +336,13 @@ const saveCompanyProfile = async () => {
     })
 
     if (result.success) {
-      $swal.fire({
-        title: '成功',
-        text: '企業資料已儲存',
-        icon: 'success',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#10b981'
-      })
+      showSuccess('成功', '企業資料已儲存')
     } else {
       throw new Error(result.error?.message || '儲存失敗')
     }
   } catch (error) {
     console.error('Failed to save company profile:', error)
-    $swal.fire({
-      title: '錯誤',
-      text: error.message || '儲存企業資料失敗',
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    showError('錯誤', error.message || '儲存企業資料失敗')
   } finally {
     loading.value = false
   }
@@ -718,27 +689,13 @@ const addNewManager = async () => {
         await loadMembers()
 
         // 顯示成功訊息 1.5 秒後自動關閉
-        await $swal.fire({
-          title: '成功',
-          text: '使用者已成功新增',
-          icon: 'success',
-          showConfirmButton: false,
-          timer: 1500,
-          timerProgressBar: true
-        })
+        await showSuccess('成功', '使用者已成功新增')
       } else {
         throw new Error(result.error?.message || '新增失敗')
       }
     } catch (error) {
       console.error('Failed to create user:', error)
-      await $swal.fire({
-        icon: 'error',
-        title: '新增失敗',
-        text: error.message || '新增使用者失敗',
-        showConfirmButton: false,
-        timer: 1500,
-        timerProgressBar: true
-      })
+      await showError('新增失敗', error.message || '新增使用者失敗')
     } finally {
       loading.value = false
     }
@@ -754,27 +711,13 @@ const setAsUser = async (manager) => {
       await loadMembers()
 
       // 顯示成功訊息 1.5 秒後自動關閉
-      await $swal.fire({
-        title: '成功',
-        text: `已將 ${manager.name || manager.username} 設為企業使用者`,
-        icon: 'success',
-        showConfirmButton: false,
-        timer: 1500,
-        timerProgressBar: true
-      })
+      await showSuccess('成功', `已將 ${manager.name || manager.username} 設為企業使用者`)
     } else {
       throw new Error(result.error?.message || '設定失敗')
     }
   } catch (error) {
     console.error('Failed to set as user:', error)
-    $swal.fire({
-      title: '錯誤',
-      text: error.message || '設定企業使用者失敗',
-      icon: 'error',
-      showConfirmButton: false,
-      timer: 1500,
-      timerProgressBar: true
-    })
+    showError('錯誤', error.message || '設定企業使用者失敗')
   }
 }
 
@@ -787,122 +730,72 @@ const setAsManager = async (user) => {
       await loadMembers()
 
       // 顯示成功訊息 1.5 秒後自動關閉
-      await $swal.fire({
-        title: '成功',
-        text: `已將 ${user.name || user.username} 設為企業管理者`,
-        icon: 'success',
-        showConfirmButton: false,
-        timer: 1500,
-        timerProgressBar: true
-      })
+      await showSuccess('成功', `已將 ${user.name || user.username} 設為企業管理者`)
     } else {
       throw new Error(result.error?.message || '設定失敗')
     }
   } catch (error) {
     console.error('Failed to set as manager:', error)
-    $swal.fire({
-      title: '錯誤',
-      text: error.message || '設定企業管理者失敗',
-      icon: 'error',
-      showConfirmButton: false,
-      timer: 1500,
-      timerProgressBar: true
-    })
+    showError('錯誤', error.message || '設定企業管理者失敗')
   }
 }
 
-const deleteManager = (index) => {
+const deleteManager = async (index) => {
   const manager = managers.value[index]
-  $swal.fire({
-    title: '確認刪除',
-    text: `確定要刪除管理者 ${manager.name || manager.username} 嗎？`,
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: '刪除',
-    cancelButtonText: '取消',
-    confirmButtonColor: '#ef4444',
-    cancelButtonColor: '#6b7280'
-  }).then(async (result) => {
-    if (result.isConfirmed) {
-      try {
-        const deleteResult = await deleteUserApi(manager.id)
+  const result = await showDeleteConfirm(
+    '確認刪除',
+    `確定要刪除管理者 ${manager.name || manager.username} 嗎？`,
+    '刪除',
+    '取消'
+  )
 
-        if (deleteResult.success) {
-          // Reload members list
-          await loadMembers()
+  if (result.isConfirmed) {
+    try {
+      const deleteResult = await deleteUserApi(manager.id)
 
-          // 顯示成功訊息 1.5 秒後自動關閉
-          $swal.fire({
-            title: '已刪除',
-            text: '管理者已被刪除',
-            icon: 'success',
-            showConfirmButton: false,
-            timer: 1500,
-            timerProgressBar: true
-          })
-        } else {
-          throw new Error(deleteResult.error?.message || '刪除失敗')
-        }
-      } catch (error) {
-        console.error('Failed to delete manager:', error)
-        $swal.fire({
-          title: '錯誤',
-          text: error.message || '刪除管理者失敗',
-          icon: 'error',
-          showConfirmButton: false,
-          timer: 1500,
-          timerProgressBar: true
-        })
+      if (deleteResult.success) {
+        // Reload members list
+        await loadMembers()
+
+        // 顯示成功訊息 1.5 秒後自動關閉
+        showSuccess('已刪除', '管理者已被刪除')
+      } else {
+        throw new Error(deleteResult.error?.message || '刪除失敗')
       }
+    } catch (error) {
+      console.error('Failed to delete manager:', error)
+      showError('錯誤', error.message || '刪除管理者失敗')
     }
-  })
+  }
 }
 
-const deleteUser = (index) => {
+const deleteUser = async (index) => {
   const user = users.value[index]
-  $swal.fire({
-    title: '確認刪除',
-    text: `確定要刪除使用者 ${user.name || user.username} 嗎？`,
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: '刪除',
-    cancelButtonText: '取消',
-    confirmButtonColor: '#ef4444',
-    cancelButtonColor: '#6b7280'
-  }).then(async (result) => {
-    if (result.isConfirmed) {
-      try {
-        const deleteResult = await deleteUserApi(user.id)
+  const result = await showDeleteConfirm(
+    '確認刪除',
+    `確定要刪除使用者 ${user.name || user.username} 嗎？`,
+    '刪除',
+    '取消'
+  )
 
-        if (deleteResult.success) {
-          // Reload members list
-          await loadMembers()
+  if (result.isConfirmed) {
+    try {
+      const deleteResult = await deleteUserApi(user.id)
 
-          // 顯示成功訊息 1.5 秒後自動關閉
-          $swal.fire({
-            title: '已刪除',
-            text: '使用者已被刪除',
-            icon: 'success',
-            showConfirmButton: false,
-            timer: 1500,
-            timerProgressBar: true
-          })
-        } else {
-          throw new Error(deleteResult.error?.message || '刪除失敗')
-        }
-      } catch (error) {
-        console.error('Failed to delete user:', error)
-        $swal.fire({
-          title: '錯誤',
-          text: error.message || '刪除使用者失敗',
-          icon: 'error',
-          showConfirmButton: false,
-          timer: 1500,
-          timerProgressBar: true
-        })
+      if (deleteResult.success) {
+        // Reload members list
+        await loadMembers()
+
+        // 顯示成功訊息 1.5 秒後自動關閉
+        showSuccess('已刪除', '使用者已被刪除')
+      } else {
+        throw new Error(deleteResult.error?.message || '刪除失敗')
       }
+    } catch (error) {
+      console.error('Failed to delete user:', error)
+      showError('錯誤', error.message || '刪除使用者失敗')
     }
-  })
+  }
 }
 
 // Load data on mount

@@ -163,7 +163,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 definePageMeta({
   middleware: ['auth', 'company-manager'],
@@ -175,6 +175,16 @@ const router = useRouter()
 const meetingId = route.params.meetingId
 const topicId = route.params.topicId
 
+// API composables
+const { getMeeting } = useMeetings()
+const { getVotingTopic } = useVotingTopics()
+const { getVotes, vote: submitVote, removeVote } = useVoting()
+const { showSuccess, showError } = useSweetAlert()
+
+// Loading states
+const isLoading = ref(false)
+const isVoting = ref(false)
+
 // Modal states
 const showVotingModal = ref(false)
 const showCancelModal = ref(false)
@@ -182,34 +192,95 @@ const selectedVoter = ref(null)
 const selectedVote = ref('')
 
 // Page data
-const renewalGroupName = ref('臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會')
-const meetingName = ref('114年度第一屆第1次會員大會')
-const topicName = ref('理事長選舉')
-const votingTime = ref('2025年3月15日 下午2:30:00')
+const renewalGroupName = ref('')
+const meetingName = ref('')
+const topicName = ref('')
+const votingTime = ref('')
 
-// Sample voters data
-const voters = ref([
-  { id: 1, name: '王小明', hasVoted: false, vote: null },
-  { id: 2, name: '李小華', hasVoted: true, vote: 'agree' },
-  { id: 3, name: '張小美', hasVoted: false, vote: null },
-  { id: 4, name: '陳小強', hasVoted: false, vote: null },
-  { id: 5, name: '林小芳', hasVoted: true, vote: 'disagree' },
-  { id: 6, name: '黃小龍', hasVoted: false, vote: null },
-  { id: 7, name: '吳小玲', hasVoted: false, vote: null },
-  { id: 8, name: '劉小軍', hasVoted: false, vote: null },
-  { id: 9, name: '蔡小慧', hasVoted: false, vote: null },
-  { id: 10, name: '鄭小勇', hasVoted: false, vote: null },
-  { id: 11, name: '謝小文', hasVoted: false, vote: null },
-  { id: 12, name: '胡小雯', hasVoted: false, vote: null },
-  { id: 13, name: '馬小峰', hasVoted: false, vote: null },
-  { id: 14, name: '楊小琪', hasVoted: false, vote: null },
-  { id: 15, name: '孫小宇', hasVoted: false, vote: null },
-  { id: 16, name: '許小蓮', hasVoted: false, vote: null },
-  { id: 17, name: '蘇小偉', hasVoted: false, vote: null },
-  { id: 18, name: '袁小雅', hasVoted: false, vote: null },
-  { id: 19, name: '鍾小浩', hasVoted: false, vote: null },
-  { id: 20, name: '江小薇', hasVoted: false, vote: null }
-])
+// Voters data
+const voters = ref([])
+
+// Load data on mount
+onMounted(async () => {
+  await loadTopicInfo()
+  await loadVoters()
+})
+
+// Load topic info
+const loadTopicInfo = async () => {
+  console.log('[Voting] Loading topic info:', topicId)
+
+  const [meetingResponse, topicResponse] = await Promise.all([
+    getMeeting(meetingId),
+    getVotingTopic(topicId)
+  ])
+
+  if (meetingResponse.success && meetingResponse.data) {
+    const meeting = meetingResponse.data.data || meetingResponse.data
+    renewalGroupName.value = meeting.renewal_group || meeting.renewalGroup || ''
+    meetingName.value = meeting.meeting_name || meeting.name || ''
+  }
+
+  if (topicResponse.success && topicResponse.data) {
+    const topic = topicResponse.data.data || topicResponse.data
+    topicName.value = topic.topic_name || topic.name || ''
+    votingTime.value = topic.voting_time || topic.votingTime || new Date().toLocaleString('zh-TW')
+  } else {
+    console.error('[Voting] Failed to load topic info:', topicResponse.error)
+    // Use fallback
+    renewalGroupName.value = '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會'
+    meetingName.value = '114年度第一屆第1次會員大會'
+    topicName.value = '理事長選舉'
+    votingTime.value = '2025年3月15日 下午2:30:00'
+  }
+}
+
+// Load voters
+const loadVoters = async () => {
+  isLoading.value = true
+  console.log('[Voting] Loading voters for topic:', topicId)
+
+  const response = await getVotes({ topic_id: topicId })
+  isLoading.value = false
+
+  if (response.success && response.data) {
+    const votesData = response.data.data || response.data
+
+    voters.value = Array.isArray(votesData) ? votesData.map(v => ({
+      id: v.voter_id || v.id,
+      name: v.voter_name || v.name || '',
+      hasVoted: v.has_voted || v.hasVoted || false,
+      vote: v.vote || null
+    })) : []
+
+    console.log('[Voting] Voters loaded:', voters.value.length)
+  } else {
+    console.error('[Voting] Failed to load voters:', response.error)
+    // Use fallback mock data
+    voters.value = [
+      { id: 1, name: '王小明', hasVoted: false, vote: null },
+      { id: 2, name: '李小華', hasVoted: true, vote: 'agree' },
+      { id: 3, name: '張小美', hasVoted: false, vote: null },
+      { id: 4, name: '陳小強', hasVoted: false, vote: null },
+      { id: 5, name: '林小芳', hasVoted: true, vote: 'disagree' },
+      { id: 6, name: '黃小龍', hasVoted: false, vote: null },
+      { id: 7, name: '吳小玲', hasVoted: false, vote: null },
+      { id: 8, name: '劉小軍', hasVoted: false, vote: null },
+      { id: 9, name: '蔡小慧', hasVoted: false, vote: null },
+      { id: 10, name: '鄭小勇', hasVoted: false, vote: null },
+      { id: 11, name: '謝小文', hasVoted: false, vote: null },
+      { id: 12, name: '胡小雯', hasVoted: false, vote: null },
+      { id: 13, name: '馬小峰', hasVoted: false, vote: null },
+      { id: 14, name: '楊小琪', hasVoted: false, vote: null },
+      { id: 15, name: '孫小宇', hasVoted: false, vote: null },
+      { id: 16, name: '許小蓮', hasVoted: false, vote: null },
+      { id: 17, name: '蘇小偉', hasVoted: false, vote: null },
+      { id: 18, name: '袁小雅', hasVoted: false, vote: null },
+      { id: 19, name: '鍾小浩', hasVoted: false, vote: null },
+      { id: 20, name: '江小薇', hasVoted: false, vote: null }
+    ]
+  }
+}
 
 const goBack = () => {
   router.push(`/tables/meeting/${meetingId}/voting-topics`)
@@ -233,18 +304,34 @@ const selectVote = (vote) => {
   selectedVote.value = vote
 }
 
-const confirmVote = () => {
+const confirmVote = async () => {
   if (!selectedVote.value || !selectedVoter.value) return
 
-  // Update voter status
-  selectedVoter.value.hasVoted = true
-  selectedVoter.value.vote = selectedVote.value
+  isVoting.value = true
 
-  console.log(`Voter ${selectedVoter.value.name} voted: ${selectedVote.value}`)
+  const voteData = {
+    topic_id: topicId,
+    voter_id: selectedVoter.value.id,
+    vote: selectedVote.value
+  }
 
-  // TODO: Send vote to backend
+  console.log('[Voting] Submitting vote:', voteData)
 
-  closeVotingModal()
+  const response = await submitVote(voteData)
+  isVoting.value = false
+
+  if (response.success) {
+    // Update voter status locally
+    selectedVoter.value.hasVoted = true
+    selectedVoter.value.vote = selectedVote.value
+
+    showSuccess('投票成功', `已為 ${selectedVoter.value.name} 記錄投票`)
+    console.log('[Voting] Vote submitted successfully')
+    closeVotingModal()
+  } else {
+    console.error('[Voting] Failed to submit vote:', response.error)
+    showError('投票失敗', response.error?.message || '無法記錄投票')
+  }
 }
 
 const cancelVote = () => {
@@ -256,14 +343,31 @@ const cancelVote = () => {
   showCancelModal.value = true
 }
 
-const confirmCancelVote = () => {
-  if (selectedVoter.value) {
+const confirmCancelVote = async () => {
+  if (!selectedVoter.value) return
+
+  isVoting.value = true
+
+  const voteData = {
+    topic_id: topicId,
+    voter_id: selectedVoter.value.id
+  }
+
+  console.log('[Voting] Cancelling vote:', voteData)
+
+  const response = await removeVote(voteData)
+  isVoting.value = false
+
+  if (response.success) {
+    // Update voter status locally
     selectedVoter.value.hasVoted = false
     selectedVoter.value.vote = null
 
-    console.log(`Cancelled vote for ${selectedVoter.value.name}`)
-
-    // TODO: Remove vote from backend
+    showSuccess('取消成功', `已取消 ${selectedVoter.value.name} 的投票`)
+    console.log('[Voting] Vote cancelled successfully')
+  } else {
+    console.error('[Voting] Failed to cancel vote:', response.error)
+    showError('取消失敗', response.error?.message || '無法取消投票')
   }
 
   showCancelModal.value = false

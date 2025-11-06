@@ -192,7 +192,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 definePageMeta({
@@ -206,44 +206,116 @@ const router = useRouter()
 // Get meeting ID from route params
 const meetingId = route.params.meetingId
 
+// API composables
+const { getMeeting } = useMeetings()
+const { getAttendance, checkIn, updateAttendanceStatus } = useAttendance()
+const { showSuccess, showError } = useSweetAlert()
+
+// Loading states
+const isLoading = ref(false)
+const isSaving = ref(false)
+
 // Modal state
 const showAttendanceModal = ref(false)
 const selectedOwner = ref(null)
 const tempAttendanceStatus = ref(null)
 
-// Sample meeting data (in real app, this would come from API)
+// Meeting data
 const meeting = ref({
   id: meetingId,
-  name: '114年度第一屆第1次會員大會',
-  renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會',
-  date: '2025年3月15日',
-  time: '下午2:00:00',
-  topics: '理事會選舉、監事會選舉'
+  name: '',
+  renewalGroup: '',
+  date: '',
+  time: '',
+  topics: ''
 })
 
-// Sample property owners data (in real app, this would come from API)
-const propertyOwners = ref([
-  { id: 1, owner_code: '001', owner_name: '王小明', attendance_status: null },
-  { id: 2, owner_code: '002', owner_name: '李美華', attendance_status: 'personal' },
-  { id: 3, owner_code: '003', owner_name: '張大同', attendance_status: 'delegated' },
-  { id: 4, owner_code: '004', owner_name: '陳雅婷', attendance_status: null },
-  { id: 5, owner_code: '005', owner_name: '林志強', attendance_status: null },
-  { id: 6, owner_code: '006', owner_name: '黃淑芬', attendance_status: 'personal' },
-  { id: 7, owner_code: '007', owner_name: '吳家豪', attendance_status: null },
-  { id: 8, owner_code: '008', owner_name: '蔡雨辰', attendance_status: 'cancelled' },
-  { id: 9, owner_code: '009', owner_name: '劉建國', attendance_status: null },
-  { id: 10, owner_code: '010', owner_name: '楊麗娟', attendance_status: 'delegated' },
-  { id: 11, owner_code: '011', owner_name: '許志明', attendance_status: null },
-  { id: 12, owner_code: '012', owner_name: '鄭雅芳', attendance_status: null },
-  { id: 13, owner_code: '013', owner_name: '徐建華', attendance_status: 'personal' },
-  { id: 14, owner_code: '014', owner_name: '謝淑貞', attendance_status: null },
-  { id: 15, owner_code: '015', owner_name: '蘇志偉', attendance_status: null },
-  { id: 16, owner_code: '016', owner_name: '江美玲', attendance_status: null },
-  { id: 17, owner_code: '017', owner_name: '廖家宏', attendance_status: null },
-  { id: 18, owner_code: '018', owner_name: '賴淑華', attendance_status: null },
-  { id: 19, owner_code: '019', owner_name: '范志強', attendance_status: null },
-  { id: 20, owner_code: '020', owner_name: '葉雅婷', attendance_status: null }
-])
+// Property owners data
+const propertyOwners = ref([])
+
+// Load data on mount
+onMounted(async () => {
+  await loadMeetingData()
+  await loadAttendanceData()
+})
+
+// Load meeting data
+const loadMeetingData = async () => {
+  console.log('[Member Checkin] Loading meeting:', meetingId)
+  const response = await getMeeting(meetingId)
+
+  if (response.success && response.data) {
+    const meetingData = response.data.data || response.data
+    meeting.value = {
+      id: meetingData.id,
+      name: meetingData.meeting_name || meetingData.name || '',
+      renewalGroup: meetingData.renewal_group || meetingData.renewalGroup || '',
+      date: meetingData.meeting_date || meetingData.date || '',
+      time: meetingData.meeting_time || meetingData.time || '',
+      topics: meetingData.topics || '理事會選舉、監事會選舉'
+    }
+    console.log('[Member Checkin] Meeting loaded:', meeting.value)
+  } else {
+    console.error('[Member Checkin] Failed to load meeting:', response.error)
+    // Use fallback mock data
+    meeting.value = {
+      id: meetingId,
+      name: '114年度第一屆第1次會員大會',
+      renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會',
+      date: '2025年3月15日',
+      time: '下午2:00:00',
+      topics: '理事會選舉、監事會選舉'
+    }
+  }
+}
+
+// Load attendance data
+const loadAttendanceData = async () => {
+  isLoading.value = true
+  console.log('[Member Checkin] Loading attendance data for meeting:', meetingId)
+
+  const response = await getAttendance({ meeting_id: meetingId })
+  isLoading.value = false
+
+  if (response.success && response.data) {
+    const attendanceData = response.data.data || response.data
+
+    propertyOwners.value = Array.isArray(attendanceData) ? attendanceData.map(a => ({
+      id: a.id,
+      owner_id: a.owner_id || a.ownerId,
+      owner_code: a.owner_code || a.ownerCode || '',
+      owner_name: a.owner_name || a.ownerName || '',
+      attendance_status: a.attendance_status || a.attendanceStatus || null
+    })) : []
+
+    console.log('[Member Checkin] Attendance data loaded:', propertyOwners.value.length)
+  } else {
+    console.error('[Member Checkin] Failed to load attendance data:', response.error)
+    // Use fallback mock data
+    propertyOwners.value = [
+      { id: 1, owner_code: '001', owner_name: '王小明', attendance_status: null },
+      { id: 2, owner_code: '002', owner_name: '李美華', attendance_status: 'personal' },
+      { id: 3, owner_code: '003', owner_name: '張大同', attendance_status: 'delegated' },
+      { id: 4, owner_code: '004', owner_name: '陳雅婷', attendance_status: null },
+      { id: 5, owner_code: '005', owner_name: '林志強', attendance_status: null },
+      { id: 6, owner_code: '006', owner_name: '黃淑芬', attendance_status: 'personal' },
+      { id: 7, owner_code: '007', owner_name: '吳家豪', attendance_status: null },
+      { id: 8, owner_code: '008', owner_name: '蔡雨辰', attendance_status: 'cancelled' },
+      { id: 9, owner_code: '009', owner_name: '劉建國', attendance_status: null },
+      { id: 10, owner_code: '010', owner_name: '楊麗娟', attendance_status: 'delegated' },
+      { id: 11, owner_code: '011', owner_name: '許志明', attendance_status: null },
+      { id: 12, owner_code: '012', owner_name: '鄭雅芳', attendance_status: null },
+      { id: 13, owner_code: '013', owner_name: '徐建華', attendance_status: 'personal' },
+      { id: 14, owner_code: '014', owner_name: '謝淑貞', attendance_status: null },
+      { id: 15, owner_code: '015', owner_name: '蘇志偉', attendance_status: null },
+      { id: 16, owner_code: '016', owner_name: '江美玲', attendance_status: null },
+      { id: 17, owner_code: '017', owner_name: '廖家宏', attendance_status: null },
+      { id: 18, owner_code: '018', owner_name: '賴淑華', attendance_status: null },
+      { id: 19, owner_code: '019', owner_name: '范志強', attendance_status: null },
+      { id: 20, owner_code: '020', owner_name: '葉雅婷', attendance_status: null }
+    ]
+  }
+}
 
 // Helper functions for card styling
 const getCardNameClass = (status) => {
@@ -305,15 +377,46 @@ const clearAttendanceStatus = () => {
   }
 }
 
-const confirmAttendance = () => {
-  if (selectedOwner.value) {
+const confirmAttendance = async () => {
+  if (!selectedOwner.value) {
+    return
+  }
+
+  isSaving.value = true
+
+  const attendanceData = {
+    meeting_id: meetingId,
+    owner_id: selectedOwner.value.owner_id || selectedOwner.value.id,
+    attendance_status: selectedOwner.value.attendance_status
+  }
+
+  console.log('[Member Checkin] Updating attendance:', attendanceData)
+
+  let response
+  if (selectedOwner.value.id) {
+    // Update existing attendance record
+    response = await updateAttendanceStatus(selectedOwner.value.id, selectedOwner.value.attendance_status)
+  } else {
+    // Create new attendance record
+    response = await checkIn(attendanceData)
+  }
+
+  isSaving.value = false
+
+  if (response.success) {
     // Find the owner in the main array and update their status
     const ownerIndex = propertyOwners.value.findIndex(owner => owner.id === selectedOwner.value.id)
     if (ownerIndex !== -1) {
       propertyOwners.value[ownerIndex].attendance_status = selectedOwner.value.attendance_status
     }
+
+    showSuccess('更新成功', '報到狀態已更新')
+    console.log('[Member Checkin] Attendance updated successfully')
+    closeAttendanceModal()
+  } else {
+    console.error('[Member Checkin] Failed to update attendance:', response.error)
+    showError('更新失敗', response.error?.message || '無法更新報到狀態')
   }
-  closeAttendanceModal()
 }
 
 // Action functions

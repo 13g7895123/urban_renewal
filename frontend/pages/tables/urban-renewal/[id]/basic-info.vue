@@ -382,6 +382,7 @@ const router = useRouter()
 const runtimeConfig = useRuntimeConfig()
 const { $swal } = useNuxtApp()
 const { get, post, put } = useApi()
+const { showSuccess, showError, showDeleteConfirm, showCustom } = useSweetAlert()
 
 // State
 const loading = ref(true)
@@ -555,13 +556,7 @@ const fetchRenewalData = async () => {
     }
   } catch (err) {
     console.error('Fetch error:', err)
-    await $swal.fire({
-      title: '載入失敗',
-      text: '無法載入資料，請稍後再試',
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    await showError('載入失敗', '無法載入資料，請稍後再試')
     router.push('/tables/urban-renewal')
   } finally {
     loading.value = false
@@ -715,16 +710,12 @@ const updateLandPlot = () => {
 }
 
 const deleteLandPlot = async (plot) => {
-  const result = await $swal.fire({
-    title: '確認刪除',
-    text: `確定要刪除地號「${plot.fullLandNumber}」嗎？`,
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#ef4444',
-    cancelButtonColor: '#6b7280',
-    confirmButtonText: '確定刪除',
-    cancelButtonText: '取消'
-  })
+  const result = await showDeleteConfirm(
+    '確認刪除',
+    `確定要刪除地號「${plot.fullLandNumber}」嗎？`,
+    '刪除',
+    '取消'
+  )
 
   if (!result.isConfirmed) {
     return
@@ -804,12 +795,15 @@ const saveChanges = async () => {
 
     // 如果有地號新增失敗，顯示警告
     if (landPlotErrors.length > 0) {
-      await $swal.fire({
+      await showCustom({
         title: '部分地號新增失敗',
         html: landPlotErrors.join('<br>'),
         icon: 'warning',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#f59e0b'
+        timer: null,
+        showConfirmButton: true,
+        confirmButtonText: '關閉',
+        toast: false,
+        position: 'center'
       })
     }
 
@@ -839,24 +833,11 @@ const saveChanges = async () => {
     deletedLandPlots.value = []
 
     // 7. 顯示成功訊息（1.5秒自動關閉）
-    await $swal.fire({
-      title: '儲存成功！',
-      text: '資料已成功更新',
-      icon: 'success',
-      timer: 1500,
-      timerProgressBar: true,
-      showConfirmButton: false
-    })
+    await showSuccess('儲存成功！', '資料已成功更新')
 
   } catch (err) {
     console.error('Save error:', err)
-    await $swal.fire({
-      title: '儲存失敗',
-      text: err.message || '儲存失敗，請稍後再試',
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    await showError('儲存失敗', err.message || '儲存失敗，請稍後再試')
   } finally {
     isSaving.value = false
   }
@@ -889,14 +870,7 @@ const fillBasicInfoTestData = () => {
   renewalData.address = testAddresses[Math.floor(Math.random() * testAddresses.length)]
   renewalData.representative = testChairmanNames[Math.floor(Math.random() * testChairmanNames.length)]
 
-  $swal.fire({
-    title: '基本資料已填入',
-    text: '基本資訊已自動填入測試資料',
-    icon: 'success',
-    timer: 1500,
-    timerProgressBar: true,
-    showConfirmButton: false
-  })
+  showSuccess('基本資料已填入', '基本資訊已自動填入測試資料')
 }
 
 // Fill land plot test data
@@ -921,14 +895,7 @@ const fillLandPlotTestData = async () => {
   landForm.landNumberSub = String(Math.floor(Math.random() * 99)).padStart(4, '0')
   landForm.landArea = Math.floor(Math.random() * 500) + 100
 
-  $swal.fire({
-    title: '測試地號已填入',
-    text: '地號表單已自動填入測試資料',
-    icon: 'success',
-    timer: 1500,
-    timerProgressBar: true,
-    showConfirmButton: false
-  })
+  showSuccess('測試地號已填入', '地號表單已自動填入測試資料')
 }
 
 const goBack = () => {

@@ -546,8 +546,8 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 
-// Use SweetAlert2
-const { $swal } = useNuxtApp()
+// Use SweetAlert composable
+const { showSuccess, showError } = useSweetAlert()
 
 const route = useRoute()
 const router = useRouter()
@@ -644,13 +644,7 @@ const fetchPropertyOwner = async () => {
     }
   } catch (err) {
     console.error('Failed to fetch property owner:', err)
-    $swal.fire({
-      title: '載入失敗',
-      text: '無法載入所有權人資料',
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    showError('載入失敗', '無法載入所有權人資料')
   } finally {
     loading.value = false
   }
@@ -805,13 +799,7 @@ const removeBuilding = (index) => {
 // Submit form
 const onSubmit = async () => {
   if (!formData.owner_name) {
-    $swal.fire({
-      title: '驗證失敗',
-      text: '請填寫所有權人名稱',
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    showError('驗證失敗', '請填寫所有權人名稱')
     return
   }
 
@@ -822,33 +810,14 @@ const onSubmit = async () => {
     const response = await put(`/property-owners/${ownerId.value}`, formData)
 
     if (response.data?.status === 'success') {
-      $swal.fire({
-        title: '更新成功！',
-        text: '所有權人資料已成功更新',
-        icon: 'success',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#10b981'
-      }).then(() => {
-        router.push(`/tables/urban-renewal/${urbanRenewalId.value}/property-owners`)
-      })
+      await showSuccess('更新成功！', '所有權人資料已成功更新')
+      router.push(`/tables/urban-renewal/${urbanRenewalId.value}/property-owners`)
     } else {
-      $swal.fire({
-        title: '更新失敗',
-        text: response.data?.message || '更新失敗',
-        icon: 'error',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#ef4444'
-      })
+      showError('更新失敗', response.data?.message || '更新失敗')
     }
   } catch (err) {
     console.error('Submit error:', err)
-    $swal.fire({
-      title: '更新失敗',
-      text: '更新失敗，請稍後再試',
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    showError('更新失敗', '更新失敗，請稍後再試')
   } finally {
     isSubmitting.value = false
   }
@@ -1002,23 +971,11 @@ const reloadBuildings = async () => {
         formatted: formatBuildingNumber(b)
       })))
       
-      $swal.fire({
-        title: '重新整理成功',
-        text: `已載入 ${formData.buildings.length} 筆建號資料`,
-        icon: 'success',
-        timer: 1500,
-        showConfirmButton: false
-      })
+      showSuccess('重新整理成功', `已載入 ${formData.buildings.length} 筆建號資料`)
     }
   } catch (err) {
     console.error('Failed to reload buildings:', err)
-    $swal.fire({
-      title: '重新整理失敗',
-      text: '無法載入建號資料',
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    showError('重新整理失敗', '無法載入建號資料')
   } finally {
     isReloadingBuildings.value = false
   }
@@ -1042,23 +999,11 @@ const reloadLands = async () => {
         formatted: formatLandNumber(l)
       })))
       
-      $swal.fire({
-        title: '重新整理成功',
-        text: `已載入 ${formData.lands.length} 筆地號資料`,
-        icon: 'success',
-        timer: 1500,
-        showConfirmButton: false
-      })
+      showSuccess('重新整理成功', `已載入 ${formData.lands.length} 筆地號資料`)
     }
   } catch (err) {
     console.error('Failed to reload lands:', err)
-    $swal.fire({
-      title: '重新整理失敗',
-      text: '無法載入地號資料',
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    showError('重新整理失敗', '無法載入地號資料')
   } finally {
     isReloadingLands.value = false
   }

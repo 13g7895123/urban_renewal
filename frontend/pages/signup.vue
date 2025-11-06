@@ -180,6 +180,7 @@
 <script setup>
 const { $swal } = useNuxtApp()
 const { post } = useApi()
+const { showSuccess, showError, showWarning } = useSweetAlert()
 const currentStep = ref(1)
 const selectedAccountType = ref('')
 const loading = ref(false)
@@ -248,24 +249,12 @@ const handleRegister = async () => {
     if (response.success) {
       currentStep.value = 3
     } else {
-      await $swal.fire({
-        title: '註冊失敗',
-        text: response.message || '請稍後再試',
-        icon: 'error',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#ef4444'
-      })
+      await showError('註冊失敗', response.message || '請稍後再試')
     }
   } catch (error) {
     console.error('Registration error:', error)
     const errorMessage = error.response?.data?.message || error.message || '請稍後再試'
-    await $swal.fire({
-      title: '註冊失敗',
-      text: errorMessage,
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    await showError('註冊失敗', errorMessage)
   } finally {
     loading.value = false
   }
@@ -276,38 +265,20 @@ const validateForm = async () => {
 
   for (const field of requiredFields) {
     if (!formData.value[field]) {
-      await $swal.fire({
-        title: '欄位未填寫完整',
-        text: '請填寫所有必填欄位',
-        icon: 'warning',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#f59e0b'
-      })
+      await showWarning('欄位未填寫完整', '請填寫所有必填欄位')
       return false
     }
   }
 
   if (formData.value.password !== formData.value.confirmPassword) {
-    await $swal.fire({
-      title: '密碼不一致',
-      text: '密碼與確認密碼不符',
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    await showError('密碼不一致', '密碼與確認密碼不符')
     return false
   }
 
   // Additional validation for business accounts
   if (selectedAccountType.value === 'business') {
     if (!formData.value.businessName || !formData.value.taxId) {
-      await $swal.fire({
-        title: '企業資料未完整',
-        text: '請填寫企業相關資料',
-        icon: 'warning',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#f59e0b'
-      })
+      await showWarning('企業資料未完整', '請填寫企業相關資料')
       return false
     }
   }

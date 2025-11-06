@@ -203,6 +203,7 @@ definePageMeta({
 const authStore = useAuthStore()
 const { get, put, post } = useApi()
 const { $swal } = useNuxtApp()
+const { showSuccess, showError, showWarning } = useSweetAlert()
 
 // 表單資料
 const loading = ref(true)
@@ -252,13 +253,7 @@ const loadUserProfile = async () => {
     }
   } catch (error) {
     console.error('Load profile error:', error)
-    await $swal.fire({
-      title: '載入失敗',
-      text: error.message || '無法載入使用者資料',
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    await showError('載入失敗', error.message || '無法載入使用者資料')
   } finally {
     loading.value = false
   }
@@ -282,13 +277,7 @@ const saveProfile = async () => {
     const response = await put(`/users/${userId}`, updateData)
 
     if (response.success) {
-      await $swal.fire({
-        title: '儲存成功',
-        text: '個人資料已更新',
-        icon: 'success',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#22c55e'
-      })
+      await showSuccess('儲存成功', '個人資料已更新')
 
       // 重新載入資料
       await loadUserProfile()
@@ -297,13 +286,7 @@ const saveProfile = async () => {
     }
   } catch (error) {
     console.error('Save profile error:', error)
-    await $swal.fire({
-      title: '儲存失敗',
-      text: error.message || '無法儲存個人資料',
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    await showError('儲存失敗', error.message || '無法儲存個人資料')
   } finally {
     saving.value = false
   }
@@ -324,24 +307,12 @@ const submitChangePassword = async () => {
   try {
     // 驗證新密碼
     if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
-      await $swal.fire({
-        title: '密碼不符',
-        text: '新密碼與確認密碼不相符',
-        icon: 'warning',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#f59e0b'
-      })
+      await showWarning('密碼不符', '新密碼與確認密碼不相符')
       return
     }
 
     if (passwordForm.value.newPassword.length < 6) {
-      await $swal.fire({
-        title: '密碼太短',
-        text: '新密碼至少需要6個字元',
-        icon: 'warning',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#f59e0b'
-      })
+      await showWarning('密碼太短', '新密碼至少需要6個字元')
       return
     }
 
@@ -355,13 +326,7 @@ const submitChangePassword = async () => {
 
     if (response.success) {
       showPasswordModal.value = false
-      await $swal.fire({
-        title: '變更成功',
-        text: '密碼已成功變更',
-        icon: 'success',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#22c55e'
-      })
+      await showSuccess('變更成功', '密碼已成功變更')
 
       // 清空表單
       passwordForm.value = {
@@ -374,13 +339,7 @@ const submitChangePassword = async () => {
     }
   } catch (error) {
     console.error('Change password error:', error)
-    await $swal.fire({
-      title: '變更失敗',
-      text: error.message || '無法變更密碼',
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    await showError('變更失敗', error.message || '無法變更密碼')
   } finally {
     changingPassword.value = false
   }

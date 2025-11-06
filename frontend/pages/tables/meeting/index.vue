@@ -15,15 +15,17 @@
       
       <!-- Action Buttons -->
       <div class="flex justify-end gap-4 mb-6">
-        <UButton 
-          color="red" 
+        <UButton
+          color="red"
           @click="deleteMeetings"
+          :disabled="isDeleting || selectedMeetings.length === 0"
+          :loading="isDeleting"
         >
           <Icon name="heroicons:trash" class="w-5 h-5 mr-2" />
           刪除
         </UButton>
-        <UButton 
-          color="green" 
+        <UButton
+          color="green"
           @click="addMeeting"
         >
           <Icon name="heroicons:plus" class="w-5 h-5 mr-2" />
@@ -243,7 +245,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { navigateTo } from '#app'
 
 definePageMeta({
@@ -251,10 +253,15 @@ definePageMeta({
   layout: false
 })
 
+// API composables
+const { getMeetings, deleteMeeting } = useMeetings()
+const { showSuccess, showError, showConfirm } = useSweetAlert()
+
 const selectAll = ref(false)
 const selectedMeetings = ref([])
 const pageSize = ref(10)
 const loading = ref(false)
+const isDeleting = ref(false)
 
 // Modal state
 const showVotingTopicsModal = ref(false)
@@ -280,30 +287,69 @@ const votingTopics = ref([
   }
 ])
 
-const meetings = ref([
-  {
-    id: 1,
-    name: '114年度第一屆第1次會員大會',
-    renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會',
-    date: '2025年3月15日',
-    time: '下午2:00:00',
-    attendees: 73,
-    totalCountedAttendees: 72,
-    totalObservers: 0,
-    votingTopicCount: 5
-  },
-  {
-    id: 2,
-    name: '114年度第一屆第2次會員大會',
-    renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會',
-    date: '2025年8月9日',
-    time: '下午2:00:00',
-    attendees: 74,
-    totalCountedAttendees: 74,
-    totalObservers: 0,
-    votingTopicCount: 3
+// Meetings data
+const meetings = ref([])
+
+// Load meetings data on mount
+onMounted(async () => {
+  await loadMeetings()
+})
+
+// Load meetings function
+const loadMeetings = async () => {
+  loading.value = true
+  console.log('[Meeting Index] Loading meetings...')
+
+  const response = await getMeetings()
+  loading.value = false
+
+  if (response.success && response.data) {
+    const meetingsData = response.data.data || response.data
+
+    // Transform API data to match UI format
+    meetings.value = Array.isArray(meetingsData) ? meetingsData.map(m => ({
+      id: m.id,
+      name: m.meeting_name || m.name || '',
+      renewalGroup: m.renewal_group || m.renewalGroup || '',
+      date: m.meeting_date || m.date || '',
+      time: m.meeting_time || m.time || '',
+      attendees: m.attendees || 0,
+      totalCountedAttendees: m.total_counted_attendees || m.totalCountedAttendees || 0,
+      totalObservers: m.total_observers || m.totalObservers || 0,
+      votingTopicCount: m.voting_topic_count || m.votingTopicCount || 0
+    })) : []
+
+    console.log('[Meeting Index] Meetings loaded:', meetings.value.length)
+  } else {
+    console.error('[Meeting Index] Failed to load meetings:', response.error)
+    showError('載入失敗', response.error?.message || '無法載入會議資料')
+    // Use fallback mock data if API fails
+    meetings.value = [
+      {
+        id: 1,
+        name: '114年度第一屆第1次會員大會',
+        renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會',
+        date: '2025年3月15日',
+        time: '下午2:00:00',
+        attendees: 73,
+        totalCountedAttendees: 72,
+        totalObservers: 0,
+        votingTopicCount: 5
+      },
+      {
+        id: 2,
+        name: '114年度第一屆第2次會員大會',
+        renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會',
+        date: '2025年8月9日',
+        time: '下午2:00:00',
+        attendees: 74,
+        totalCountedAttendees: 74,
+        totalObservers: 0,
+        votingTopicCount: 3
+      }
+    ]
   }
-])
+}
 
 const toggleSelectAll = () => {
   if (selectAll.value) {
@@ -320,20 +366,53 @@ const addMeeting = () => {
 
 // Refresh data function
 const refreshData = async () => {
-  loading.value = true
-  try {
-    // TODO: Replace with actual API call when backend is ready
-    // For now, just simulate a loading state
-    await new Promise(resolve => setTimeout(resolve, 500))
-    console.log('Meetings data refreshed')
-  } finally {
-    loading.value = false
-  }
+  await loadMeetings()
 }
 
-const deleteMeetings = () => {
-  console.log('Deleting meetings:', selectedMeetings.value)
-  // TODO: Implement delete functionality
+// Delete meetings function
+const deleteMeetings = async () => {
+  if (selectedMeetings.value.length === 0) {
+    showError('請選擇會議', '請至少選擇一個會議進行刪除')
+    return
+  }
+
+  const confirmed = await showConfirm(
+    '確認刪除',
+    `確定要刪除 ${selectedMeetings.value.length} 個會議嗎？此操作無法復原。`
+  )
+
+  if (!confirmed) {
+    return
+  }
+
+  isDeleting.value = true
+  let successCount = 0
+  let failCount = 0
+
+  for (const meetingId of selectedMeetings.value) {
+    console.log('[Meeting Index] Deleting meeting:', meetingId)
+    const response = await deleteMeeting(meetingId)
+
+    if (response.success) {
+      successCount++
+    } else {
+      failCount++
+      console.error('[Meeting Index] Failed to delete meeting:', meetingId, response.error)
+    }
+  }
+
+  isDeleting.value = false
+
+  if (successCount > 0) {
+    showSuccess('刪除成功', `成功刪除 ${successCount} 個會議`)
+    selectedMeetings.value = []
+    selectAll.value = false
+    await loadMeetings()
+  }
+
+  if (failCount > 0) {
+    showError('部分刪除失敗', `${failCount} 個會議刪除失敗`)
+  }
 }
 
 const showBasicInfo = (meeting) => {

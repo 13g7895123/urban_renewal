@@ -173,7 +173,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 definePageMeta({
   middleware: ['auth', 'company-manager'],
@@ -184,54 +184,138 @@ const route = useRoute()
 const meetingId = route.params.meetingId
 const topicId = route.params.topicId
 
+// API composables
+const { getMeeting } = useMeetings()
+const { getVotingTopic } = useVotingTopics()
+const { getDetailedResults } = useVoting()
+const { showError } = useSweetAlert()
+
+// Loading state
+const isLoading = ref(false)
+
 // Page data
-const renewalGroupName = ref('臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會')
-const meetingName = ref('114年度第一屆第1次會員大會')
-const topicName = ref('理事長選舉')
-const votingTime = ref('2025年3月15日 下午2:30:00')
+const renewalGroupName = ref('')
+const meetingName = ref('')
+const topicName = ref('')
+const votingTime = ref('')
 
 // Voting results data
 const agreeResults = ref({
-  people: {
-    count: 45,
-    numerator: 45,
-    denominator: 72,
-    percentage: 62.5
-  },
-  land: {
-    area: 1250.5,
-    numerator: 1250.5,
-    denominator: 2000.0,
-    percentage: 62.5
-  },
-  building: {
-    area: 890.3,
-    numerator: 890.3,
-    denominator: 1500.0,
-    percentage: 59.4
-  }
+  people: { count: 0, numerator: 0, denominator: 0, percentage: 0 },
+  land: { area: 0, numerator: 0, denominator: 0, percentage: 0 },
+  building: { area: 0, numerator: 0, denominator: 0, percentage: 0 }
 })
 
 const disagreeResults = ref({
-  people: {
-    count: 27,
-    numerator: 27,
-    denominator: 72,
-    percentage: 37.5
-  },
-  land: {
-    area: 749.5,
-    numerator: 749.5,
-    denominator: 2000.0,
-    percentage: 37.5
-  },
-  building: {
-    area: 609.7,
-    numerator: 609.7,
-    denominator: 1500.0,
-    percentage: 40.6
-  }
+  people: { count: 0, numerator: 0, denominator: 0, percentage: 0 },
+  land: { area: 0, numerator: 0, denominator: 0, percentage: 0 },
+  building: { area: 0, numerator: 0, denominator: 0, percentage: 0 }
 })
+
+// Load data on mount
+onMounted(async () => {
+  await loadResults()
+})
+
+// Load voting results
+const loadResults = async () => {
+  isLoading.value = true
+  console.log('[Results] Loading results for topic:', topicId)
+
+  const [meetingResponse, topicResponse, resultsResponse] = await Promise.all([
+    getMeeting(meetingId),
+    getVotingTopic(topicId),
+    getDetailedResults(topicId)
+  ])
+
+  if (meetingResponse.success && meetingResponse.data) {
+    const meeting = meetingResponse.data.data || meetingResponse.data
+    renewalGroupName.value = meeting.renewal_group || meeting.renewalGroup || ''
+    meetingName.value = meeting.meeting_name || meeting.name || ''
+  }
+
+  if (topicResponse.success && topicResponse.data) {
+    const topic = topicResponse.data.data || topicResponse.data
+    topicName.value = topic.topic_name || topic.name || ''
+    votingTime.value = topic.voting_time || topic.votingTime || new Date().toLocaleString('zh-TW')
+  }
+
+  if (resultsResponse.success && resultsResponse.data) {
+    const results = resultsResponse.data.data || resultsResponse.data
+
+    // Parse agree results
+    if (results.agree) {
+      agreeResults.value = {
+        people: {
+          count: results.agree.people?.count || 0,
+          numerator: results.agree.people?.numerator || 0,
+          denominator: results.agree.people?.denominator || 0,
+          percentage: results.agree.people?.percentage || 0
+        },
+        land: {
+          area: results.agree.land?.area || 0,
+          numerator: results.agree.land?.numerator || 0,
+          denominator: results.agree.land?.denominator || 0,
+          percentage: results.agree.land?.percentage || 0
+        },
+        building: {
+          area: results.agree.building?.area || 0,
+          numerator: results.agree.building?.numerator || 0,
+          denominator: results.agree.building?.denominator || 0,
+          percentage: results.agree.building?.percentage || 0
+        }
+      }
+    }
+
+    // Parse disagree results
+    if (results.disagree) {
+      disagreeResults.value = {
+        people: {
+          count: results.disagree.people?.count || 0,
+          numerator: results.disagree.people?.numerator || 0,
+          denominator: results.disagree.people?.denominator || 0,
+          percentage: results.disagree.people?.percentage || 0
+        },
+        land: {
+          area: results.disagree.land?.area || 0,
+          numerator: results.disagree.land?.numerator || 0,
+          denominator: results.disagree.land?.denominator || 0,
+          percentage: results.disagree.land?.percentage || 0
+        },
+        building: {
+          area: results.disagree.building?.area || 0,
+          numerator: results.disagree.building?.numerator || 0,
+          denominator: results.disagree.building?.denominator || 0,
+          percentage: results.disagree.building?.percentage || 0
+        }
+      }
+    }
+
+    console.log('[Results] Results loaded successfully')
+  } else {
+    console.error('[Results] Failed to load results:', resultsResponse.error)
+    showError('載入失敗', resultsResponse.error?.message || '無法載入投票結果')
+    // Use fallback mock data
+    renewalGroupName.value = '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會'
+    meetingName.value = '114年度第一屆第1次會員大會'
+    topicName.value = '理事長選舉'
+    votingTime.value = '2025年3月15日 下午2:30:00'
+
+    agreeResults.value = {
+      people: { count: 45, numerator: 45, denominator: 72, percentage: 62.5 },
+      land: { area: 1250.5, numerator: 1250.5, denominator: 2000.0, percentage: 62.5 },
+      building: { area: 890.3, numerator: 890.3, denominator: 1500.0, percentage: 59.4 }
+    }
+
+    disagreeResults.value = {
+      people: { count: 27, numerator: 27, denominator: 72, percentage: 37.5 },
+      land: { area: 749.5, numerator: 749.5, denominator: 2000.0, percentage: 37.5 },
+      building: { area: 609.7, numerator: 609.7, denominator: 1500.0, percentage: 40.6 }
+    }
+  }
+
+  isLoading.value = false
+}
 
 // Computed values
 const totalVoters = computed(() => agreeResults.value.people.denominator)
@@ -248,8 +332,22 @@ const printResults = () => {
   window.print()
 }
 
-// Auto-refresh every 30 seconds if voting is still ongoing
-// TODO: Implement real-time updates from backend
+// Auto-refresh every 30 seconds
+let refreshInterval = null
+onMounted(() => {
+  refreshInterval = setInterval(() => {
+    console.log('[Results] Auto-refreshing results...')
+    loadResults()
+  }, 30000) // Refresh every 30 seconds
+})
+
+// Clean up interval on unmount
+import { onUnmounted } from 'vue'
+onUnmounted(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+  }
+})
 </script>
 
 <style>

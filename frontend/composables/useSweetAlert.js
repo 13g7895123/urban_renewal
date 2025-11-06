@@ -1,13 +1,16 @@
 import Swal from 'sweetalert2'
 
 export const useSweetAlert = () => {
+  // 統一的自動關閉時間 (1.5秒)
+  const AUTO_CLOSE_TIMER = 1500
+
   // Success notification
   const showSuccess = (title = '成功', text = '操作已成功完成') => {
     return Swal.fire({
       icon: 'success',
       title,
       text,
-      timer: 2000,
+      timer: AUTO_CLOSE_TIMER,
       timerProgressBar: true,
       showConfirmButton: false,
       toast: true,
@@ -24,7 +27,7 @@ export const useSweetAlert = () => {
       icon: 'error',
       title,
       text,
-      timer: 3000,
+      timer: AUTO_CLOSE_TIMER,
       timerProgressBar: true,
       showConfirmButton: false,
       toast: true,
@@ -41,7 +44,7 @@ export const useSweetAlert = () => {
       icon: 'warning',
       title,
       text,
-      timer: 3000,
+      timer: AUTO_CLOSE_TIMER,
       timerProgressBar: true,
       showConfirmButton: false,
       toast: true,
@@ -58,7 +61,7 @@ export const useSweetAlert = () => {
       icon: 'info',
       title,
       text,
-      timer: 2500,
+      timer: AUTO_CLOSE_TIMER,
       timerProgressBar: true,
       showConfirmButton: false,
       toast: true,
@@ -69,12 +72,12 @@ export const useSweetAlert = () => {
     })
   }
 
-  // Confirmation dialog
+  // Confirmation dialog (保留按鈕，因為需要用戶確認操作)
   const showConfirm = (
     title = '確認操作',
     text = '您確定要執行此操作嗎？',
-    confirmButtonText = '確認',
-    cancelButtonText = '取消'
+    confirmButtonText = '是',
+    cancelButtonText = '否'
   ) => {
     return Swal.fire({
       icon: 'question',
@@ -89,11 +92,11 @@ export const useSweetAlert = () => {
     })
   }
 
-  // Delete confirmation
+  // Delete confirmation (保留按鈕，因為需要用戶確認刪除)
   const showDeleteConfirm = (
     title = '確認刪除',
     text = '此操作無法復原！',
-    confirmButtonText = '確認刪除',
+    confirmButtonText = '刪除',
     cancelButtonText = '取消'
   ) => {
     return Swal.fire({
@@ -131,7 +134,7 @@ export const useSweetAlert = () => {
   // Custom alert with more options
   const showCustom = (options) => {
     const defaultOptions = {
-      timer: 2000,
+      timer: AUTO_CLOSE_TIMER,
       timerProgressBar: true,
       showConfirmButton: false,
       toast: true,
@@ -140,14 +143,14 @@ export const useSweetAlert = () => {
         popup: 'colored-toast'
       }
     }
-    
+
     return Swal.fire({
       ...defaultOptions,
       ...options
     })
   }
 
-  // Form input dialog
+  // Form input dialog (保留按鈕，因為需要用戶輸入)
   const showInput = (
     title = '輸入',
     inputPlaceholder = '請輸入內容',
@@ -158,7 +161,7 @@ export const useSweetAlert = () => {
       input: inputType,
       inputPlaceholder,
       showCancelButton: true,
-      confirmButtonText: '確認',
+      confirmButtonText: '送出',
       cancelButtonText: '取消',
       inputValidator: (value) => {
         if (!value) {

@@ -191,10 +191,10 @@
               </UButton>
             </div>
             <div class="flex gap-3">
-              <UButton variant="outline" @click="goBack">
+              <UButton variant="outline" @click="goBack" :disabled="isSaving">
                 回上一頁
               </UButton>
-              <UButton color="green" @click="saveBasicInfo">
+              <UButton color="green" @click="saveBasicInfo" :disabled="isSaving" :loading="isSaving">
                 <Icon name="heroicons:check" class="w-4 h-4 mr-2" />
                 儲存
               </UButton>
@@ -217,6 +217,15 @@ definePageMeta({
 
 const route = useRoute()
 const meetingId = route.params.meetingId
+
+// API composables
+const { getMeeting } = useMeetings()
+const { createVotingTopic } = useVotingTopics()
+const { showSuccess, showError } = useSweetAlert()
+
+// Loading states
+const isLoading = ref(false)
+const isSaving = ref(false)
 
 // This is for creating a new topic, so no existing topic selected
 const selectedTopic = ref(null)
@@ -280,39 +289,41 @@ const mockMeeting = {
   renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會'
 }
 
-onMounted(() => {
-  meetingInfo.value = mockMeeting
+onMounted(async () => {
+  await loadMeetingInfo()
+  // Creating new topic - reset form fields
+  selectedTopic.value = null
+  resetFormFields()
+})
 
-  if (topicId === 'new') {
-    // Creating new topic
-    selectedTopic.value = null
-    resetFormFields()
+// Load meeting info
+const loadMeetingInfo = async () => {
+  isLoading.value = true
+  console.log('[New Voting Topic] Loading meeting info:', meetingId)
+
+  const response = await getMeeting(meetingId)
+  isLoading.value = false
+
+  if (response.success && response.data) {
+    const meeting = response.data.data || response.data
+    meetingInfo.value = {
+      id: meeting.id,
+      name: meeting.meeting_name || meeting.name || '',
+      dateTime: `${meeting.meeting_date || meeting.date || ''} ${meeting.meeting_time || meeting.time || ''}`,
+      renewalGroup: meeting.renewal_group || meeting.renewalGroup || ''
+    }
+    console.log('[New Voting Topic] Meeting info loaded:', meetingInfo.value)
   } else {
-    // Load existing topic data
-    selectedTopic.value = mockTopics.find(t => t.id === topicId)
-    if (selectedTopic.value) {
-      // Initialize form fields with existing data
-      topicName.value = selectedTopic.value.name
-      isAnonymous.value = selectedTopic.value.isAnonymous
-      maxSelections.value = selectedTopic.value.maxSelections
-      acceptedCount.value = selectedTopic.value.acceptedCount
-      alternateCount.value = selectedTopic.value.alternateCount
-      landAreaRatioNumerator.value = selectedTopic.value.landAreaRatioNumerator
-      landAreaRatioDenominator.value = selectedTopic.value.landAreaRatioDenominator
-      buildingAreaRatioNumerator.value = selectedTopic.value.buildingAreaRatioNumerator
-      buildingAreaRatioDenominator.value = selectedTopic.value.buildingAreaRatioDenominator
-      peopleRatioNumerator.value = selectedTopic.value.peopleRatioNumerator
-      peopleRatioDenominator.value = selectedTopic.value.peopleRatioDenominator
-      remarks.value = selectedTopic.value.remarks
-
-      // Add sample property owners for demo
-      propertyOwners.value = [
-        { name: '張三', isPinned: false },
-        { name: '李四', isPinned: true }
-      ]
+    console.error('[New Voting Topic] Failed to load meeting info:', response.error)
+    // Use fallback mock data
+    meetingInfo.value = {
+      id: meetingId,
+      name: '114年度第一屆第1次會員大會',
+      dateTime: '2025年3月15日 下午2:00:00',
+      renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會'
     }
   }
-})
+}
 
 const resetFormFields = () => {
   topicName.value = ''
@@ -388,48 +399,51 @@ const goBack = () => {
 }
 
 // Save function
-const saveBasicInfo = () => {
-  if (selectedTopic.value) {
-    // Editing existing topic
-    console.log('Updating existing topic:', selectedTopic.value)
-    console.log('Form data:', {
-      topicName: topicName.value,
-      isAnonymous: isAnonymous.value,
-      propertyOwners: propertyOwners.value,
-      maxSelections: maxSelections.value,
-      acceptedCount: acceptedCount.value,
-      alternateCount: alternateCount.value,
-      landAreaRatioNumerator: landAreaRatioNumerator.value,
-      landAreaRatioDenominator: landAreaRatioDenominator.value,
-      buildingAreaRatioNumerator: buildingAreaRatioNumerator.value,
-      buildingAreaRatioDenominator: buildingAreaRatioDenominator.value,
-      peopleRatioNumerator: peopleRatioNumerator.value,
-      peopleRatioDenominator: peopleRatioDenominator.value,
-      remarks: remarks.value
-    })
-    // TODO: Implement update functionality
-  } else {
-    // Creating new topic
-    console.log('Creating new topic')
-    console.log('Form data:', {
-      topicName: topicName.value,
-      isAnonymous: isAnonymous.value,
-      propertyOwners: propertyOwners.value,
-      maxSelections: maxSelections.value,
-      acceptedCount: acceptedCount.value,
-      alternateCount: alternateCount.value,
-      landAreaRatioNumerator: landAreaRatioNumerator.value,
-      landAreaRatioDenominator: landAreaRatioDenominator.value,
-      buildingAreaRatioNumerator: buildingAreaRatioNumerator.value,
-      buildingAreaRatioDenominator: buildingAreaRatioDenominator.value,
-      peopleRatioNumerator: peopleRatioNumerator.value,
-      peopleRatioDenominator: peopleRatioDenominator.value,
-      remarks: remarks.value
-    })
-    // TODO: Implement create functionality
+const saveBasicInfo = async () => {
+  // Validation
+  if (!topicName.value.trim()) {
+    showError('資料不完整', '請輸入議題名稱')
+    return
   }
 
-  // Navigate back to voting topics list after save
-  navigateTo(`/tables/meeting/${meetingId}/voting-topics`)
+  isSaving.value = true
+
+  const formData = {
+    meeting_id: meetingId,
+    topic_name: topicName.value,
+    is_anonymous: isAnonymous.value,
+    property_owners: propertyOwners.value.map(owner => ({
+      name: owner.name,
+      is_pinned: owner.isPinned
+    })),
+    max_selections: parseInt(maxSelections.value) || 1,
+    accepted_count: parseInt(acceptedCount.value) || 1,
+    alternate_count: parseInt(alternateCount.value) || 0,
+    land_area_ratio_numerator: parseInt(landAreaRatioNumerator.value) || 0,
+    land_area_ratio_denominator: parseInt(landAreaRatioDenominator.value) || 0,
+    building_area_ratio_numerator: parseInt(buildingAreaRatioNumerator.value) || 0,
+    building_area_ratio_denominator: parseInt(buildingAreaRatioDenominator.value) || 0,
+    people_ratio_numerator: parseInt(peopleRatioNumerator.value) || 0,
+    people_ratio_denominator: parseInt(peopleRatioDenominator.value) || 0,
+    remarks: remarks.value
+  }
+
+  console.log('[New Voting Topic] Creating new topic:', formData)
+
+  const response = await createVotingTopic(formData)
+  isSaving.value = false
+
+  if (response.success) {
+    showSuccess('建立成功', '投票議題已成功建立')
+    console.log('[New Voting Topic] Topic created successfully:', response.data)
+
+    // Navigate back to voting topics list after save
+    setTimeout(() => {
+      navigateTo(`/tables/meeting/${meetingId}/voting-topics`)
+    }, 1500)
+  } else {
+    console.error('[New Voting Topic] Failed to create topic:', response.error)
+    showError('建立失敗', response.error?.message || '無法建立投票議題')
+  }
 }
 </script>

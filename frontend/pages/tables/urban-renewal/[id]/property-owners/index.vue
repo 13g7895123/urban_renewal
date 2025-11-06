@@ -141,7 +141,10 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 
-// Use SweetAlert2
+// Use SweetAlert composable
+const { showSuccess, showError, showConfirm, showLoading, showCustom, close } = useSweetAlert()
+
+// For special dialogs with deny button (3-button dialogs)
 const { $swal } = useNuxtApp()
 
 const route = useRoute()
@@ -181,13 +184,7 @@ const fetchPropertyOwners = async () => {
 
     // Show more detailed error message
     const errorMessage = err.data?.message || err.message || '無法載入所有權人資料'
-    $swal.fire({
-      title: '載入失敗',
-      text: errorMessage,
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    showError('載入失敗', errorMessage)
     propertyOwners.value = []
   } finally {
     loading.value = false
@@ -201,12 +198,15 @@ const refreshData = async () => {
 
 const deletePropertyOwner = async (id) => {
   try {
+    console.log('[Property Owners] DELETE request to:', `/property-owners/${id}`)
     // Use useApi() composable which automatically adds Authorization header
     const response = await del(`/property-owners/${id}`)
+    console.log('[Property Owners] Raw delete response:', response)
     return response
   } catch (err) {
-    console.error('Delete error:', err)
-    throw new Error(err.data?.message || '刪除失敗')
+    console.error('[Property Owners] Delete error:', err)
+    console.error('[Property Owners] Error details:', err.data || err)
+    throw new Error(err.data?.message || err.message || '刪除失敗')
   }
 }
 
@@ -221,13 +221,7 @@ const exportOwners = async () => {
     const token = authStore.token
     
     if (!token) {
-      $swal.fire({
-        title: '未授權',
-        text: '請先登入',
-        icon: 'error',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#ef4444'
-      })
+      showError('未授權', '請先登入')
       return
     }
 
@@ -258,23 +252,10 @@ const exportOwners = async () => {
     window.URL.revokeObjectURL(url)
     document.body.removeChild(a)
 
-    $swal.fire({
-      title: '匯出成功！',
-      text: 'Excel檔案下載中...',
-      icon: 'success',
-      timer: 2000,
-      timerProgressBar: true,
-      showConfirmButton: false
-    })
+    showSuccess('匯出成功！', 'Excel檔案下載中...')
   } catch (err) {
     console.error('[Export] Error:', err)
-    $swal.fire({
-      title: '匯出失敗',
-      text: err.message || '匯出失敗，請稍後再試',
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    showError('匯出失敗', err.message || '匯出失敗，請稍後再試')
   }
 }
 
@@ -284,13 +265,7 @@ const downloadTemplate = async () => {
     const token = authStore.token
     
     if (!token) {
-      $swal.fire({
-        title: '未授權',
-        text: '請先登入',
-        icon: 'error',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#ef4444'
-      })
+      showError('未授權', '請先登入')
       return
     }
 
@@ -322,13 +297,7 @@ const downloadTemplate = async () => {
     document.body.removeChild(a)
   } catch (err) {
     console.error('[Template] Error:', err)
-    $swal.fire({
-      title: '下載失敗',
-      text: err.message || '下載失敗，請稍後再試',
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    showError('下載失敗', err.message || '下載失敗，請稍後再試')
   }
 }
 
@@ -374,9 +343,9 @@ const importOwners = async () => {
     `,
     showCancelButton: true,
     showDenyButton: true,
-    confirmButtonText: '選擇檔案匯入',
+    confirmButtonText: '選擇檔案',
     denyButtonText: '下載範本',
-    cancelButtonText: '取消',
+    cancelButtonText: '返回',
     confirmButtonColor: '#10b981',
     denyButtonColor: '#3b82f6',
     cancelButtonColor: '#6b7280',
@@ -410,26 +379,13 @@ const importOwners = async () => {
     // Validate file type
     const extension = file.name.split('.').pop().toLowerCase()
     if (!['xlsx', 'xls'].includes(extension)) {
-      $swal.fire({
-        title: '檔案格式錯誤',
-        text: '僅支援 .xlsx 或 .xls 格式的檔案',
-        icon: 'error',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#ef4444'
-      })
+      showError('檔案格式錯誤', '僅支援 .xlsx 或 .xls 格式的檔案')
       return
     }
 
     try {
       // Show loading
-      $swal.fire({
-        title: '匯入中...',
-        text: '正在驗證並匯入資料，請稍候...',
-        allowOutsideClick: false,
-        didOpen: () => {
-          $swal.showLoading()
-        }
-      })
+      showLoading('匯入中...', '正在驗證並匯入資料，請稍候...')
 
       const isDev = process.dev || process.env.NODE_ENV === 'development'
       // Create form data
@@ -457,12 +413,19 @@ const importOwners = async () => {
           message += '</div>'
         }
 
-        await $swal.fire({
+        // Close loading and show result
+        close()
+
+        await showCustom({
           title: '匯入完成！',
           html: message,
           icon: response.data?.error_count > 0 ? 'warning' : 'success',
-          confirmButtonText: '確定',
+          timer: null, // Don't auto-close for detailed results
+          showConfirmButton: true,
+          confirmButtonText: '關閉',
           confirmButtonColor: '#10b981',
+          toast: false,
+          position: 'center',
           width: '600px'
         })
 
@@ -473,13 +436,7 @@ const importOwners = async () => {
       }
     } catch (err) {
       console.error('[Import] Error:', err)
-      $swal.fire({
-        title: '匯入失敗',
-        text: err.data?.message || err.message || '匯入失敗，請稍後再試',
-        icon: 'error',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#ef4444'
-      })
+      showError('匯入失敗', err.data?.message || err.message || '匯入失敗，請稍後再試')
     }
   }
 
@@ -496,13 +453,7 @@ const viewOwnerDetails = (owner) => {
 
   if (!owner || !owner.id) {
     console.error('[Property Owners] Owner or owner.id is missing:', owner)
-    $swal.fire({
-      title: '錯誤',
-      text: '無法取得所有權人資料',
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    showError('錯誤', '無法取得所有權人資料')
     return
   }
 
@@ -511,51 +462,41 @@ const viewOwnerDetails = (owner) => {
 }
 
 const deleteOwner = async (owner) => {
-  const result = await $swal.fire({
-    title: '確認刪除',
-    text: `確定要刪除「${owner.owner_name}」嗎？`,
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#ef4444',
-    cancelButtonColor: '#6b7280',
-    confirmButtonText: '確定刪除',
-    cancelButtonText: '取消'
-  })
+  const ownerName = owner.owner_name || owner.name || '此所有權人'
+
+  const result = await showConfirm(
+    '確認刪除',
+    `確定要刪除「${ownerName}」嗎？此操作無法復原。`,
+    '刪除',
+    '取消'
+  )
 
   if (!result.isConfirmed) {
     return
   }
 
   try {
+    console.log('[Property Owners] Deleting owner:', owner)
+    console.log('[Property Owners] Owner ID:', owner.id)
+    console.log('[Property Owners] Full owner object:', JSON.stringify(owner, null, 2))
+
     const response = await deletePropertyOwner(owner.id)
 
-    if (response.status === 'success') {
+    console.log('[Property Owners] Delete response:', response)
+
+    if (response.status === 'success' || (response.success && response.data?.status === 'success')) {
       // Refresh the list
       await fetchPropertyOwners()
-      $swal.fire({
-        title: '刪除成功！',
-        text: '所有權人已成功刪除',
-        icon: 'success',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#10b981'
-      })
+      showSuccess('刪除成功！', '所有權人已成功刪除')
     } else {
-      $swal.fire({
-        title: '刪除失敗',
-        text: response.message || '刪除失敗',
-        icon: 'error',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#ef4444'
-      })
+      const errorMsg = response.message || response.error?.message || response.data?.message || '刪除失敗'
+      console.error('[Property Owners] Delete failed:', errorMsg)
+      showError('刪除失敗', errorMsg)
     }
   } catch (err) {
-    $swal.fire({
-      title: '刪除失敗',
-      text: err.message || '刪除失敗，請稍後再試',
-      icon: 'error',
-      confirmButtonText: '確定',
-      confirmButtonColor: '#ef4444'
-    })
+    console.error('[Property Owners] Delete exception:', err)
+    const errorMsg = err.message || err.data?.message || err.error?.message || '刪除失敗，請稍後再試'
+    showError('刪除失敗', errorMsg)
   }
 }
 

@@ -13,7 +13,15 @@
         </div>
       </div>
 
-      <UCard>
+      <!-- Loading overlay -->
+      <div v-if="isLoading" class="flex justify-center items-center py-12">
+        <div class="text-center">
+          <Icon name="heroicons:arrow-path" class="w-12 h-12 text-green-500 animate-spin mx-auto mb-4" />
+          <p class="text-gray-600">載入中...</p>
+        </div>
+      </div>
+
+      <UCard v-else>
         <div class="space-y-6 p-6">
           <!-- Test Data Button -->
           <div v-if="!selectedMeeting" class="flex justify-end">
@@ -255,10 +263,10 @@
               </UButton>
             </div>
             <div class="flex gap-3">
-              <UButton variant="outline" @click="goBack">
+              <UButton variant="outline" @click="goBack" :disabled="isLoading">
                 回上一頁
               </UButton>
-              <UButton color="green" @click="saveBasicInfo">
+              <UButton color="green" @click="saveBasicInfo" :disabled="isLoading" :loading="isLoading">
                 <Icon name="heroicons:check" class="w-4 h-4 mr-2" />
                 儲存
               </UButton>
@@ -281,6 +289,13 @@ definePageMeta({
 
 const route = useRoute()
 const meetingId = route.params.meetingId
+
+// API composables
+const { getMeeting, createMeeting, updateMeeting } = useMeetings()
+const { showSuccess, showError } = useSweetAlert()
+
+// Loading state
+const isLoading = ref(false)
 
 // Get meeting data (this would typically come from an API)
 const selectedMeeting = ref(null)
@@ -345,29 +360,79 @@ const meetings = [
   }
 ]
 
-onMounted(() => {
+onMounted(async () => {
   if (meetingId === 'new') {
     // Creating new meeting
     selectedMeeting.value = null
     resetFormFields()
   } else {
-    // Load existing meeting data
-    selectedMeeting.value = meetings.find(m => m.id === meetingId)
+    // Load existing meeting data from API
+    isLoading.value = true
     console.log('[Basic Info] Loading meeting:', meetingId)
-    console.log('[Basic Info] Selected meeting:', selectedMeeting.value)
-    
-    if (selectedMeeting.value) {
+
+    const response = await getMeeting(meetingId)
+    isLoading.value = false
+
+    if (response.success && response.data) {
+      const meeting = response.data.data || response.data
+      selectedMeeting.value = meeting
+
+      console.log('[Basic Info] Meeting loaded:', meeting)
+
       // Initialize form fields with existing data
-      meetingDateTime.value = `${selectedMeeting.value.date} ${selectedMeeting.value.time}`
-      meetingLocation.value = selectedMeeting.value.location || ''
-      totalObservers.value = selectedMeeting.value.totalObservers || 0
-      
-      console.log('[Basic Info] Form initialized:', {
-        renewalGroup: selectedMeeting.value.renewalGroup,
-        meetingType: selectedMeeting.value.meetingType,
-        meetingDateTime: meetingDateTime.value,
-        meetingLocation: meetingLocation.value
-      })
+      renewalGroup.value = meeting.renewal_group || meeting.renewalGroup || ''
+      meetingDateTime.value = meeting.meeting_datetime || meeting.meetingDateTime || ''
+      meetingLocation.value = meeting.meeting_location || meeting.meetingLocation || meeting.location || ''
+      totalObservers.value = meeting.total_observers || meeting.totalObservers || 0
+
+      // Load ratio and area data
+      landAreaRatioNumerator.value = meeting.land_area_ratio_numerator || 0
+      landAreaRatioDenominator.value = meeting.land_area_ratio_denominator || 0
+      totalLandArea.value = meeting.total_land_area || 0
+      buildingAreaRatioNumerator.value = meeting.building_area_ratio_numerator || 0
+      buildingAreaRatioDenominator.value = meeting.building_area_ratio_denominator || 0
+      totalBuildingArea.value = meeting.total_building_area || 0
+      peopleRatioNumerator.value = meeting.people_ratio_numerator || 0
+      peopleRatioDenominator.value = meeting.people_ratio_denominator || 0
+      totalPeopleCount.value = meeting.total_people_count || 0
+
+      // Load observers
+      if (meeting.observers && Array.isArray(meeting.observers)) {
+        observers.value = meeting.observers.map(o => ({
+          name: o.name || '',
+          title: o.title || '',
+          phone: o.phone || ''
+        }))
+      }
+
+      // Load notice data
+      noticeDocNumber.value = meeting.notice_doc_number || ''
+      noticeWordNumber.value = meeting.notice_word_number || ''
+      noticeMidNumber.value = meeting.notice_mid_number || ''
+      noticeEndNumber.value = meeting.notice_end_number || ''
+      chairmanName.value = meeting.chairman_name || ''
+      contactName.value = meeting.contact_name || ''
+      contactPhone.value = meeting.contact_phone || ''
+      attachments.value = meeting.attachments || ''
+
+      // Load descriptions
+      if (meeting.descriptions && Array.isArray(meeting.descriptions)) {
+        descriptions.value = meeting.descriptions.map(d => ({
+          content: d.content || d
+        }))
+      }
+
+      console.log('[Basic Info] Form initialized successfully')
+    } else {
+      console.error('[Basic Info] Failed to load meeting:', response.error)
+      showError('載入會議資料失敗', response.error?.message || '無法載入會議資料')
+      // Use fallback mock data if API fails
+      selectedMeeting.value = meetings.find(m => m.id === meetingId)
+      if (selectedMeeting.value) {
+        meetingDateTime.value = `${selectedMeeting.value.date} ${selectedMeeting.value.time}`
+        meetingLocation.value = selectedMeeting.value.location || ''
+        totalObservers.value = selectedMeeting.value.totalObservers || 0
+      }
     }
   }
 })
@@ -487,51 +552,71 @@ const goBack = () => {
 }
 
 // Save function
-const saveBasicInfo = () => {
-  if (selectedMeeting.value) {
-    // Editing existing meeting
-    console.log('Updating existing meeting:', selectedMeeting.value)
-    console.log('Form data:', {
-      meetingDateTime: meetingDateTime.value,
-      meetingLocation: meetingLocation.value,
-      totalObservers: totalObservers.value,
-      observers: observers.value,
-      descriptions: descriptions.value
-    })
-    // TODO: Implement update functionality
-  } else {
-    // Creating new meeting
-    console.log('Creating new meeting')
-    console.log('Form data:', {
-      renewalGroup: renewalGroup.value,
-      meetingName: meetingName.value,
-      meetingDateTime: meetingDateTime.value,
-      meetingLocation: meetingLocation.value,
-      totalObservers: totalObservers.value,
-      landAreaRatioNumerator: landAreaRatioNumerator.value,
-      landAreaRatioDenominator: landAreaRatioDenominator.value,
-      totalLandArea: totalLandArea.value,
-      buildingAreaRatioNumerator: buildingAreaRatioNumerator.value,
-      buildingAreaRatioDenominator: buildingAreaRatioDenominator.value,
-      totalBuildingArea: totalBuildingArea.value,
-      peopleRatioNumerator: peopleRatioNumerator.value,
-      peopleRatioDenominator: peopleRatioDenominator.value,
-      totalPeopleCount: totalPeopleCount.value,
-      observers: observers.value,
-      noticeDocNumber: noticeDocNumber.value,
-      noticeWordNumber: noticeWordNumber.value,
-      noticeMidNumber: noticeMidNumber.value,
-      noticeEndNumber: noticeEndNumber.value,
-      chairmanName: chairmanName.value,
-      contactName: contactName.value,
-      contactPhone: contactPhone.value,
-      attachments: attachments.value,
-      descriptions: descriptions.value
-    })
-    // TODO: Implement create functionality and add to meetings list
-  }
+const saveBasicInfo = async () => {
+  isLoading.value = true
 
-  // Navigate back to meeting list after save
-  navigateTo('/tables/meeting')
+  try {
+    const formData = {
+      meeting_datetime: meetingDateTime.value,
+      meeting_location: meetingLocation.value,
+      total_observers: parseInt(totalObservers.value) || 0,
+      land_area_ratio_numerator: parseInt(landAreaRatioNumerator.value) || 0,
+      land_area_ratio_denominator: parseInt(landAreaRatioDenominator.value) || 0,
+      total_land_area: parseFloat(totalLandArea.value) || 0,
+      building_area_ratio_numerator: parseInt(buildingAreaRatioNumerator.value) || 0,
+      building_area_ratio_denominator: parseInt(buildingAreaRatioDenominator.value) || 0,
+      total_building_area: parseFloat(totalBuildingArea.value) || 0,
+      people_ratio_numerator: parseInt(peopleRatioNumerator.value) || 0,
+      people_ratio_denominator: parseInt(peopleRatioDenominator.value) || 0,
+      total_people_count: parseInt(totalPeopleCount.value) || 0,
+      observers: observers.value,
+      notice_doc_number: noticeDocNumber.value,
+      notice_word_number: noticeWordNumber.value,
+      notice_mid_number: noticeMidNumber.value,
+      notice_end_number: noticeEndNumber.value,
+      chairman_name: chairmanName.value,
+      contact_name: contactName.value,
+      contact_phone: contactPhone.value,
+      attachments: attachments.value,
+      descriptions: descriptions.value.map(d => d.content)
+    }
+
+    let response
+
+    if (selectedMeeting.value) {
+      // Editing existing meeting
+      console.log('[Basic Info] Updating meeting:', meetingId, formData)
+      response = await updateMeeting(meetingId, formData)
+    } else {
+      // Creating new meeting
+      formData.renewal_group = renewalGroup.value
+      formData.meeting_name = meetingName.value
+      formData.meeting_type = '會員大會'
+      console.log('[Basic Info] Creating new meeting:', formData)
+      response = await createMeeting(formData)
+    }
+
+    isLoading.value = false
+
+    if (response.success) {
+      const action = selectedMeeting.value ? '更新' : '建立'
+      showSuccess(`${action}成功`, `會議資料已成功${action}`)
+      console.log(`[Basic Info] Meeting ${action} successfully:`, response.data)
+
+      // Navigate back to meeting list after save
+      setTimeout(() => {
+        navigateTo('/tables/meeting')
+      }, 1500)
+    } else {
+      const action = selectedMeeting.value ? '更新' : '建立'
+      console.error(`[Basic Info] Failed to ${action} meeting:`, response.error)
+      showError(`${action}失敗`, response.error?.message || `無法${action}會議資料`)
+    }
+  } catch (error) {
+    isLoading.value = false
+    const action = selectedMeeting.value ? '更新' : '建立'
+    console.error(`[Basic Info] Error ${action} meeting:`, error)
+    showError(`${action}失敗`, error.message || `${action}會議資料時發生錯誤`)
+  }
 }
 </script>
