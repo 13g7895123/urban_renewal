@@ -55,7 +55,8 @@
       "Bash(node test-session-storage.mjs:*)",
       "Bash(./test-login.sh:*)",
       "Bash(node test-login-refresh.mjs:*)",
-      "Bash(./test-api.sh:*)"
+      "Bash(./test-api.sh:*)",
+      "Bash(./test-update-owner.sh)"
     ],
     "deny": [],
     "ask": []

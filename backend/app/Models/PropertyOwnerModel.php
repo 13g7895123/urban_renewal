@@ -156,30 +156,55 @@ class PropertyOwnerModel extends Model
                 $districtName = $building['district'];
                 $sectionName = $building['section'];
                 
-                if ($countyModel && $building['county']) {
-                    $county = $countyModel->where('code', $building['county'])->first();
-                    if ($county) {
-                        $countyName = $county['name'];
+                try {
+                    if ($countyModel && !empty($building['county'])) {
+                        $countyQuery = $countyModel->where('code', $building['county']);
+                        if ($countyQuery) {
+                            $county = $countyQuery->first();
+                            if ($county) {
+                                $countyName = $county['name'];
+                            }
+                        }
                     }
+                } catch (\Exception $e) {
+                    log_message('warning', 'Failed to fetch county name: ' . $e->getMessage());
                 }
-                
-                if ($districtModel && $building['district']) {
-                    $district = $districtModel->where('code', $building['district'])
-                                             ->where('county_code', $building['county'])
-                                             ->first();
-                    if ($district) {
-                        $districtName = $district['name'];
+
+                try {
+                    if ($districtModel && !empty($building['district'])) {
+                        $districtQuery = $districtModel->where('code', $building['district']);
+                        if ($districtQuery && !empty($building['county'])) {
+                            $districtQuery = $districtQuery->where('county_code', $building['county']);
+                        }
+                        if ($districtQuery) {
+                            $district = $districtQuery->first();
+                            if ($district) {
+                                $districtName = $district['name'];
+                            }
+                        }
                     }
+                } catch (\Exception $e) {
+                    log_message('warning', 'Failed to fetch district name: ' . $e->getMessage());
                 }
-                
-                if ($sectionModel && $building['section']) {
-                    $section = $sectionModel->where('code', $building['section'])
-                                           ->where('county_code', $building['county'])
-                                           ->where('district_code', $building['district'])
-                                           ->first();
-                    if ($section) {
-                        $sectionName = $section['name'];
+
+                try {
+                    if ($sectionModel && !empty($building['section'])) {
+                        $sectionQuery = $sectionModel->where('code', $building['section']);
+                        if ($sectionQuery && !empty($building['county'])) {
+                            $sectionQuery = $sectionQuery->where('county_code', $building['county']);
+                        }
+                        if ($sectionQuery && !empty($building['district'])) {
+                            $sectionQuery = $sectionQuery->where('district_code', $building['district']);
+                        }
+                        if ($sectionQuery) {
+                            $section = $sectionQuery->first();
+                            if ($section) {
+                                $sectionName = $section['name'];
+                            }
+                        }
                     }
+                } catch (\Exception $e) {
+                    log_message('warning', 'Failed to fetch section name: ' . $e->getMessage());
                 }
                 
                 $building['location'] = $countyName . '/' . $districtName . '/' . $sectionName;
