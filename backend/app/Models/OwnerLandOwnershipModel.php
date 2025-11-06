@@ -96,9 +96,11 @@ class OwnerLandOwnershipModel extends Model
      */
     public function getByPropertyOwnerId(int $propertyOwnerId): array
     {
-        return $this->where('property_owner_id', $propertyOwnerId)
-                    ->where('deleted_at', null)
-                    ->findAll();
+        $result = $this->where('property_owner_id', $propertyOwnerId)
+                       ->where('deleted_at IS NULL')
+                       ->findAll();
+
+        return $result !== false ? $result : [];
     }
 
     /**
@@ -106,9 +108,11 @@ class OwnerLandOwnershipModel extends Model
      */
     public function getByLandPlotId(int $landPlotId): array
     {
-        return $this->where('land_plot_id', $landPlotId)
-                    ->where('deleted_at', null)
-                    ->findAll();
+        $result = $this->where('land_plot_id', $landPlotId)
+                       ->where('deleted_at IS NULL')
+                       ->findAll();
+
+        return $result !== false ? $result : [];
     }
 
     /**
@@ -116,10 +120,12 @@ class OwnerLandOwnershipModel extends Model
      */
     public function ownershipExists(int $propertyOwnerId, int $landPlotId): bool
     {
-        return $this->where('property_owner_id', $propertyOwnerId)
-                    ->where('land_plot_id', $landPlotId)
-                    ->where('deleted_at', null)
-                    ->countAllResults() > 0;
+        $count = $this->where('property_owner_id', $propertyOwnerId)
+                      ->where('land_plot_id', $landPlotId)
+                      ->where('deleted_at IS NULL')
+                      ->countAllResults();
+
+        return $count !== false && $count > 0;
     }
 
     /**
@@ -133,7 +139,7 @@ class OwnerLandOwnershipModel extends Model
         // First check for active (non-deleted) records
         $existing = $this->where('property_owner_id', $data['property_owner_id'])
                          ->where('land_plot_id', $data['land_plot_id'])
-                         ->where('deleted_at', null)
+                         ->where('deleted_at IS NULL')
                          ->first();
 
         if ($existing) {

@@ -567,6 +567,8 @@ class PropertyOwnerController extends ResourceController
                 // Add new buildings
                 if (!empty($data['buildings']) && is_array($data['buildings'])) {
                     foreach ($data['buildings'] as $buildingData) {
+                        log_message('info', 'Processing building data: ' . json_encode($buildingData, JSON_UNESCAPED_UNICODE));
+
                         // Create building if not exists
                         $buildingId = $this->buildingModel->createIfNotExists([
                             'urban_renewal_id' => $existingOwner['urban_renewal_id'],
@@ -574,19 +576,27 @@ class PropertyOwnerController extends ResourceController
                             'district' => $buildingData['district'],
                             'section' => $buildingData['section'],
                             'building_number_main' => $buildingData['building_number_main'],
-                            'building_number_sub' => $buildingData['building_number_sub'],
+                            'building_number_sub' => $buildingData['building_number_sub'] ?? '',
                             'building_area' => $buildingData['building_area'] ?? null,
                             'building_address' => $buildingData['building_address'] ?? null
                         ]);
 
                         if ($buildingId) {
+                            log_message('info', 'Building created/found with ID: ' . $buildingId);
+
                             // Create ownership relationship
-                            $this->ownerBuildingModel->createOrUpdate([
+                            $ownershipResult = $this->ownerBuildingModel->createOrUpdate([
                                 'property_owner_id' => $id,
                                 'building_id' => $buildingId,
                                 'ownership_numerator' => $buildingData['ownership_numerator'],
                                 'ownership_denominator' => $buildingData['ownership_denominator']
                             ]);
+
+                            if (!$ownershipResult) {
+                                log_message('error', 'Failed to create building ownership relationship');
+                            }
+                        } else {
+                            log_message('error', 'Failed to create building for data: ' . json_encode($buildingData, JSON_UNESCAPED_UNICODE));
                         }
                     }
                 }
@@ -603,6 +613,8 @@ class PropertyOwnerController extends ResourceController
                 // Add new lands
                 if (!empty($data['lands']) && is_array($data['lands'])) {
                     foreach ($data['lands'] as $landData) {
+                        log_message('info', 'Processing land data: ' . json_encode($landData, JSON_UNESCAPED_UNICODE));
+
                         // Find land plot by plot number - try multiple search methods
                         $landPlot = null;
 
@@ -618,14 +630,14 @@ class PropertyOwnerController extends ResourceController
                             $parts = explode('-', $landData['plot_number']);
                             $landNumberMain = $parts[0];
                             $landNumberSub = $parts[1] ?? '';
-                            
+
                             $query = $this->landPlotModel->where('land_number_main', $landNumberMain)
                                                         ->where('urban_renewal_id', $existingOwner['urban_renewal_id']);
-                            
+
                             if (!empty($landNumberSub)) {
                                 $query->where('land_number_sub', $landNumberSub);
                             }
-                            
+
                             $landPlot = $query->first();
                         }
 
@@ -637,13 +649,21 @@ class PropertyOwnerController extends ResourceController
                         }
 
                         if ($landPlot) {
+                            log_message('info', 'Land plot found with ID: ' . $landPlot['id']);
+
                             // Create ownership relationship
-                            $this->ownerLandModel->createOrUpdate([
+                            $ownershipResult = $this->ownerLandModel->createOrUpdate([
                                 'property_owner_id' => $id,
                                 'land_plot_id' => $landPlot['id'],
                                 'ownership_numerator' => $landData['ownership_numerator'],
                                 'ownership_denominator' => $landData['ownership_denominator']
                             ]);
+
+                            if (!$ownershipResult) {
+                                log_message('error', 'Failed to create land ownership relationship');
+                            }
+                        } else {
+                            log_message('warning', 'Land plot not found for plot_number: ' . $landData['plot_number']);
                         }
                     }
                 }

@@ -56,7 +56,9 @@
       "Bash(./test-login.sh:*)",
       "Bash(node test-login-refresh.mjs:*)",
       "Bash(./test-api.sh:*)",
-      "Bash(./test-update-owner.sh)"
+      "Bash(./test-update-owner.sh)",
+      "Bash(/home/jarvis/project/bonus/urban_renewal/test-update-owner.sh)",
+      "Bash(/home/jarvis/project/bonus/urban_renewal/test-update-with-land.sh)"
     ],
     "deny": [],
     "ask": []

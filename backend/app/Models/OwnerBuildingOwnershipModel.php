@@ -95,9 +95,11 @@ class OwnerBuildingOwnershipModel extends Model
      */
     public function getByPropertyOwnerId(int $propertyOwnerId): array
     {
-        return $this->where('property_owner_id', $propertyOwnerId)
-                    ->where('deleted_at', null)
-                    ->findAll();
+        $result = $this->where('property_owner_id', $propertyOwnerId)
+                       ->where('deleted_at IS NULL')
+                       ->findAll();
+
+        return $result !== false ? $result : [];
     }
 
     /**
@@ -105,9 +107,11 @@ class OwnerBuildingOwnershipModel extends Model
      */
     public function getByBuildingId(int $buildingId): array
     {
-        return $this->where('building_id', $buildingId)
-                    ->where('deleted_at', null)
-                    ->findAll();
+        $result = $this->where('building_id', $buildingId)
+                       ->where('deleted_at IS NULL')
+                       ->findAll();
+
+        return $result !== false ? $result : [];
     }
 
     /**
@@ -115,10 +119,12 @@ class OwnerBuildingOwnershipModel extends Model
      */
     public function ownershipExists(int $propertyOwnerId, int $buildingId): bool
     {
-        return $this->where('property_owner_id', $propertyOwnerId)
-                    ->where('building_id', $buildingId)
-                    ->where('deleted_at', null)
-                    ->countAllResults() > 0;
+        $count = $this->where('property_owner_id', $propertyOwnerId)
+                      ->where('building_id', $buildingId)
+                      ->where('deleted_at IS NULL')
+                      ->countAllResults();
+
+        return $count !== false && $count > 0;
     }
 
     /**
@@ -129,7 +135,7 @@ class OwnerBuildingOwnershipModel extends Model
         // First check for active (non-deleted) records
         $existing = $this->where('property_owner_id', $data['property_owner_id'])
                          ->where('building_id', $data['building_id'])
-                         ->where('deleted_at', null)
+                         ->where('deleted_at IS NULL')
                          ->first();
 
         if ($existing) {
@@ -144,7 +150,7 @@ class OwnerBuildingOwnershipModel extends Model
             if ($softDeleted && $softDeleted['deleted_at'] !== null) {
                 // Restore the record first
                 $this->builder()->where('id', $softDeleted['id'])->update(['deleted_at' => null]);
-                
+
                 // Then update with new data
                 return $this->update($softDeleted['id'], $data);
             } else {

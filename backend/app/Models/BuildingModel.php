@@ -35,7 +35,7 @@ class BuildingModel extends Model
         'district' => 'required|max_length[10]',
         'section' => 'required|max_length[10]',
         'building_number_main' => 'required|max_length[10]',
-        'building_number_sub' => 'required|max_length[10]',
+        'building_number_sub' => 'permit_empty|max_length[10]',
         'building_area' => 'permit_empty|decimal',
         'building_address' => 'permit_empty|max_length[255]'
     ];
@@ -62,7 +62,6 @@ class BuildingModel extends Model
             'max_length' => '建號母號不能超過10字符'
         ],
         'building_number_sub' => [
-            'required' => '建號子號為必填項目',
             'max_length' => '建號子號不能超過10字符'
         ]
     ];
@@ -85,10 +84,12 @@ class BuildingModel extends Model
      */
     public function getByUrbanRenewalId(int $urbanRenewalId): array
     {
-        return $this->where('urban_renewal_id', $urbanRenewalId)
-                    ->where('deleted_at', null)
-                    ->orderBy('created_at', 'DESC')
-                    ->findAll();
+        $result = $this->where('urban_renewal_id', $urbanRenewalId)
+                       ->where('deleted_at IS NULL')
+                       ->orderBy('created_at', 'DESC')
+                       ->findAll();
+
+        return $result !== false ? $result : [];
     }
 
     /**
@@ -101,13 +102,14 @@ class BuildingModel extends Model
                         ->where('section', $section)
                         ->where('building_number_main', $main)
                         ->where('building_number_sub', $sub)
-                        ->where('deleted_at', null);
+                        ->where('deleted_at IS NULL');
 
         if ($excludeId) {
             $builder->where('id !=', $excludeId);
         }
 
-        return $builder->countAllResults() > 0;
+        $count = $builder->countAllResults();
+        return $count !== false && $count > 0;
     }
 
     /**
@@ -115,13 +117,15 @@ class BuildingModel extends Model
      */
     public function findByLocation(string $county, string $district, string $section, string $main, string $sub): ?array
     {
-        return $this->where('county', $county)
-                    ->where('district', $district)
-                    ->where('section', $section)
-                    ->where('building_number_main', $main)
-                    ->where('building_number_sub', $sub)
-                    ->where('deleted_at', null)
-                    ->first();
+        $result = $this->where('county', $county)
+                       ->where('district', $district)
+                       ->where('section', $section)
+                       ->where('building_number_main', $main)
+                       ->where('building_number_sub', $sub)
+                       ->where('deleted_at IS NULL')
+                       ->first();
+
+        return $result !== false ? $result : null;
     }
 
     /**
@@ -129,6 +133,11 @@ class BuildingModel extends Model
      */
     public function createIfNotExists(array $data): int
     {
+        // Ensure building_number_sub is set (even if empty string)
+        if (!isset($data['building_number_sub'])) {
+            $data['building_number_sub'] = '';
+        }
+
         $existing = $this->findByLocation(
             $data['county'],
             $data['district'],
@@ -142,6 +151,15 @@ class BuildingModel extends Model
         }
 
         $id = $this->insert($data);
+
+        if ($id === false) {
+            // Log validation errors
+            $errors = $this->errors();
+            log_message('error', 'Failed to create building: ' . json_encode($errors, JSON_UNESCAPED_UNICODE));
+            log_message('error', 'Building data: ' . json_encode($data, JSON_UNESCAPED_UNICODE));
+            return 0;
+        }
+
         return $id ?: 0;
     }
 
