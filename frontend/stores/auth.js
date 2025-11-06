@@ -242,7 +242,10 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error('Token refresh failed')
       }
 
-      const { token: newToken, refresh_token: newRefreshToken, expires_in } = response.data
+      // 與登入邏輯一致，從 response.data.data 或 response.data 取得資料
+      const backendData = response.data.data || response.data
+      const { token: newToken, refresh_token: newRefreshToken, expires_in } = backendData
+      
       token.value = newToken
       refreshToken.value = newRefreshToken
 

@@ -12,49 +12,42 @@ export const useApi = () => {
 
   // Get base URL from environment - handle development vs production
   const getBaseURL = () => {
-    // Check if we're running on client-side (browser) or server-side (SSR)
     const isClient = process.client
 
-    // On client side, we need to use the host-accessible URL (localhost or actual domain)
-    if (isClient) {
-      // Check if browser-specific URL is configured
-      if (typeof window !== 'undefined') {
-        // For local development in browser, use localhost with backend port
-        const isDev = config.public.backendHost === 'backend' || config.public.backendHost === 'localhost'
-        console.log('test');
-        if (isDev) {
-          const clientUrl = `http://localhost:${config.public.backendPort || 9228}/api`
-          console.log('[API] Client-side using localhost URL:', clientUrl)
-          return clientUrl
-        }
-      }
-
-      // For production or configured public URL
-      if (config.public.apiBaseUrl && !config.public.apiBaseUrl.includes('backend:')) {
-        const baseUrl = config.public.apiBaseUrl
-        const apiUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`
-        console.log('[API] Client-side using configured URL:', apiUrl)
-        return apiUrl
-      }
-    }
-
-    // Server-side rendering: use internal Docker network URL
+    // Priority 1: Use configured API base URL
     if (config.public.apiBaseUrl) {
       const baseUrl = config.public.apiBaseUrl
       const apiUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`
-      console.log('[API] Server-side using internal URL:', apiUrl)
+      console.log('[API] Using configured apiBaseUrl:', apiUrl)
       return apiUrl
     }
 
-    // Fallback for development
-    const isDev = process.dev || process.env.NODE_ENV === 'development'
-    if (isDev) {
-      const fallbackUrl = isClient ? 'http://localhost:9228/api' : 'http://backend:8000/api'
-      console.log('[API] Using fallback URL:', fallbackUrl)
-      return fallbackUrl
+    // Priority 2: Construct from backend URL
+    if (config.public.backendUrl) {
+      const baseUrl = config.public.backendUrl
+      const apiUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`
+      console.log('[API] Using backendUrl:', apiUrl)
+      return apiUrl
     }
 
-    // Final fallback
+    // Priority 3: Development fallback
+    const isDev = process.dev || process.env.NODE_ENV === 'development'
+    if (isDev) {
+      // For client-side in development, use localhost with backend port
+      if (isClient) {
+        const port = config.public.backendPort || 9228
+        const devUrl = `http://localhost:${port}/api`
+        console.log('[API] Development client using:', devUrl)
+        return devUrl
+      } else {
+        // For server-side in development, use Docker network name
+        const devUrl = 'http://backend:8000/api'
+        console.log('[API] Development server using:', devUrl)
+        return devUrl
+      }
+    }
+
+    // No configuration found
     console.error('[API] No API base URL configured! Check environment variables.')
     throw new Error('API base URL not configured. Please set NUXT_PUBLIC_API_BASE_URL environment variable.')
   }

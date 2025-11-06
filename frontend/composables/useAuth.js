@@ -61,7 +61,7 @@ export const useAuth = () => {
    * Update user profile (through users endpoint)
    */
   const updateProfile = async (profileData) => {
-    return await get('/users/profile')
+    return await put('/users/profile', profileData)
   }
 
   /**

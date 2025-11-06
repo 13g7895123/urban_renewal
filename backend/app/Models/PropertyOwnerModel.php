@@ -141,12 +141,49 @@ class PropertyOwnerModel extends Model
             ->findAll();
 
         $buildings = [];
+        $countyModel = model('CountyModel');
+        $districtModel = model('DistrictModel');
+        $sectionModel = model('SectionModel');
+        
         foreach ($buildingOwnerships as $ownership) {
             $building = $buildingModel->find($ownership['building_id']);
             if ($building) {
                 $building['ownership_numerator'] = $ownership['ownership_numerator'];
                 $building['ownership_denominator'] = $ownership['ownership_denominator'];
-                $building['location'] = $building['county'] . '/' . $building['district'] . '/' . $building['section'];
+                
+                // 將代碼轉換為中文名稱
+                $countyName = $building['county'];
+                $districtName = $building['district'];
+                $sectionName = $building['section'];
+                
+                if ($countyModel && $building['county']) {
+                    $county = $countyModel->where('code', $building['county'])->first();
+                    if ($county) {
+                        $countyName = $county['name'];
+                    }
+                }
+                
+                if ($districtModel && $building['district']) {
+                    $district = $districtModel->where('code', $building['district'])
+                                             ->where('county_code', $building['county'])
+                                             ->first();
+                    if ($district) {
+                        $districtName = $district['name'];
+                    }
+                }
+                
+                if ($sectionModel && $building['section']) {
+                    $section = $sectionModel->where('code', $building['section'])
+                                           ->where('county_code', $building['county'])
+                                           ->where('district_code', $building['district'])
+                                           ->first();
+                    if ($section) {
+                        $sectionName = $section['name'];
+                    }
+                }
+                
+                $building['location'] = $countyName . '/' . $districtName . '/' . $sectionName;
+                
                 // 確保建號欄位格式正確（前端相容性）
                 $building['building_number_main'] = (string)($building['building_number_main'] ?? '');
                 $building['building_number_sub'] = (string)($building['building_number_sub'] ?? '');

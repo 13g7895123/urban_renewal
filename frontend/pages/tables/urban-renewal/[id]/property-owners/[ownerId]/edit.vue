@@ -911,30 +911,49 @@ const fillLandTestData = () => {
 }
 
 // Fill test data for building form
-const fillBuildingTestData = () => {
+const fillBuildingTestData = async () => {
   const alert = useAlert()
 
-  // Use only the counties and districts that are available in the dropdown
-  const counties = ['台北市', '新北市']
-  const districts = {
-    '台北市': ['大安區', '信義區'],
-    '新北市': ['大安區', '信義區'] // Using same districts to match available options
+  if (counties.value.length === 0) {
+    alert.warning('無可用縣市', '請稍後再試')
+    return
   }
-  const sections = ['大安段', '信義段']
 
-  const randomCounty = counties[Math.floor(Math.random() * counties.length)]
-  const randomDistrict = districts[randomCounty][Math.floor(Math.random() * districts[randomCounty].length)]
-  const randomSection = sections[Math.floor(Math.random() * sections.length)]
+  // Select random county from available options
+  const randomCounty = counties.value[Math.floor(Math.random() * counties.value.length)]
+  buildingForm.county = randomCounty.code
 
-  buildingForm.county = randomCounty
-  buildingForm.district = randomDistrict
-  buildingForm.section = randomSection
+  // Fetch districts for selected county
+  await onBuildingCountyChange()
+
+  if (buildingDistricts.value.length === 0) {
+    alert.warning('無可用行政區', '該縣市沒有可用的行政區資料')
+    return
+  }
+
+  // Select random district
+  const randomDistrict = buildingDistricts.value[Math.floor(Math.random() * buildingDistricts.value.length)]
+  buildingForm.district = randomDistrict.code
+
+  // Fetch sections for selected district
+  await onBuildingDistrictChange()
+
+  if (buildingSections.value.length === 0) {
+    alert.warning('無可用段小段', '該行政區沒有可用的段小段資料')
+    return
+  }
+
+  // Select random section
+  const randomSection = buildingSections.value[Math.floor(Math.random() * buildingSections.value.length)]
+  buildingForm.section = randomSection.code
+
+  // Fill other fields
   buildingForm.building_number_main = String(Math.floor(Math.random() * 9999) + 1).padStart(5, '0')
   buildingForm.building_number_sub = String(Math.floor(Math.random() * 999)).padStart(3, '0')
   buildingForm.building_area = (Math.random() * 200 + 50).toFixed(2)
   buildingForm.ownership_numerator = Math.floor(Math.random() * 10) + 1
   buildingForm.ownership_denominator = Math.floor(Math.random() * 100) + 10
-  buildingForm.building_address = `${randomCounty}${randomDistrict}測試路${Math.floor(Math.random() * 999) + 1}號`
+  buildingForm.building_address = `${randomCounty.name}${randomDistrict.name}測試路${Math.floor(Math.random() * 999) + 1}號`
 
   alert.success('測試建號已填入', '建號表單已自動填入測試資料')
 }

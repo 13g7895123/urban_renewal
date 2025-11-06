@@ -27,11 +27,7 @@ export default defineNuxtConfig({
   },
   tailwindcss: {
     viewer: false,
-    quiet: true,
-    config: {
-      content: [],
-      important: false
-    }
+    quiet: true
   },
   plugins: [
     '~/plugins/clear-invalid-auth.client.js', // 先清理無效數據
@@ -60,7 +56,7 @@ export default defineNuxtConfig({
   nitro: {
     devProxy: {
       '/api': {
-        target: 'http://urban_renewal-backend-1:8000',
+        target: `http://localhost:${process.env.BACKEND_PORT || 9228}`,
         changeOrigin: true,
         prependPath: true,
       }
