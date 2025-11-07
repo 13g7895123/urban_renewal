@@ -30,30 +30,11 @@
           @preview-submit-data="previewSubmitData"
         />
 
-        <!-- 地號和建號新增區域 -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold text-gray-900">地號和建號管理</h2>
-            <div class="flex gap-2">
-              <button
-                type="button"
-                @click="showAddLandModal = true"
-                class="inline-flex items-center px-3 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors duration-200"
-              >
-                <Icon name="heroicons:plus" class="w-4 h-4 mr-1" />
-                新增地號
-              </button>
-              <button
-                type="button"
-                @click="showAddBuildingModal = true"
-                class="inline-flex items-center px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors duration-200"
-              >
-                <Icon name="heroicons:plus" class="w-4 h-4 mr-1" />
-                新增建號
-              </button>
-            </div>
-          </div>
-        </div>
+        <!-- 地號和建號新增區域元件 -->
+        <PropertyOwnerLandBuildingActionBar
+          @add-land="showAddLandModal = true"
+          @add-building="showAddBuildingModal = true"
+        />
 
         <!-- 建號列表元件 -->
         <PropertyOwnerBuildingTable
@@ -105,8 +86,10 @@
       <PropertyOwnerLandModal
         :is-open="showAddLandModal"
         :available-plots="availablePlots"
+        :show-test-button="true"
         @close="showAddLandModal = false"
         @submit="addLand"
+        @fill-test-data="fillLandTestData"
       />
 
       <!-- Building Modal 元件 -->
@@ -115,10 +98,12 @@
         :counties="counties"
         :districts="buildingDistricts"
         :sections="buildingSections"
+        :show-test-button="true"
         @close="showAddBuildingModal = false"
         @submit="addBuilding"
         @county-change="onBuildingCountyChange"
         @district-change="onBuildingDistrictChange"
+        @fill-test-data="fillBuildingTestData"
       />
     </div>
   </NuxtLayout>
@@ -251,6 +236,51 @@ const fillTestData = () => {
 
   // Show notification
   showSuccess('測試資料已填入', '所有表單欄位已自動填入測試資料')
+}
+
+// 填入地號測試資料
+const fillLandTestData = () => {
+  if (availablePlots.length > 0) {
+    const randomPlot = availablePlots[Math.floor(Math.random() * availablePlots.length)]
+    landForm.plot_number = randomPlot.landNumber || randomPlot.plot_number
+    landForm.total_area = (Math.random() * 1000 + 100).toFixed(2)
+    landForm.ownership_numerator = Math.floor(Math.random() * 10) + 1
+    landForm.ownership_denominator = Math.floor(Math.random() * 100) + 10
+    showSuccess('地號測試資料已填入', 'Modal 表單已自動填入測試資料')
+  }
+}
+
+// 填入建號測試資料
+const fillBuildingTestData = () => {
+  if (counties.length > 0) {
+    const randomCounty = counties[Math.floor(Math.random() * counties.length)]
+    buildingForm.county = randomCounty.code
+    onBuildingCountyChange(randomCounty.code)
+
+    setTimeout(() => {
+      if (buildingDistricts.length > 0) {
+        const randomDistrict = buildingDistricts[Math.floor(Math.random() * buildingDistricts.length)]
+        buildingForm.district = randomDistrict.code
+        onBuildingDistrictChange(randomCounty.code, randomDistrict.code)
+
+        setTimeout(() => {
+          if (buildingSections.length > 0) {
+            const randomSection = buildingSections[Math.floor(Math.random() * buildingSections.length)]
+            buildingForm.section = randomSection.code
+          }
+        }, 100)
+      }
+    }, 100)
+
+    buildingForm.building_number_main = String(Math.floor(Math.random() * 99999) + 1).padStart(5, '0')
+    buildingForm.building_number_sub = String(Math.floor(Math.random() * 999)).padStart(3, '0')
+    buildingForm.building_area = (Math.random() * 500 + 50).toFixed(2)
+    buildingForm.ownership_numerator = Math.floor(Math.random() * 10) + 1
+    buildingForm.ownership_denominator = Math.floor(Math.random() * 100) + 10
+    buildingForm.building_address = `測試路${Math.floor(Math.random() * 999) + 1}號`
+
+    showSuccess('建號測試資料已填入', 'Modal 表單已自動填入測試資料')
+  }
 }
 
 // Initialize

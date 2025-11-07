@@ -12,30 +12,11 @@
           @fill-test-data="fillTestData"
         />
 
-        <!-- 地號和建號新增區域 -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold text-gray-900">地號和建號管理</h2>
-            <div class="flex gap-2">
-              <button
-                type="button"
-                @click="showAddLandModal = true"
-                class="inline-flex items-center px-3 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors duration-200"
-              >
-                <Icon name="heroicons:plus" class="w-4 h-4 mr-1" />
-                新增地號
-              </button>
-              <button
-                type="button"
-                @click="showAddBuildingModal = true"
-                class="inline-flex items-center px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors duration-200"
-              >
-                <Icon name="heroicons:plus" class="w-4 h-4 mr-1" />
-                新增建號
-              </button>
-            </div>
-          </div>
-        </div>
+        <!-- 地號和建號新增區域元件 -->
+        <PropertyOwnerLandBuildingActionBar
+          @add-land="showAddLandModal = true"
+          @add-building="showAddBuildingModal = true"
+        />
 
         <!-- 建號列表元件 -->
         <PropertyOwnerBuildingTable
