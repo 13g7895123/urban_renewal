@@ -31,9 +31,9 @@ class BuildingModel extends Model
 
     protected $validationRules = [
         'urban_renewal_id' => 'required|integer',
-        'county' => 'required|max_length[10]',
-        'district' => 'required|max_length[10]',
-        'section' => 'required|max_length[10]',
+        'county' => 'required|max_length[10]|validate_county_code',
+        'district' => 'required|max_length[10]|validate_district_code[county]',
+        'section' => 'required|max_length[10]|validate_section_code[county,district]',
         'building_number_main' => 'required|max_length[10]',
         'building_number_sub' => 'permit_empty|max_length[10]',
         'building_area' => 'permit_empty|decimal',
@@ -47,15 +47,18 @@ class BuildingModel extends Model
         ],
         'county' => [
             'required' => '縣市為必填項目',
-            'max_length' => '縣市名稱不能超過10字符'
+            'max_length' => '縣市名稱不能超過10字符',
+            'validate_county_code' => '縣市代碼 {value} 不存在於資料庫中'
         ],
         'district' => [
             'required' => '行政區為必填項目',
-            'max_length' => '行政區名稱不能超過10字符'
+            'max_length' => '行政區名稱不能超過10字符',
+            'validate_district_code' => '行政區代碼 {value} 不存在於資料庫中'
         ],
         'section' => [
             'required' => '段小段為必填項目',
-            'max_length' => '段小段名稱不能超過10字符'
+            'max_length' => '段小段名稱不能超過10字符',
+            'validate_section_code' => '段小段代碼 {value} 不存在於資料庫中'
         ],
         'building_number_main' => [
             'required' => '建號母號為必填項目',

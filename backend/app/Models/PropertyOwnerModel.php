@@ -158,12 +158,9 @@ class PropertyOwnerModel extends Model
                 
                 try {
                     if ($countyModel && !empty($building['county'])) {
-                        $countyQuery = $countyModel->where('code', $building['county']);
-                        if ($countyQuery) {
-                            $county = $countyQuery->first();
-                            if ($county) {
-                                $countyName = $county['name'];
-                            }
+                        $county = $countyModel->where('code', $building['county'])->first();
+                        if ($county) {
+                            $countyName = $county['name'];
                         }
                     }
                 } catch (\Exception $e) {
@@ -171,13 +168,12 @@ class PropertyOwnerModel extends Model
                 }
 
                 try {
-                    if ($districtModel && !empty($building['district'])) {
-                        $districtQuery = $districtModel->where('code', $building['district']);
-                        if ($districtQuery && !empty($building['county'])) {
-                            $districtQuery = $districtQuery->where('county_code', $building['county']);
-                        }
-                        if ($districtQuery) {
-                            $district = $districtQuery->first();
+                    if ($districtModel && !empty($building['district']) && !empty($building['county'])) {
+                        // Get county ID first
+                        $county = $countyModel->where('code', $building['county'])->first();
+                        if ($county) {
+                            // Use the existing method from DistrictModel
+                            $district = $districtModel->getByCodeAndCounty($building['district'], $county['id']);
                             if ($district) {
                                 $districtName = $district['name'];
                             }
@@ -188,18 +184,18 @@ class PropertyOwnerModel extends Model
                 }
 
                 try {
-                    if ($sectionModel && !empty($building['section'])) {
-                        $sectionQuery = $sectionModel->where('code', $building['section']);
-                        if ($sectionQuery && !empty($building['county'])) {
-                            $sectionQuery = $sectionQuery->where('county_code', $building['county']);
-                        }
-                        if ($sectionQuery && !empty($building['district'])) {
-                            $sectionQuery = $sectionQuery->where('district_code', $building['district']);
-                        }
-                        if ($sectionQuery) {
-                            $section = $sectionQuery->first();
-                            if ($section) {
-                                $sectionName = $section['name'];
+                    if ($sectionModel && !empty($building['section']) && !empty($building['county']) && !empty($building['district'])) {
+                        // Get county ID first
+                        $county = $countyModel->where('code', $building['county'])->first();
+                        if ($county) {
+                            // Get district ID
+                            $district = $districtModel->getByCodeAndCounty($building['district'], $county['id']);
+                            if ($district) {
+                                // Use the existing method from SectionModel
+                                $section = $sectionModel->getByCodeAndDistrict($building['section'], $district['id']);
+                                if ($section) {
+                                    $sectionName = $section['name'];
+                                }
                             }
                         }
                     }

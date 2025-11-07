@@ -21,155 +21,14 @@
 
     <div class="p-8" :class="{ 'opacity-50 pointer-events-none': isLoading }">
       <form @submit.prevent="onSubmit" class="max-w-6xl mx-auto">
-        <!-- 基本資料 -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-semibold text-gray-900">基本資料</h2>
-            <div class="flex gap-2">
-              <button
-                type="button"
-                @click="fillTestData"
-                class="px-3 py-1 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-md transition-colors duration-200"
-              >
-                <Icon name="heroicons:beaker" class="w-4 h-4 mr-1 inline" />
-                填入測試資料
-              </button>
-              <button
-                type="button"
-                @click="previewSubmitData"
-                class="px-3 py-1 text-sm font-medium text-white bg-purple-500 hover:bg-purple-600 rounded-md transition-colors duration-200"
-              >
-                <Icon name="heroicons:eye" class="w-4 h-4 mr-1 inline" />
-                預覽提交資料
-              </button>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- 所屬更新會 -->
-            <div class="md:col-span-2">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                所屬更新會 <span class="text-red-500">*</span>
-              </label>
-              <input
-                v-model="urbanRenewalName"
-                type="text"
-                readonly
-                class="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none cursor-not-allowed"
-              />
-            </div>
-
-            <!-- 所有權人名稱 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                所有權人名稱 <span class="text-red-500">*</span>
-              </label>
-              <input
-                v-model="formData.owner_name"
-                type="text"
-                required
-                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="請輸入所有權人名稱"
-              />
-            </div>
-
-            <!-- 所有權人身分證字號 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                所有權人身分證字號
-              </label>
-              <input
-                v-model="formData.identity_number"
-                type="text"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="請輸入身分證字號"
-              />
-            </div>
-
-            <!-- 所有權人編號(自動產生) -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                所有權人編號(自動產生)
-              </label>
-              <input
-                v-model="formData.owner_code"
-                type="text"
-                readonly
-                class="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none cursor-not-allowed"
-              />
-            </div>
-
-            <!-- 所有權人電話1 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                所有權人電話1
-              </label>
-              <input
-                v-model="formData.phone1"
-                type="tel"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="請輸入電話號碼"
-              />
-            </div>
-
-            <!-- 所有權人電話2 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                所有權人電話2
-              </label>
-              <input
-                v-model="formData.phone2"
-                type="tel"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="請輸入電話號碼"
-              />
-            </div>
-
-            <!-- 所有權人聯絡地址 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                所有權人聯絡地址
-              </label>
-              <input
-                v-model="formData.contact_address"
-                type="text"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="請輸入聯絡地址"
-              />
-            </div>
-
-            <!-- 所有權人戶籍地址 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                所有權人戶籍地址
-              </label>
-              <input
-                v-model="formData.registered_address"
-                type="text"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="請輸入戶籍地址"
-              />
-            </div>
-
-            <!-- 排除計算 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                排除計算
-              </label>
-              <select
-                v-model="formData.exclusion_type"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              >
-                <option value="">請選擇排除類型</option>
-                <option value="法院囑託查封">法院囑託查封</option>
-                <option value="假扣押">假扣押</option>
-                <option value="假處分">假處分</option>
-                <option value="破產登記">破產登記</option>
-                <option value="未經繼承">未經繼承</option>
-              </select>
-            </div>
-          </div>
-        </div>
+        <!-- 基本資料元件 -->
+        <PropertyOwnerBaseInfoForm
+          :form-data="formData"
+          :urban-renewal-name="urbanRenewalName"
+          :show-preview-button="true"
+          @fill-test-data="fillTestData"
+          @preview-submit-data="previewSubmitData"
+        />
 
         <!-- 地號和建號新增區域 -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
@@ -196,77 +55,17 @@
           </div>
         </div>
 
-        <!-- 建號列表 -->
-        <div v-if="formData.buildings.length > 0" class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-          <div class="p-4 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">建號列表</h3>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead>
-                <tr class="border-b border-gray-200">
-                  <th class="p-3 text-left text-sm font-medium text-green-600">縣市/行政區/段小段</th>
-                  <th class="p-3 text-left text-sm font-medium text-green-600">建號</th>
-                  <th class="p-3 text-left text-sm font-medium text-green-600">建物總面積</th>
-                  <th class="p-3 text-left text-sm font-medium text-green-600">持有比例</th>
-                  <th class="p-3 text-center text-sm font-medium text-green-600">操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(building, index) in formData.buildings" :key="index" class="border-b border-gray-100">
-                  <td class="p-3 text-sm">{{ building.location }}</td>
-                  <td class="p-3 text-sm">{{ building.building_number_main }}-{{ building.building_number_sub }}</td>
-                  <td class="p-3 text-sm">{{ building.building_area }}</td>
-                  <td class="p-3 text-sm">{{ building.ownership_numerator }}/{{ building.ownership_denominator }}</td>
-                  <td class="p-3 text-center">
-                    <button
-                      type="button"
-                      @click="removeBuilding(index)"
-                      class="text-red-500 hover:text-red-700"
-                    >
-                      <Icon name="heroicons:trash" class="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <!-- 建號列表元件 -->
+        <PropertyOwnerBuildingTable
+          :buildings="formData.buildings"
+          @remove="removeBuilding"
+        />
 
-        <!-- 地號列表 -->
-        <div v-if="formData.lands.length > 0" class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-          <div class="p-4 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">地號列表</h3>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead>
-                <tr class="border-b border-gray-200">
-                  <th class="p-3 text-left text-sm font-medium text-green-600">地號</th>
-                  <th class="p-3 text-left text-sm font-medium text-green-600">土地總面積</th>
-                  <th class="p-3 text-left text-sm font-medium text-green-600">持有比例</th>
-                  <th class="p-3 text-center text-sm font-medium text-green-600">操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(land, index) in formData.lands" :key="index" class="border-b border-gray-100">
-                  <td class="p-3 text-sm">{{ land.plot_number_display || land.plot_number }}</td>
-                  <td class="p-3 text-sm">{{ land.total_area }}</td>
-                  <td class="p-3 text-sm">{{ land.ownership_numerator }}/{{ land.ownership_denominator }}</td>
-                  <td class="p-3 text-center">
-                    <button
-                      type="button"
-                      @click="removeLand(index)"
-                      class="text-red-500 hover:text-red-700"
-                    >
-                      <Icon name="heroicons:trash" class="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <!-- 地號列表元件 -->
+        <PropertyOwnerLandTable
+          :lands="formData.lands"
+          @remove="removeLand"
+        />
 
         <!-- 備註 -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
@@ -302,636 +101,71 @@
         </div>
       </form>
 
-      <!-- Add Land Modal -->
-      <div v-if="showAddLandModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-          <div class="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity" @click="showAddLandModal = false"></div>
+      <!-- Land Modal 元件 -->
+      <PropertyOwnerLandModal
+        :is-open="showAddLandModal"
+        :available-plots="availablePlots"
+        @close="showAddLandModal = false"
+        @submit="addLand"
+      />
 
-          <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
-            <div class="mb-4">
-              <h3 class="text-lg font-semibold text-gray-900">新增地號</h3>
-            </div>
-
-            <form @submit.prevent="addLand">
-              <div class="space-y-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">地號</label>
-                  <select
-                    v-model="landForm.plot_number"
-                    required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  >
-                    <option value="">請選擇地號</option>
-                    <option v-for="plot in availablePlots" :key="plot.id" :value="plot.landNumber || plot.plot_number">
-                      {{ plot.chineseFullLandNumber || plot.fullLandNumber || plot.plot_number }}
-                      <span v-if="plot.isRepresentative" class="text-blue-600 font-medium"> (代表號)</span>
-                    </option>
-                  </select>
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">土地總面積(平方公尺)</label>
-                  <input
-                    v-model="landForm.total_area"
-                    type="number"
-                    step="0.01"
-                    required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    placeholder="請輸入土地總面積"
-                  />
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">持有比例分子</label>
-                    <input
-                      v-model="landForm.ownership_numerator"
-                      type="number"
-                      required
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      placeholder="分子"
-                    />
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">持有比例分母</label>
-                    <input
-                      v-model="landForm.ownership_denominator"
-                      type="number"
-                      required
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      placeholder="分母"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div class="flex justify-end gap-3 mt-6">
-                <button
-                  type="button"
-                  @click="showAddLandModal = false"
-                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                >
-                  取消
-                </button>
-                <button
-                  type="submit"
-                  class="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700"
-                >
-                  新增
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      <!-- Add Building Modal -->
-      <div v-if="showAddBuildingModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-          <div class="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity" @click="showAddBuildingModal = false"></div>
-
-          <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full sm:p-6">
-            <div class="mb-4">
-              <h3 class="text-lg font-semibold text-gray-900">新增建號</h3>
-            </div>
-
-            <form @submit.prevent="addBuilding">
-              <div class="space-y-4">
-                <div class="grid grid-cols-3 gap-4">
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">縣市</label>
-                    <select
-                      v-model="buildingForm.county"
-                      @change="onBuildingCountyChange"
-                      required
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    >
-                      <option value="">請選擇縣市</option>
-                      <option v-for="county in counties" :key="county.id" :value="county.code">
-                        {{ county.name }}
-                      </option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">行政區</label>
-                    <select
-                      v-model="buildingForm.district"
-                      @change="onBuildingDistrictChange"
-                      required
-                      :disabled="!buildingForm.county"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    >
-                      <option value="">請選擇行政區</option>
-                      <option v-for="district in buildingDistricts" :key="district.id" :value="district.code">
-                        {{ district.name }}
-                      </option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">段小段</label>
-                    <select
-                      v-model="buildingForm.section"
-                      required
-                      :disabled="!buildingForm.district"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    >
-                      <option value="">請選擇段小段</option>
-                      <option v-for="section in buildingSections" :key="section.id" :value="section.code">
-                        {{ section.name }}
-                      </option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">建號母號</label>
-                    <input
-                      v-model="buildingForm.building_number_main"
-                      type="text"
-                      required
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      placeholder="例：00001"
-                    />
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">建號子號</label>
-                    <input
-                      v-model="buildingForm.building_number_sub"
-                      type="text"
-                      required
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      placeholder="例：000"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">建物總面積(平方公尺)</label>
-                  <input
-                    v-model="buildingForm.building_area"
-                    type="number"
-                    step="0.01"
-                    required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    placeholder="請輸入建物總面積"
-                  />
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">持有比例分子</label>
-                    <input
-                      v-model="buildingForm.ownership_numerator"
-                      type="number"
-                      required
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      placeholder="分子"
-                    />
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">持有比例分母</label>
-                    <input
-                      v-model="buildingForm.ownership_denominator"
-                      type="number"
-                      required
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      placeholder="分母"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">建物門牌</label>
-                  <input
-                    v-model="buildingForm.building_address"
-                    type="text"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    placeholder="請輸入建物門牌"
-                  />
-                </div>
-              </div>
-
-              <div class="flex justify-end gap-3 mt-6">
-                <button
-                  type="button"
-                  @click="showAddBuildingModal = false"
-                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                >
-                  取消
-                </button>
-                <button
-                  type="submit"
-                  class="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700"
-                >
-                  新增
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
+      <!-- Building Modal 元件 -->
+      <PropertyOwnerBuildingModal
+        :is-open="showAddBuildingModal"
+        :counties="counties"
+        :districts="buildingDistricts"
+        :sections="buildingSections"
+        @close="showAddBuildingModal = false"
+        @submit="addBuilding"
+        @county-change="onBuildingCountyChange"
+        @district-change="onBuildingDistrictChange"
+      />
     </div>
   </NuxtLayout>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { computed, onMounted } from 'vue'
 
 // Use SweetAlert composable
-const { showSuccess, showError } = useSweetAlert()
+const { showSuccess, showCustom } = useSweetAlert()
 
 const route = useRoute()
-const router = useRouter()
-const runtimeConfig = useRuntimeConfig()
-
-// Use API composable for authenticated requests
-const { get, post } = useApi()
-
-// Get API base URL for development vs production
-const getApiBaseUrl = () => {
-  const isDev = process.dev || process.env.NODE_ENV === 'development'
-  return isDev ? 'http://localhost:9228' : (runtimeConfig.public.apiBaseUrl || '')
-}
-const apiBaseUrl = getApiBaseUrl()
 
 // Get urban renewal ID from route (reactive)
 const urbanRenewalId = computed(() => route.params.id)
 
-const isSubmitting = ref(false)
-const isLoading = ref(true)
-const urbanRenewalName = ref('')
-const showAddLandModal = ref(false)
-const showAddBuildingModal = ref(false)
-const availablePlots = ref([])
-const loadingProgress = ref(0)
+// Use Property Owner Form composable with create mode
+const {
+  // 狀態
+  isLoading,
+  loadingProgress,
+  isSubmitting,
+  urbanRenewalName,
+  availablePlots,
+  formData,
+  landForm,
+  buildingForm,
+  showAddLandModal,
+  showAddBuildingModal,
+  counties,
+  buildingDistricts,
+  buildingSections,
 
-// 地區映射緩存
-const locationMappings = ref({
-  counties: new Map(),
-  districts: new Map(),
-  sections: new Map()
+  // 方法
+  addLand,
+  removeLand,
+  addBuilding,
+  removeBuilding,
+  onBuildingCountyChange,
+  onBuildingDistrictChange,
+  submit: onSubmit,
+  goBack,
+  initialize
+} = usePropertyOwnerForm({
+  mode: 'create',
+  urbanRenewalId: urbanRenewalId.value
 })
-
-// 縣市資料
-const counties = ref([])
-
-// Building form cascading dropdown data
-const buildingDistricts = ref([])
-const buildingSections = ref([])
-
-// Form data
-const formData = reactive({
-  urban_renewal_id: urbanRenewalId.value,
-  owner_name: '',
-  identity_number: '',
-  owner_code: '',
-  phone1: '',
-  phone2: '',
-  contact_address: '',
-  registered_address: '',
-  exclusion_type: '',
-  buildings: [],
-  lands: [],
-  notes: ''
-})
-
-// Land form
-const landForm = reactive({
-  plot_number: '',
-  total_area: '',
-  ownership_numerator: '',
-  ownership_denominator: ''
-})
-
-// Building form
-const buildingForm = reactive({
-  county: '',
-  district: '',
-  section: '',
-  building_number_main: '',
-  building_number_sub: '',
-  building_area: '',
-  ownership_numerator: '',
-  ownership_denominator: '',
-  building_address: ''
-})
-
-// 將地號代號轉換為中文顯示
-const getChineseLandNumber = async (plot) => {
-  // 如果 fullLandNumber 已經是中文格式，直接使用
-  if (plot.fullLandNumber && !plot.fullLandNumber.match(/^[A-Z]{3,}/)) {
-    return plot.fullLandNumber
-  }
-
-  let countyName = plot.county
-  let districtName = plot.district
-  let sectionName = plot.section
-
-  try {
-    // 獲取縣市名稱
-    if (locationMappings.value.counties.has(plot.county)) {
-      countyName = locationMappings.value.counties.get(plot.county)
-    } else if (counties.value.length > 0) {
-      const county = counties.value.find(c => c.code === plot.county)
-      if (county) {
-        countyName = county.name
-        locationMappings.value.counties.set(plot.county, county.name)
-      }
-    }
-
-    // 獲取行政區名稱
-    const districtKey = `${plot.county}_${plot.district}`
-    if (locationMappings.value.districts.has(districtKey)) {
-      districtName = locationMappings.value.districts.get(districtKey)
-    } else {
-      try {
-        const response = await get(`/locations/districts/${plot.county}`)
-        if (response.data?.status === 'success') {
-          const district = response.data.data.find(d => d.code === plot.district)
-          if (district) {
-            districtName = district.name
-            locationMappings.value.districts.set(districtKey, district.name)
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching district:', error)
-      }
-    }
-
-    // 獲取段小段名稱
-    const sectionKey = `${plot.county}_${plot.district}_${plot.section}`
-    if (locationMappings.value.sections.has(sectionKey)) {
-      sectionName = locationMappings.value.sections.get(sectionKey)
-    } else {
-      try {
-        const response = await get(`/locations/sections/${plot.county}/${plot.district}`)
-        if (response.data?.status === 'success') {
-          const section = response.data.data.find(s => s.code === plot.section)
-          if (section) {
-            sectionName = section.name
-            locationMappings.value.sections.set(sectionKey, section.name)
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching section:', error)
-      }
-    }
-  } catch (error) {
-    console.error('Error in getChineseLandNumber:', error)
-  }
-
-  return `${countyName}${districtName}${sectionName}${plot.landNumber}`
-}
-
-// 獲取縣市資料
-const fetchCounties = async () => {
-  try {
-    const response = await get('/locations/counties')
-    if (response.data?.status === 'success') {
-      counties.value = response.data.data
-    }
-  } catch (err) {
-    console.error('Failed to fetch counties:', err)
-  }
-}
-
-// Generate owner code
-const generateOwnerCode = () => {
-  const timestamp = Date.now()
-  const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-  formData.owner_code = `OW${timestamp}${randomNum}`.slice(-10)
-}
-
-// Fetch urban renewal info
-const fetchUrbanRenewalInfo = async () => {
-  try {
-    loadingProgress.value = 25
-    const response = await get(`/urban-renewals/${urbanRenewalId.value}`)
-
-    if (response.data?.status === 'success') {
-      urbanRenewalName.value = response.data.data.name
-      loadingProgress.value = 50
-    }
-  } catch (err) {
-    console.error('Failed to fetch urban renewal info:', err)
-  }
-}
-
-// Fetch available land plots
-const fetchAvailablePlots = async () => {
-  try {
-    loadingProgress.value = 75
-    const response = await get(`/urban-renewals/${urbanRenewalId.value}/land-plots`)
-
-    if (response.data?.status === 'success') {
-      // 將地號轉換為中文格式
-      const plotsWithChineseNames = await Promise.all(
-        (response.data.data || []).map(async (plot) => {
-          const chineseFullLandNumber = await getChineseLandNumber(plot)
-          return {
-            ...plot,
-            chineseFullLandNumber
-          }
-        })
-      )
-
-      availablePlots.value = plotsWithChineseNames
-      loadingProgress.value = 100
-    }
-  } catch (err) {
-    console.error('Failed to fetch land plots:', err)
-  }
-}
-
-// Add land to form
-const addLand = () => {
-  // 從可用地號列表中找到對應的地號資訊
-  const selectedPlot = availablePlots.value.find(plot =>
-    (plot.landNumber || plot.plot_number) === landForm.plot_number
-  )
-
-  formData.lands.push({
-    plot_number: landForm.plot_number,
-    plot_number_display: selectedPlot?.chineseFullLandNumber || selectedPlot?.fullLandNumber || landForm.plot_number,
-    total_area: landForm.total_area,
-    ownership_numerator: landForm.ownership_numerator,
-    ownership_denominator: landForm.ownership_denominator
-  })
-
-  // Reset form
-  landForm.plot_number = ''
-  landForm.total_area = ''
-  landForm.ownership_numerator = ''
-  landForm.ownership_denominator = ''
-
-  showAddLandModal.value = false
-}
-
-// Handle building county change
-const onBuildingCountyChange = async () => {
-  // Reset district and section when county changes
-  buildingForm.district = ''
-  buildingForm.section = ''
-  buildingDistricts.value = []
-  buildingSections.value = []
-
-  if (!buildingForm.county) return
-
-  try {
-    const response = await get(`/locations/districts/${buildingForm.county}`)
-    if (response.data?.status === 'success') {
-      buildingDistricts.value = response.data.data
-    }
-  } catch (error) {
-    console.error('Error fetching districts:', error)
-  }
-}
-
-// Handle building district change
-const onBuildingDistrictChange = async () => {
-  // Reset section when district changes
-  buildingForm.section = ''
-  buildingSections.value = []
-
-  if (!buildingForm.district) return
-
-  try {
-    const response = await get(`/locations/sections/${buildingForm.county}/${buildingForm.district}`)
-    if (response.data?.status === 'success') {
-      buildingSections.value = response.data.data
-    }
-  } catch (error) {
-    console.error('Error fetching sections:', error)
-  }
-}
-
-// Add building to form
-const addBuilding = () => {
-  // Get the Chinese names for display
-  const countyObj = counties.value.find(c => c.code === buildingForm.county)
-  const districtObj = buildingDistricts.value.find(d => d.code === buildingForm.district)
-  const sectionObj = buildingSections.value.find(s => s.code === buildingForm.section)
-
-  const countyName = countyObj ? countyObj.name : buildingForm.county
-  const districtName = districtObj ? districtObj.name : buildingForm.district
-  const sectionName = sectionObj ? sectionObj.name : buildingForm.section
-
-  formData.buildings.push({
-    county: buildingForm.county,
-    district: buildingForm.district,
-    section: buildingForm.section,
-    location: `${countyName}/${districtName}/${sectionName}`,
-    building_number_main: buildingForm.building_number_main,
-    building_number_sub: buildingForm.building_number_sub,
-    building_area: buildingForm.building_area,
-    ownership_numerator: buildingForm.ownership_numerator,
-    ownership_denominator: buildingForm.ownership_denominator,
-    building_address: buildingForm.building_address
-  })
-
-  // Reset form
-  buildingForm.county = ''
-  buildingForm.district = ''
-  buildingForm.section = ''
-  buildingForm.building_number_main = ''
-  buildingForm.building_number_sub = ''
-  buildingForm.building_area = ''
-  buildingForm.ownership_numerator = ''
-  buildingForm.ownership_denominator = ''
-  buildingForm.building_address = ''
-
-  // Reset cascading dropdowns
-  buildingDistricts.value = []
-  buildingSections.value = []
-
-  showAddBuildingModal.value = false
-}
-
-// Remove land
-const removeLand = (index) => {
-  formData.lands.splice(index, 1)
-}
-
-// Remove building
-const removeBuilding = (index) => {
-  formData.buildings.splice(index, 1)
-}
-
-// Submit form
-const onSubmit = async () => {
-  if (!formData.owner_name) {
-    showError('驗證失敗', '請填寫所有權人名稱')
-    return
-  }
-
-  isSubmitting.value = true
-
-  // 轉換欄位名稱以符合後端API格式
-  const submitData = {
-    urban_renewal_id: formData.urban_renewal_id,
-    owner_name: formData.owner_name,  // Backend expects 'owner_name' for create
-    identity_number: formData.identity_number,  // Backend expects 'identity_number' for create
-    // owner_code 由後端自動生成，不發送
-    phone1: formData.phone1,
-    phone2: formData.phone2,
-    contact_address: formData.contact_address,
-    registered_address: formData.registered_address,  // Backend expects 'registered_address' for create
-    exclusion_type: formData.exclusion_type,
-    lands: formData.lands.map(land => {
-      // 從可用地號列表中找到對應的地號資訊
-      const selectedPlot = availablePlots.value.find(plot =>
-        (plot.landNumber || plot.plot_number) === land.plot_number
-      )
-
-      return {
-        plot_number: selectedPlot?.landNumberMain || land.plot_number.split('-')[0] || land.plot_number,
-        total_area: parseFloat(land.total_area) || 0,
-        ownership_numerator: parseInt(land.ownership_numerator) || 1,
-        ownership_denominator: parseInt(land.ownership_denominator) || 1
-      }
-    }),
-    buildings: formData.buildings,
-    notes: formData.notes
-  }
-
-  try {
-
-    const response = await post('/property-owners', submitData)
-
-    if (response.data?.status === 'success') {
-      await showSuccess('新增成功！', '所有權人已成功建立')
-      router.push(`/tables/urban-renewal/${urbanRenewalId.value}/property-owners`)
-    } else {
-      showError('新增失敗', response.data?.message || '新增失敗')
-    }
-  } catch (err) {
-    console.error('Submit error:', err)
-
-    // 提供更詳細的錯誤信息
-    let errorMessage = '新增失敗，請稍後再試'
-    if (err.data && err.data.message) {
-      errorMessage = err.data.message
-    } else if (err.message) {
-      errorMessage = err.message
-    }
-
-    // 如果是後端API問題，提供調試信息
-    if (err.status === 500 || err.statusCode === 500) {
-      errorMessage += '\n\n調試信息：'
-      errorMessage += '\n- 請檢查所有權人名稱是否填寫'
-      errorMessage += '\n- 請檢查地號是否正確選擇'
-      errorMessage += '\n- 如果問題持續，請聯繫系統管理員'
-
-      // 在控制台輸出提交的數據以便調試
-      console.log('提交的數據：', submitData)
-    }
-
-    showError('新增失敗', errorMessage)
-  } finally {
-    isSubmitting.value = false
-  }
-}
 
 // 預覽提交資料
 const previewSubmitData = () => {
@@ -945,7 +179,7 @@ const previewSubmitData = () => {
     registered_address: formData.registered_address,
     exclusion_type: formData.exclusion_type,
     lands: formData.lands.map(land => {
-      const selectedPlot = availablePlots.value.find(plot =>
+      const selectedPlot = availablePlots.find(plot =>
         (plot.landNumber || plot.plot_number) === land.plot_number
       )
 
@@ -994,22 +228,11 @@ const fillTestData = () => {
     '黃八方', '劉九龍', '吳十全', '鄭一品', '謝二郎'
   ]
 
-  const testCompanies = [
-    '富邦建設股份有限公司', '遠雄建設股份有限公司', '潤泰建設股份有限公司',
-    '華固建設股份有限公司', '興富發建設股份有限公司', '長虹建設股份有限公司'
-  ]
-
-  const testPositions = [
-    '董事長', '總經理', '副總經理', '經理', '副理', '專員', '工程師', '會計師'
-  ]
-
   const testExcludeReasons = [
     '法院囑託查封', '假扣押', '假處分', '破產登記', '未經繼承'
   ]
 
   const randomName = testNames[Math.floor(Math.random() * testNames.length)]
-  const randomCompany = testCompanies[Math.floor(Math.random() * testCompanies.length)]
-  const randomPosition = testPositions[Math.floor(Math.random() * testPositions.length)]
 
   // Generate random ID
   const idPrefixes = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D1', 'D2', 'E1', 'E2']
@@ -1022,70 +245,16 @@ const fillTestData = () => {
   formData.phone1 = `09${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`
   formData.phone2 = `02-${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`
   formData.contact_address = `台北市${['大安區', '信義區', '中山區', '松山區', '萬華區'][Math.floor(Math.random() * 5)]}${randomName}路${Math.floor(Math.random() * 999) + 1}號`
-  formData.household_address = `台北市${['中正區', '大同區', '中山區', '松山區', '大安區'][Math.floor(Math.random() * 5)]}${randomName}街${Math.floor(Math.random() * 999) + 1}號`
-  formData.exclude_calculation = testExcludeReasons[Math.floor(Math.random() * testExcludeReasons.length)]
-  formData.company_name = randomCompany
-  formData.position = randomPosition
-  formData.remarks = `${randomName}的測試資料，包含相關地號和建號資訊。`
+  formData.registered_address = `台北市${['中正區', '大同區', '中山區', '松山區', '大安區'][Math.floor(Math.random() * 5)]}${randomName}街${Math.floor(Math.random() * 999) + 1}號`
+  formData.exclusion_type = testExcludeReasons[Math.floor(Math.random() * testExcludeReasons.length)]
+  formData.notes = `${randomName}的測試資料，包含相關地號和建號資訊。`
 
   // Show notification
   showSuccess('測試資料已填入', '所有表單欄位已自動填入測試資料')
 }
 
-// Go back
-const goBack = () => {
-  router.push(`/tables/urban-renewal/${urbanRenewalId.value}/property-owners`)
-}
-
-// Initialize data loading
-const initializeData = async () => {
-  try {
-    isLoading.value = true
-    loadingProgress.value = 0
-
-    console.log('[Property Owner Create] Starting initialization...')
-    console.log('[Property Owner Create] API Base URL:', apiBaseUrl)
-
-    generateOwnerCode()
-    loadingProgress.value = 10
-
-    // 並行獲取資料 with timeout
-    const timeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Initialization timeout')), 10000)
-    )
-
-    await Promise.race([
-      Promise.all([
-        fetchCounties(),
-        fetchUrbanRenewalInfo()
-      ]),
-      timeout
-    ])
-
-    loadingProgress.value = 50
-
-    await fetchAvailablePlots()
-
-    // Add a small delay for smooth animation
-    setTimeout(() => {
-      isLoading.value = false
-      console.log('[Property Owner Create] Initialization complete')
-    }, 500)
-
-  } catch (error) {
-    console.error('[Property Owner Create] Error initializing data:', error)
-
-    // Show user-friendly error message
-    showError('載入失敗', '無法載入必要資料，請重新整理頁面或稍後再試')
-
-    // Stop loading state on error
-    isLoading.value = false
-    loadingProgress.value = 0
-  }
-}
-
 // Initialize
 onMounted(() => {
-  initializeData()
+  initialize()
 })
 </script>

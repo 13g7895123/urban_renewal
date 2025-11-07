@@ -333,7 +333,7 @@ class PropertyOwnerController extends ResourceController
 
             // Handle buildings
             if (!empty($data['buildings']) && is_array($data['buildings'])) {
-                foreach ($data['buildings'] as $buildingData) {
+                foreach ($data['buildings'] as $buildingIndex => $buildingData) {
                     // Create building if not exists
                     $buildingId = $this->buildingModel->createIfNotExists([
                         'urban_renewal_id' => $data['urban_renewal_id'],
@@ -354,6 +354,23 @@ class PropertyOwnerController extends ResourceController
                             'ownership_numerator' => $buildingData['ownership_numerator'],
                             'ownership_denominator' => $buildingData['ownership_denominator']
                         ]);
+                    } else {
+                        // Get validation errors from the model
+                        $errors = $this->buildingModel->errors();
+                        log_message('error', 'Failed to create building for data: ' . json_encode($buildingData, JSON_UNESCAPED_UNICODE));
+                        log_message('error', 'Validation errors: ' . json_encode($errors, JSON_UNESCAPED_UNICODE));
+
+                        // Return error response with detailed validation errors
+                        $errorMessage = '建物資料驗證失敗 (建物 #' . ($buildingIndex + 1) . ')';
+                        if (!empty($errors)) {
+                            $errorDetails = [];
+                            foreach ($errors as $field => $error) {
+                                $errorDetails[] = $error;
+                            }
+                            $errorMessage .= ': ' . implode('; ', $errorDetails);
+                        }
+
+                        return $this->fail($errorMessage, 400);
                     }
                 }
             }
@@ -566,7 +583,7 @@ class PropertyOwnerController extends ResourceController
 
                 // Add new buildings
                 if (!empty($data['buildings']) && is_array($data['buildings'])) {
-                    foreach ($data['buildings'] as $buildingData) {
+                    foreach ($data['buildings'] as $buildingIndex => $buildingData) {
                         log_message('info', 'Processing building data: ' . json_encode($buildingData, JSON_UNESCAPED_UNICODE));
 
                         // Create building if not exists
@@ -596,7 +613,22 @@ class PropertyOwnerController extends ResourceController
                                 log_message('error', 'Failed to create building ownership relationship');
                             }
                         } else {
+                            // Get validation errors from the model
+                            $errors = $this->buildingModel->errors();
                             log_message('error', 'Failed to create building for data: ' . json_encode($buildingData, JSON_UNESCAPED_UNICODE));
+                            log_message('error', 'Validation errors: ' . json_encode($errors, JSON_UNESCAPED_UNICODE));
+
+                            // Return error response with detailed validation errors
+                            $errorMessage = '建物資料驗證失敗 (建物 #' . ($buildingIndex + 1) . ')';
+                            if (!empty($errors)) {
+                                $errorDetails = [];
+                                foreach ($errors as $field => $error) {
+                                    $errorDetails[] = $error;
+                                }
+                                $errorMessage .= ': ' . implode('; ', $errorDetails);
+                            }
+
+                            return $this->fail($errorMessage, 400);
                         }
                     }
                 }
