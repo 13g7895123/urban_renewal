@@ -318,7 +318,7 @@ const route = useRoute()
 const meetingId = route.params.meetingId
 
 // API composables
-const { getMeeting, createMeeting, updateMeeting } = useMeetings()
+const { getMeeting, createMeeting, updateMeeting, exportMeetingNotice: exportMeetingNoticeApi } = useMeetings()
 const { getUrbanRenewals } = useUrbanRenewal()
 const { showSuccess, showError } = useSweetAlert()
 
@@ -628,9 +628,23 @@ const exportSignatureBook = () => {
   // TODO: Implement export signature book functionality
 }
 
-const exportMeetingNotice = () => {
-  console.log('Exporting meeting notice for meeting:', selectedMeeting.value)
-  // TODO: Implement export meeting notice functionality
+const exportMeetingNotice = async () => {
+  if (!selectedMeeting.value || !meetingId) {
+    showError('匯出失敗', '找不到會議資料')
+    return
+  }
+
+  isLoading.value = true
+  console.log('[Basic Info] Exporting meeting notice for meeting:', meetingId)
+
+  const response = await exportMeetingNoticeApi(meetingId)
+  isLoading.value = false
+
+  if (response.success) {
+    showSuccess('匯出成功', '會議通知已成功匯出')
+  } else {
+    showError('匯出失敗', response.error?.message || '無法匯出會議通知')
+  }
 }
 
 // Fill test data function

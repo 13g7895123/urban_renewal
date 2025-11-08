@@ -91,10 +91,11 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         $routes->delete('(:num)', 'MeetingController::delete/$1');              // DELETE /api/meetings/{id}
         $routes->patch('(:num)/status', 'MeetingController::updateStatus/$1');  // PATCH /api/meetings/{id}/status
         $routes->get('(:num)/statistics', 'MeetingController::statistics/$1');  // GET /api/meetings/{id}/statistics
+        $routes->get('(:num)/export-notice', 'MeetingController::exportNotice/$1'); // GET /api/meetings/{id}/export-notice
         $routes->get('search', 'MeetingController::search');                    // GET /api/meetings/search
         $routes->get('upcoming', 'MeetingController::upcoming');                // GET /api/meetings/upcoming
         $routes->get('status-statistics', 'MeetingController::statusStatistics'); // GET /api/meetings/status-statistics
-        
+
         // Meeting Attendances nested routes
         $routes->get('(:num)/attendances', 'MeetingAttendanceController::index/$1');          // GET /api/meetings/{id}/attendances
         $routes->post('(:num)/attendances/(:num)', 'MeetingAttendanceController::checkIn/$1/$2'); // POST /api/meetings/{meetingId}/attendances/{ownerId}
