@@ -58,7 +58,9 @@
       "Bash(./test-api.sh:*)",
       "Bash(./test-update-owner.sh)",
       "Bash(/home/jarvis/project/bonus/urban_renewal/test-update-owner.sh)",
-      "Bash(/home/jarvis/project/bonus/urban_renewal/test-update-with-land.sh)"
+      "Bash(/home/jarvis/project/bonus/urban_renewal/test-update-with-land.sh)",
+      "Bash(git merge:*)",
+      "Bash(docker port:*)"
     ],
     "deny": [],
     "ask": []

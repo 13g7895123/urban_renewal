@@ -1,0 +1,295 @@
+{
+  "info": {
+    "name": "都更計票系統 - 會議 API",
+    "description": "會議管理相關 API 的 Postman Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "urban_renewal_meeting_api"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:4002/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data && response.data.token) {",
+                  "        pm.collectionVariables.set('token', response.data.token);",
+                  "        pm.environment.set('token', response.data.token);",
+                  "        console.log('Token saved:', response.data.token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"admin\",\n    \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "登入取得 JWT Token"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Meetings",
+      "item": [
+        {
+          "name": "取得會議列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/meetings?page=1&per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["meetings"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "頁碼"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10",
+                  "description": "每頁筆數"
+                },
+                {
+                  "key": "urban_renewal_id",
+                  "value": "",
+                  "description": "更新會 ID（篩選）",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "會議狀態",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "搜尋關鍵字",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "取得會議列表，支援分頁和篩選"
+          },
+          "response": []
+        },
+        {
+          "name": "取得會議詳情",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/meetings/1",
+              "host": ["{{base_url}}"],
+              "path": ["meetings", "1"]
+            },
+            "description": "取得指定會議的詳細資訊"
+          },
+          "response": []
+        },
+        {
+          "name": "建立新會議",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"urban_renewal_id\": 6,\n    \"meeting_name\": \"114年度第一屆第4次會員大會\",\n    \"meeting_type\": \"會員大會\",\n    \"meeting_date\": \"2025-12-20\",\n    \"meeting_time\": \"14:00\",\n    \"meeting_location\": \"台北市南港區玉成街1號\",\n    \"attendee_count\": 0,\n    \"calculated_total_count\": 0,\n    \"observer_count\": 0,\n    \"quorum_land_area_numerator\": 3,\n    \"quorum_land_area_denominator\": 4,\n    \"quorum_land_area\": 1500,\n    \"quorum_building_area_numerator\": 2,\n    \"quorum_building_area_denominator\": 3,\n    \"quorum_building_area\": 2000,\n    \"quorum_member_numerator\": 50,\n    \"quorum_member_denominator\": 100,\n    \"quorum_member_count\": 75,\n    \"observers\": [\n        {\"name\": \"張三\"},\n        {\"name\": \"李四\"}\n    ],\n    \"notice_doc_number\": \"北市都更\",\n    \"notice_word_number\": \"字第\",\n    \"notice_mid_number\": \"1140001\",\n    \"notice_end_number\": \"號\",\n    \"chairman_name\": \"王大明\",\n    \"contact_name\": \"陳小明\",\n    \"contact_phone\": \"02-3456-7890\",\n    \"attachments\": \"會議議程、投票單\",\n    \"descriptions\": [\n        \"請各位會員準時出席會議\",\n        \"會議當日請攜帶身分證明文件\"\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/meetings",
+              "host": ["{{base_url}}"],
+              "path": ["meetings"]
+            },
+            "description": "建立新會議"
+          },
+          "response": []
+        },
+        {
+          "name": "更新會議資料",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"meeting_location\": \"台北市南港區玉成街2號\",\n    \"attendee_count\": 75,\n    \"calculated_total_count\": 74,\n    \"observer_count\": 3\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/meetings/1",
+              "host": ["{{base_url}}"],
+              "path": ["meetings", "1"]
+            },
+            "description": "更新會議資料（可以只更新部分欄位）"
+          },
+          "response": []
+        },
+        {
+          "name": "更新會議狀態",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"scheduled\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/meetings/1/status",
+              "host": ["{{base_url}}"],
+              "path": ["meetings", "1", "status"]
+            },
+            "description": "更新會議狀態\n\n狀態轉換規則：\n- draft → scheduled, cancelled\n- scheduled → in_progress, cancelled\n- in_progress → completed, cancelled\n- completed → (不能變更)\n- cancelled → draft"
+          },
+          "response": []
+        },
+        {
+          "name": "刪除會議",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/meetings/1",
+              "host": ["{{base_url}}"],
+              "path": ["meetings", "1"]
+            },
+            "description": "刪除會議\n\n限制：\n- 進行中或已完成的會議不能刪除\n- 有投票議題的會議不能刪除"
+          },
+          "response": []
+        },
+        {
+          "name": "取得特定更新會的會議列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/urban-renewals/6/meetings?page=1&per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["urban-renewals", "6", "meetings"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "會議狀態篩選",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "取得指定更新會的所有會議"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Meeting Statistics",
+      "item": [
+        {
+          "name": "取得會議統計資料",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/meetings/1/statistics",
+              "host": ["{{base_url}}"],
+              "path": ["meetings", "1", "statistics"]
+            },
+            "description": "取得會議的統計資料，包含：\n- 出席統計\n- 投票議題統計\n- 成會門檻檢查"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Meeting Export",
+      "item": [
+        {
+          "name": "匯出會議通知",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/meetings/1/export-notice",
+              "host": ["{{base_url}}"],
+              "path": ["meetings", "1", "export-notice"]
+            },
+            "description": "匯出會議通知（Word 格式）"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

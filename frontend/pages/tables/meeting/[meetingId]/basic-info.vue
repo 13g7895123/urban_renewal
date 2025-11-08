@@ -449,20 +449,34 @@ onMounted(async () => {
     isLoading.value = false
 
     if (response.success && response.data) {
-      const meeting = response.data.data || response.data
+      // 處理雙層嵌套的 data 結構: useApi 包裝 + 後端回傳
+      // useApi 回傳: { success, data: { success, data: meeting } }
+      // 所以要取 response.data.data 才是真正的 meeting 資料
+      let meeting
+      if (response.data.data && typeof response.data.data === 'object') {
+        meeting = response.data.data
+      } else if (response.data && typeof response.data === 'object') {
+        meeting = response.data
+      } else {
+        console.error('[Basic Info] Invalid response structure:', response)
+        showError('載入會議資料失敗', '回傳資料格式錯誤')
+        return
+      }
 
       console.log('[Basic Info] Meeting loaded:', meeting)
       console.log('[Basic Info] urban_renewal_name:', meeting.urban_renewal_name)
       console.log('[Basic Info] meeting_type:', meeting.meeting_type)
 
-      // Initialize form fields with existing data
-      // 使用 trim() 和空字串檢查確保正確處理
-      renewalGroup.value = (meeting.urban_renewal_name && meeting.urban_renewal_name.trim() !== '')
-                          ? meeting.urban_renewal_name
-                          : (meeting.renewal_group || meeting.renewalGroup || '')
+      // 處理所屬更新會名稱 (確保正確處理 null/undefined/empty/whitespace)
+      const renewalName = meeting.urban_renewal_name || meeting.renewal_group || meeting.renewalGroup || ''
+      renewalGroup.value = typeof renewalName === 'string' && renewalName.trim() !== ''
+                          ? renewalName.trim()
+                          : ''
 
-      meetingType.value = (meeting.meeting_type && meeting.meeting_type.trim() !== '')
-                         ? meeting.meeting_type
+      // 處理會議類型 (確保正確處理 null/undefined/empty/whitespace)
+      const typeValue = meeting.meeting_type || ''
+      meetingType.value = typeof typeValue === 'string' && typeValue.trim() !== ''
+                         ? typeValue.trim()
                          : '會員大會'
 
       console.log('[Basic Info] renewalGroup set to:', renewalGroup.value)
