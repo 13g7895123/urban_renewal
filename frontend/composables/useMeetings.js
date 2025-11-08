@@ -74,6 +74,73 @@ export const useMeetings = () => {
     return await get('/meetings/status-statistics')
   }
 
+  /**
+   * Export meeting notice
+   */
+  const exportMeetingNotice = async (id) => {
+    try {
+      const config = useRuntimeConfig()
+      const apiUrl = config.public.apiUrl || 'http://localhost:4002'
+
+      // Get auth token
+      const token = localStorage.getItem('token')
+      if (!token) {
+        return {
+          success: false,
+          error: { message: '請先登入' }
+        }
+      }
+
+      // Make request to download file
+      const response = await fetch(`${apiUrl}/meetings/${id}/export-notice`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        return {
+          success: false,
+          error: errorData.error || { message: '匯出失敗' }
+        }
+      }
+
+      // Get filename from response header
+      const contentDisposition = response.headers.get('Content-Disposition')
+      let filename = '會議通知.docx'
+      if (contentDisposition) {
+        const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition)
+        if (matches != null && matches[1]) {
+          filename = decodeURIComponent(matches[1].replace(/['"]/g, ''))
+        }
+      }
+
+      // Download file
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+
+      return {
+        success: true,
+        message: '匯出成功'
+      }
+    } catch (error) {
+      console.error('Export meeting notice error:', error)
+      return {
+        success: false,
+        error: { message: error.message || '匯出失敗' }
+      }
+    }
+  }
+
   return {
     getMeetings,
     getMeeting,
@@ -84,6 +151,7 @@ export const useMeetings = () => {
     getMeetingStatistics,
     searchMeetings,
     getUpcomingMeetings,
-    getStatusStatistics
+    getStatusStatistics,
+    exportMeetingNotice
   }
 }
