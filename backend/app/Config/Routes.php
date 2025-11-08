@@ -91,16 +91,20 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
     // Meetings API
     $routes->group('meetings', function ($routes) {
         $routes->get('/', 'MeetingController::index');                          // GET /api/meetings
-        $routes->get('(:num)', 'MeetingController::show/$1');                   // GET /api/meetings/{id}
         $routes->post('/', 'MeetingController::create');                        // POST /api/meetings
-        $routes->put('(:num)', 'MeetingController::update/$1');                 // PUT /api/meetings/{id}
-        $routes->delete('(:num)', 'MeetingController::delete/$1');              // DELETE /api/meetings/{id}
-        $routes->patch('(:num)/status', 'MeetingController::updateStatus/$1');  // PATCH /api/meetings/{id}/status
-        $routes->get('(:num)/statistics', 'MeetingController::statistics/$1');  // GET /api/meetings/{id}/statistics
-        $routes->get('(:num)/export-notice', 'MeetingController::exportNotice/$1'); // GET /api/meetings/{id}/export-notice
+
+        // Specific routes with patterns must come before generic (:num) route
         $routes->get('search', 'MeetingController::search');                    // GET /api/meetings/search
         $routes->get('upcoming', 'MeetingController::upcoming');                // GET /api/meetings/upcoming
         $routes->get('status-statistics', 'MeetingController::statusStatistics'); // GET /api/meetings/status-statistics
+        $routes->get('(:num)/statistics', 'MeetingController::statistics/$1');  // GET /api/meetings/{id}/statistics
+        $routes->get('(:num)/export-notice', 'MeetingController::exportNotice/$1'); // GET /api/meetings/{id}/export-notice
+        $routes->patch('(:num)/status', 'MeetingController::updateStatus/$1');  // PATCH /api/meetings/{id}/status
+
+        // Generic routes with (:num) at the end
+        $routes->get('(:num)', 'MeetingController::show/$1');                   // GET /api/meetings/{id}
+        $routes->put('(:num)', 'MeetingController::update/$1');                 // PUT /api/meetings/{id}
+        $routes->delete('(:num)', 'MeetingController::delete/$1');              // DELETE /api/meetings/{id}
 
         // Meeting Attendances nested routes
         $routes->get('(:num)/attendances', 'MeetingAttendanceController::index/$1');          // GET /api/meetings/{id}/attendances
