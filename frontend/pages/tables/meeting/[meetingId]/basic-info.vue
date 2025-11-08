@@ -41,7 +41,7 @@
             <label class="block text-sm font-medium text-gray-700 mb-2">所屬更新會</label>
             <UInput
               v-if="selectedMeeting"
-              :value="selectedMeeting.renewalGroup || renewalGroup"
+              :value="renewalGroup"
               readonly
               class="bg-gray-50"
             />
@@ -62,7 +62,7 @@
               <label class="block text-sm font-medium text-gray-700 mb-2">會議類型</label>
               <UInput
                 v-if="selectedMeeting"
-                :value="selectedMeeting?.meetingType || '會員大會'"
+                :value="meetingType"
                 readonly
                 class="bg-gray-50"
               />
@@ -450,12 +450,19 @@ onMounted(async () => {
 
     if (response.success && response.data) {
       const meeting = response.data.data || response.data
-      selectedMeeting.value = meeting
 
       console.log('[Basic Info] Meeting loaded:', meeting)
 
       // Initialize form fields with existing data
-      renewalGroup.value = meeting.renewal_group || meeting.renewalGroup || ''
+      renewalGroup.value = meeting.urban_renewal_name || meeting.renewal_group || meeting.renewalGroup || ''
+      meetingType.value = meeting.meeting_type || '會員大會'
+
+      // Set selectedMeeting with normalized fields for display
+      selectedMeeting.value = {
+        ...meeting,
+        renewalGroup: renewalGroup.value,
+        meetingType: meetingType.value
+      }
 
       // 組合 meeting_date 和 meeting_time 為 meeting_datetime (符合 datetime-local 格式)
       if (meeting.meeting_date && meeting.meeting_time) {
@@ -467,18 +474,22 @@ onMounted(async () => {
       }
 
       meetingLocation.value = meeting.meeting_location || meeting.meetingLocation || meeting.location || ''
-      // totalObservers 現在是 computed property，會自動計算
+
+      // Load attendance data
+      attendees.value = meeting.attendee_count || 0
+      baseAttendees.value = meeting.attendee_count || 0
+      excludeOwnerFromCount.value = meeting.exclude_owner_from_count || false
 
       // Load ratio and area data
-      landAreaRatioNumerator.value = meeting.land_area_ratio_numerator || 0
-      landAreaRatioDenominator.value = meeting.land_area_ratio_denominator || 0
-      totalLandArea.value = meeting.total_land_area || 0
-      buildingAreaRatioNumerator.value = meeting.building_area_ratio_numerator || 0
-      buildingAreaRatioDenominator.value = meeting.building_area_ratio_denominator || 0
-      totalBuildingArea.value = meeting.total_building_area || 0
-      peopleRatioNumerator.value = meeting.people_ratio_numerator || 0
-      peopleRatioDenominator.value = meeting.people_ratio_denominator || 0
-      totalPeopleCount.value = meeting.total_people_count || 0
+      landAreaRatioNumerator.value = meeting.quorum_land_area_numerator || 0
+      landAreaRatioDenominator.value = meeting.quorum_land_area_denominator || 1
+      totalLandArea.value = meeting.quorum_land_area || 0
+      buildingAreaRatioNumerator.value = meeting.quorum_building_area_numerator || 0
+      buildingAreaRatioDenominator.value = meeting.quorum_building_area_denominator || 1
+      totalBuildingArea.value = meeting.quorum_building_area || 0
+      peopleRatioNumerator.value = meeting.quorum_member_numerator || 0
+      peopleRatioDenominator.value = meeting.quorum_member_denominator || 1
+      totalPeopleCount.value = meeting.quorum_member_count || 0
 
       // Load observers (只載入 name 欄位)
       if (meeting.observers && Array.isArray(meeting.observers)) {
@@ -687,19 +698,19 @@ const saveBasicInfo = async () => {
       meeting_date: meetingDate,
       meeting_time: meetingTime,
       meeting_location: meetingLocation.value,
-      attendees: parseInt(attendees.value) || 0,
-      total_counted_attendees: parseInt(totalCountedAttendees.value) || 0,
+      attendee_count: parseInt(attendees.value) || 0,
+      calculated_total_count: parseInt(totalCountedAttendees.value) || 0,
       exclude_owner_from_count: excludeOwnerFromCount.value,
-      total_observers: parseInt(totalObservers.value) || 0,
-      land_area_ratio_numerator: parseInt(landAreaRatioNumerator.value) || 0,
-      land_area_ratio_denominator: parseInt(landAreaRatioDenominator.value) || 0,
-      total_land_area: parseFloat(totalLandArea.value) || 0,
-      building_area_ratio_numerator: parseInt(buildingAreaRatioNumerator.value) || 0,
-      building_area_ratio_denominator: parseInt(buildingAreaRatioDenominator.value) || 0,
-      total_building_area: parseFloat(totalBuildingArea.value) || 0,
-      people_ratio_numerator: parseInt(peopleRatioNumerator.value) || 0,
-      people_ratio_denominator: parseInt(peopleRatioDenominator.value) || 0,
-      total_people_count: parseInt(totalPeopleCount.value) || 0,
+      observer_count: parseInt(totalObservers.value) || 0,
+      quorum_land_area_numerator: parseInt(landAreaRatioNumerator.value) || 0,
+      quorum_land_area_denominator: parseInt(landAreaRatioDenominator.value) || 1,
+      quorum_land_area: parseFloat(totalLandArea.value) || 0,
+      quorum_building_area_numerator: parseInt(buildingAreaRatioNumerator.value) || 0,
+      quorum_building_area_denominator: parseInt(buildingAreaRatioDenominator.value) || 1,
+      quorum_building_area: parseFloat(totalBuildingArea.value) || 0,
+      quorum_member_numerator: parseInt(peopleRatioNumerator.value) || 0,
+      quorum_member_denominator: parseInt(peopleRatioDenominator.value) || 1,
+      quorum_member_count: parseInt(totalPeopleCount.value) || 0,
       observers: observers.value,
       notice_doc_number: noticeDocNumber.value,
       notice_word_number: noticeWordNumber.value,
@@ -720,18 +731,17 @@ const saveBasicInfo = async () => {
       response = await updateMeeting(meetingId, formData)
     } else {
       // Creating new meeting
-      if (selectedUrbanRenewal.value) {
-        // selectedUrbanRenewal is now the full object: { label, value, name, address, member_count }
-        formData.urban_renewal_id = selectedUrbanRenewal.value.value || selectedUrbanRenewal.value.id
-        formData.renewal_group = selectedUrbanRenewal.value.name || selectedUrbanRenewal.value.label
-        console.log('[Basic Info] Selected urban renewal:', selectedUrbanRenewal.value)
-        console.log('[Basic Info] urban_renewal_id:', formData.urban_renewal_id)
-        console.log('[Basic Info] renewal_group:', formData.renewal_group)
+      const createFormData = {
+        ...formData,
+        meeting_name: meetingName.value,
+        meeting_type: meetingType.value,
+        urban_renewal_id: selectedUrbanRenewal.value?.value || selectedUrbanRenewal.value?.id || 0
       }
-      formData.meeting_name = meetingName.value
-      formData.meeting_type = meetingType.value
-      console.log('[Basic Info] Creating new meeting:', formData)
-      response = await createMeeting(formData)
+
+      console.log('[Basic Info] Selected urban renewal:', selectedUrbanRenewal.value)
+      console.log('[Basic Info] urban_renewal_id:', createFormData.urban_renewal_id)
+      console.log('[Basic Info] Creating new meeting:', createFormData)
+      response = await createMeeting(createFormData)
     }
 
     isLoading.value = false
