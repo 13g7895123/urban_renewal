@@ -58,6 +58,10 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
 
     // Urban Renewals API
     $routes->group('urban-renewals', function ($routes) {
+        // Batch operations must come before single resource routes
+        $routes->post('batch-assign', 'UrbanRenewalController::batchAssign');     // POST /api/urban-renewals/batch-assign
+        $routes->get('company-managers', 'UrbanRenewalController::getCompanyManagers'); // GET /api/urban-renewals/company-managers
+
         $routes->get('/', 'UrbanRenewalController::index');           // GET /api/urban-renewals
         $routes->get('(:num)', 'UrbanRenewalController::show/$1');    // GET /api/urban-renewals/{id}
         $routes->post('/', 'UrbanRenewalController::create');         // POST /api/urban-renewals
