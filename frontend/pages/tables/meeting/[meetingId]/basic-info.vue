@@ -128,7 +128,7 @@
             <!-- 列席總人數 -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">列席總人數</label>
-              <UInput v-model="totalObservers" type="number" />
+              <UInput v-model="totalObservers" readonly class="bg-gray-50" />
             </div>
           </div>
 
@@ -195,24 +195,16 @@
                   <thead class="bg-gray-50 sticky top-0">
                     <tr>
                       <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">姓名</th>
-                      <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">職稱</th>
-                      <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">聯絡電話</th>
-                      <th class="px-4 py-2 text-center text-sm font-medium text-gray-700">操作</th>
+                      <th class="px-4 py-2 text-center text-sm font-medium text-gray-700 w-24">操作</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-if="observers.length === 0">
-                      <td colspan="4" class="px-4 py-8 text-center text-gray-500">暫無列席者資料</td>
+                      <td colspan="2" class="px-4 py-8 text-center text-gray-500">暫無列席者資料</td>
                     </tr>
                     <tr v-for="(observer, index) in observers" :key="index" class="border-b border-gray-100">
                       <td class="px-4 py-2">
-                        <UInput v-model="observer.name" size="sm" />
-                      </td>
-                      <td class="px-4 py-2">
-                        <UInput v-model="observer.title" size="sm" />
-                      </td>
-                      <td class="px-4 py-2">
-                        <UInput v-model="observer.phone" size="sm" />
+                        <UInput v-model="observer.name" size="sm" placeholder="請輸入姓名" />
                       </td>
                       <td class="px-4 py-2 text-center">
                         <UButton color="red" size="xs" @click="removeObserver(index)">刪除</UButton>
@@ -357,12 +349,16 @@ const totalCountedAttendees = computed(() => {
   return baseAttendees.value
 })
 
+// Computed: 列席總人數（自動計算有名字的列席者）
+const totalObservers = computed(() => {
+  return observers.value.filter(observer => observer.name && observer.name.trim() !== '').length
+})
+
 // Basic info form fields
 const renewalGroup = ref('')
 const meetingName = ref('')
 const meetingDateTime = ref('')
 const meetingLocation = ref('')
-const totalObservers = ref(0)
 const landAreaRatioNumerator = ref(0)
 const landAreaRatioDenominator = ref(0)
 const totalLandArea = ref(0)
@@ -460,7 +456,7 @@ onMounted(async () => {
       renewalGroup.value = meeting.renewal_group || meeting.renewalGroup || ''
       meetingDateTime.value = meeting.meeting_datetime || meeting.meetingDateTime || ''
       meetingLocation.value = meeting.meeting_location || meeting.meetingLocation || meeting.location || ''
-      totalObservers.value = meeting.total_observers || meeting.totalObservers || 0
+      // totalObservers 現在是 computed property，會自動計算
 
       // Load ratio and area data
       landAreaRatioNumerator.value = meeting.land_area_ratio_numerator || 0
@@ -473,12 +469,10 @@ onMounted(async () => {
       peopleRatioDenominator.value = meeting.people_ratio_denominator || 0
       totalPeopleCount.value = meeting.total_people_count || 0
 
-      // Load observers
+      // Load observers (只載入 name 欄位)
       if (meeting.observers && Array.isArray(meeting.observers)) {
         observers.value = meeting.observers.map(o => ({
-          name: o.name || '',
-          title: o.title || '',
-          phone: o.phone || ''
+          name: o.name || ''
         }))
       }
 
@@ -508,7 +502,7 @@ onMounted(async () => {
       if (selectedMeeting.value) {
         meetingDateTime.value = `${selectedMeeting.value.date} ${selectedMeeting.value.time}`
         meetingLocation.value = selectedMeeting.value.location || ''
-        totalObservers.value = selectedMeeting.value.totalObservers || 0
+        // totalObservers 會由 computed property 自動計算
       }
     }
   }
@@ -547,7 +541,7 @@ const resetFormFields = () => {
   attendees.value = 0
   baseAttendees.value = 0
   excludeOwnerFromCount.value = false
-  totalObservers.value = 0
+  // totalObservers 由 computed property 自動計算
   landAreaRatioNumerator.value = 0
   landAreaRatioDenominator.value = 0
   totalLandArea.value = 0
@@ -572,9 +566,7 @@ const resetFormFields = () => {
 // Observer management functions
 const addObserver = () => {
   observers.value.push({
-    name: '',
-    title: '',
-    phone: ''
+    name: ''
   })
 }
 
@@ -622,7 +614,7 @@ const fillMeetingTestData = () => {
   meetingName.value = '114年度第一屆第3次會員大會'
   meetingDateTime.value = '2025-12-15T14:00'
   meetingLocation.value = '台北市南港區玉成街1號'
-  totalObservers.value = 5
+  // totalObservers 由 computed property 自動計算（根據 observers 陣列）
   landAreaRatioNumerator.value = 3
   landAreaRatioDenominator.value = 4
   totalLandArea.value = 1500
@@ -634,8 +626,9 @@ const fillMeetingTestData = () => {
   totalPeopleCount.value = 75
 
   observers.value = [
-    { name: '張三', title: '市政府代表', phone: '02-1234-5678' },
-    { name: '李四', title: '建築師', phone: '02-2345-6789' }
+    { name: '張三' },
+    { name: '李四' },
+    { name: '王五' }
   ]
 
   noticeDocNumber.value = '北市都更'

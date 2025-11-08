@@ -123,10 +123,12 @@
 
 #### 1.8 列席總人數
 - **佈局**: 與出席人數、納入計算總人數同列（右側）
-- **類型**: 數字輸入框 (UInput, type="number")
-- **必填**: 否
-- **預設值**: 0
-- **說明**: 可手動輸入列席人數
+- **類型**: 數字輸入框 (UInput)
+- **模式**: 唯讀 (readonly)
+- **自動計算**: 根據列席者陣列中有名字的列席者數量自動計算
+- **樣式**: 灰色背景 (`bg-gray-50`)
+- **計算邏輯**: 使用 computed property，計算 `observers` 陣列中名字不為空的項目數量
+- **說明**: 由系統自動計算，即時更新
 
 ---
 
@@ -154,13 +156,14 @@
 #### 3.1 列席者表格
 - **功能**: 管理會議列席者資訊
 - **欄位**:
-  - 姓名 (name)
-  - 職稱 (title)
-  - 聯絡電話 (phone)
+  - 姓名 (name) - 唯一欄位
 - **操作**:
-  - **新增列席者**: 點擊「新增列席者」按鈕
+  - **新增列席者**: 點擊「新增列席者」按鈕，新增一筆只有姓名欄位的記錄
   - **刪除列席者**: 點擊該列的「刪除」按鈕
 - **顯示**: 最大高度 48 (max-h-48)，超過時可捲動
+- **即時更新**: 當列席者的名字不為空值時，自動更新上方的「列席總人數」
+- **資料結構**: `{ name: string }`
+- **說明**: 簡化版列席者表格，只記錄姓名資訊
 
 ---
 
@@ -205,7 +208,7 @@
   - 會議日期時間：2025-12-15T14:00
   - 會議地點：台北市南港區玉成街1號
   - 成會條件數據（土地、建物、人數比例）
-  - 列席者範例資料（2筆）
+  - 列席者範例資料（3筆，只含姓名）
   - 會議通知單資訊（發文字號、聯絡人、說明事項）
 
 #### 2. 匯出簽到冊（僅編輯模式）
@@ -279,7 +282,7 @@ const { showSuccess, showError } = useSweetAlert()
     people_ratio_numerator: number,
     people_ratio_denominator: number,
     total_people_count: number,
-    observers: array,
+    observers: array,  // [{ name: string }, ...]
     notice_doc_number: string,
     notice_word_number: string,
     notice_mid_number: string,
@@ -404,6 +407,23 @@ definePageMeta({
      - 納入計算總人數基數 (`member_count`)
    - 僅在新增模式（非編輯模式）時自動帶入
 
+5. **列席者表格簡化**
+   - 列席者欄位簡化為只保留「姓名」欄位
+   - 移除「職稱」和「聯絡電話」欄位
+   - 資料結構從 `{ name, title, phone }` 簡化為 `{ name }`
+   - 列席總人數改為自動計算（readonly）
+   - 使用 computed property 即時計算有名字的列席者數量
+   - 實作細節：
+     ```javascript
+     const totalObservers = computed(() => {
+       return observers.value.filter(observer =>
+         observer.name && observer.name.trim() !== ''
+       ).length
+     })
+     ```
+   - 當列席者名字不為空值時，自動更新上方的列席總人數
+   - 更新測試資料和載入邏輯以配合新的資料結構
+
 #### 版本 1.2 - 佈局優化與日期時間選擇器
 1. **頁面佈局調整**
    - **所屬更新會**: 改為單一列顯示（全寬）
@@ -458,12 +478,17 @@ const totalCountedAttendees = computed(() => {
   return baseAttendees.value
 })
 
+// Computed: 列席總人數（自動計算有名字的列席者）
+const totalObservers = computed(() => {
+  return observers.value.filter(observer => observer.name && observer.name.trim() !== '').length
+})
+
 // 表單欄位
 const renewalGroup = ref('')
 const meetingName = ref('')
 const meetingDateTime = ref('')
 const meetingLocation = ref('')
-const totalObservers = ref(0)
+const observers = ref([])  // 列席者陣列
 // ... 其他欄位
 ```
 
