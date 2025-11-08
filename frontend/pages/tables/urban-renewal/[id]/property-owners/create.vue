@@ -84,6 +84,7 @@
 
       <!-- Land Modal 元件 -->
       <PropertyOwnerLandModal
+        v-model="landForm"
         :is-open="showAddLandModal"
         :available-plots="availablePlots"
         :show-test-button="true"
@@ -94,6 +95,7 @@
 
       <!-- Building Modal 元件 -->
       <PropertyOwnerBuildingModal
+        v-model="buildingForm"
         :is-open="showAddBuildingModal"
         :counties="counties"
         :districts="buildingDistricts"
