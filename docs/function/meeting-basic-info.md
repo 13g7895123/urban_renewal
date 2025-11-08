@@ -18,15 +18,22 @@
 
 #### 頁面佈局
 ```
-┌─────────────────────────────────────────┐
-│ 所屬更新會（單一列，全寬）                │
-├─────────────────────┬───────────────────┤
-│ 會議類型             │ 會議日期時間       │
-├─────────────────────┴───────────────────┤
-│ 會議名稱（單一列，全寬，僅新增模式）      │
-├─────────────────────┬───────────────────┤
-│ 開會地點             │ 其他欄位...        │
-└─────────────────────┴───────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│ 所屬更新會（單一列，全寬）                                │
+├───────────────────┬─────────────────┬──────────────────┤
+│ 會議類型           │ 會議日期時間     │                   │
+├───────────────────┴─────────────────┴──────────────────┤
+│ 會議名稱（單一列，全寬，僅新增模式）                      │
+├─────────────────────────────────────────────────────────┤
+│ 開會地址（單一列，全寬）                                  │
+├───────────────────┬─────────────────┬──────────────────┤
+│ 出席人數(R)        │ 納入計算總人數(R)│ 列席總人數        │
+│                   │ ☑ 排除所有權人   │                   │
+├───────────────────┴─────────────────┴──────────────────┤
+│ 成會條件設定...                                          │
+└─────────────────────────────────────────────────────────┘
+
+註：(R) 表示 readonly 欄位
 ```
 
 #### 1.1 所屬更新會（下拉選單）
@@ -79,25 +86,47 @@
 - **必填**: 是
 - **範例**: 114年度第一屆第3次會員大會
 
-#### 1.5 開會地點
+#### 1.5 開會地址
+- **佈局**: 單一列，全寬
 - **類型**: 文字輸入框 (UInput)
 - **必填**: 是
+- **自動帶入**: 選擇更新會後，自動填入該更新會的設立地址
+- **資料來源**: `selectedUrbanRenewal.address`
 - **範例**: 台北市南港區玉成街1號
+- **說明**: 可手動修改自動帶入的地址
 
 #### 1.6 出席人數
+- **佈局**: 與納入計算總人數、列席總人數同列（左側）
 - **類型**: 數字輸入框 (UInput)
-- **模式**: 唯讀
+- **模式**: 唯讀 (readonly)
+- **自動帶入**: 選擇更新會後，自動填入該更新會的所有權人數
+- **資料來源**: `selectedUrbanRenewal.member_count`
+- **樣式**: 灰色背景 (`bg-gray-50`)
 - **說明**: 由系統自動計算，無法手動輸入
 
-#### 1.7 納入計算總人數
-- **類型**: 數字輸入框 (UInput)
-- **模式**: 唯讀
-- **說明**: 由系統自動計算，無法手動輸入
+#### 1.7 納入計算總人數（含排除選項）
+- **佈局**: 與出席人數、列席總人數同列（中間）
+- **類型**: 數字輸入框 (UInput) + 勾選框 (checkbox)
+- **模式**: 唯讀 (readonly)
+- **自動帶入**: 選擇更新會後，自動填入該更新會的所有權人數
+- **資料來源**: `selectedUrbanRenewal.member_count`
+- **樣式**: 灰色背景 (`bg-gray-50`)
+- **計算邏輯**:
+  - 未勾選「排除所有權人不列計」: `totalCountedAttendees = baseAttendees`
+  - 勾選「排除所有權人不列計」: `totalCountedAttendees = baseAttendees - 1`
+  - 使用 Vue computed property 自動計算
+- **排除選項**:
+  - **勾選框文字**: 排除所有權人不列計
+  - **狀態**: `excludeOwnerFromCount` (ref)
+  - **樣式**: 綠色勾選框 (`text-green-600 focus:ring-green-500`)
+  - **功能**: 勾選時，納入計算總人數自動減 1
 
 #### 1.8 列席總人數
+- **佈局**: 與出席人數、納入計算總人數同列（右側）
 - **類型**: 數字輸入框 (UInput, type="number")
 - **必填**: 否
 - **預設值**: 0
+- **說明**: 可手動輸入列席人數
 
 ---
 
@@ -237,6 +266,9 @@ const { showSuccess, showError } = useSweetAlert()
     meeting_type: string,
     meeting_datetime: string,
     meeting_location: string,
+    attendees: number,
+    total_counted_attendees: number,
+    exclude_owner_from_count: boolean,
     total_observers: number,
     land_area_ratio_numerator: number,
     land_area_ratio_denominator: number,
@@ -264,6 +296,10 @@ const { showSuccess, showError } = useSweetAlert()
 - **端點**: `PUT /api/meetings/:id`
 - **時機**: 編輯模式儲存時
 - **傳送資料**: 同建立會議（不含 urban_renewal_id, renewal_group, meeting_name, meeting_type）
+- **包含新增欄位**:
+  - `attendees`: 出席人數
+  - `total_counted_attendees`: 納入計算總人數
+  - `exclude_owner_from_count`: 是否排除所有權人不列計
 
 ---
 
@@ -335,6 +371,39 @@ definePageMeta({
 
 ### 2025-11-08
 
+#### 版本 1.3 - 自動帶入與排除選項
+1. **開會地點改為開會地址**
+   - 名稱從「開會地點」改為「開會地址」
+   - 改為單一列顯示（全寬）
+   - 選擇更新會後自動帶入該更新會的設立地址
+
+2. **出席人數與納入計算總人數調整**
+   - 佈局：改為三欄並列（出席人數、納入計算總人數、列席總人數）
+   - 出席人數：改為 readonly，選擇更新會後自動帶入所有權人數
+   - 納入計算總人數：改為 readonly，使用 computed property 自動計算
+
+3. **新增「排除所有權人不列計」功能**
+   - 在納入計算總人數欄位下方加入勾選框
+   - 勾選時，納入計算總人數自動減 1
+   - 使用 Vue computed property 實現響應式計算
+   - 實作細節：
+     ```javascript
+     const totalCountedAttendees = computed(() => {
+       if (excludeOwnerFromCount.value) {
+         return Math.max(0, baseAttendees.value - 1)
+       }
+       return baseAttendees.value
+     })
+     ```
+
+4. **選擇更新會自動帶入資料**
+   - 使用 watch 監聽 `selectedUrbanRenewal` 變化
+   - 自動帶入：
+     - 開會地址 (`address`)
+     - 出席人數 (`member_count`)
+     - 納入計算總人數基數 (`member_count`)
+   - 僅在新增模式（非編輯模式）時自動帶入
+
 #### 版本 1.2 - 佈局優化與日期時間選擇器
 1. **頁面佈局調整**
    - **所屬更新會**: 改為單一列顯示（全寬）
@@ -376,6 +445,19 @@ const selectedUrbanRenewal = ref(null)
 const meetingTypeOptions = ref(['會員大會', '理監事會', '公聽會'])
 const meetingType = ref('會員大會')
 
+// 出席人數相關
+const attendees = ref(0)
+const baseAttendees = ref(0) // 原始所有權人數
+const excludeOwnerFromCount = ref(false)
+
+// Computed: 納入計算總人數（根據勾選狀態）
+const totalCountedAttendees = computed(() => {
+  if (excludeOwnerFromCount.value) {
+    return Math.max(0, baseAttendees.value - 1)
+  }
+  return baseAttendees.value
+})
+
 // 表單欄位
 const renewalGroup = ref('')
 const meetingName = ref('')
@@ -383,6 +465,22 @@ const meetingDateTime = ref('')
 const meetingLocation = ref('')
 const totalObservers = ref(0)
 // ... 其他欄位
+```
+
+### Watch 監聽
+```javascript
+// 監聽選擇更新會的變化
+watch(selectedUrbanRenewal, (newValue) => {
+  if (newValue && !selectedMeeting.value) {
+    // 自動帶入開會地址
+    meetingLocation.value = newValue.address || ''
+
+    // 自動帶入所有權人數
+    const memberCount = newValue.member_count || 0
+    attendees.value = memberCount
+    baseAttendees.value = memberCount
+  }
+})
 ```
 
 ### 輔助函數
@@ -413,10 +511,12 @@ fillMeetingTestData()
 2. ✅ 會議類型下拉選單
 3. ✅ 會議日期時間選擇器
 4. ✅ 頁面佈局優化
-5. ⏳ 匯出簽到冊功能
-6. ⏳ 匯出會議通知功能
-7. ⏳ 表單驗證提示
-8. ⏳ 自動儲存草稿
+5. ✅ 選擇更新會後自動帶入資料
+6. ✅ 排除所有權人不列計功能
+7. ⏳ 匯出簽到冊功能
+8. ⏳ 匯出會議通知功能
+9. ⏳ 表單驗證提示
+10. ⏳ 自動儲存草稿
 
 ---
 
