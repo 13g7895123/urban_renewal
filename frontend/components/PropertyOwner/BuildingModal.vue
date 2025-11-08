@@ -37,8 +37,8 @@
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">縣市</label>
                 <select
-                  v-model="formData.county"
-                  @change="handleCountyChange"
+                  :value="modelValue.county"
+                  @change="updateField('county', $event.target.value); handleCountyChange()"
                   required
                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 >
@@ -51,10 +51,10 @@
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">行政區</label>
                 <select
-                  v-model="formData.district"
-                  @change="handleDistrictChange"
+                  :value="modelValue.district"
+                  @change="updateField('district', $event.target.value); handleDistrictChange()"
                   required
-                  :disabled="!formData.county"
+                  :disabled="!modelValue.county"
                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
                   <option value="">請選擇行政區</option>
@@ -66,9 +66,10 @@
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">段小段</label>
                 <select
-                  v-model="formData.section"
+                  :value="modelValue.section"
+                  @input="updateField('section', $event.target.value)"
                   required
-                  :disabled="!formData.district"
+                  :disabled="!modelValue.district"
                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
                   <option value="">請選擇段小段</option>
@@ -84,7 +85,8 @@
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">建號母號</label>
                 <input
-                  v-model="formData.building_number_main"
+                  :value="modelValue.building_number_main"
+                  @input="updateField('building_number_main', $event.target.value)"
                   type="text"
                   required
                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -94,7 +96,8 @@
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">建號子號</label>
                 <input
-                  v-model="formData.building_number_sub"
+                  :value="modelValue.building_number_sub"
+                  @input="updateField('building_number_sub', $event.target.value)"
                   type="text"
                   required
                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -107,7 +110,8 @@
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">建物總面積(平方公尺)</label>
               <input
-                v-model="formData.building_area"
+                :value="modelValue.building_area"
+                @input="updateField('building_area', $event.target.value)"
                 type="number"
                 step="0.01"
                 required
@@ -121,7 +125,8 @@
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">持有比例分子</label>
                 <input
-                  v-model="formData.ownership_numerator"
+                  :value="modelValue.ownership_numerator"
+                  @input="updateField('ownership_numerator', $event.target.value)"
                   type="number"
                   required
                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -131,7 +136,8 @@
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">持有比例分母</label>
                 <input
-                  v-model="formData.ownership_denominator"
+                  :value="modelValue.ownership_denominator"
+                  @input="updateField('ownership_denominator', $event.target.value)"
                   type="number"
                   required
                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -144,7 +150,8 @@
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">建物門牌</label>
               <input
-                v-model="formData.building_address"
+                :value="modelValue.building_address"
+                @input="updateField('building_address', $event.target.value)"
                 type="text"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 placeholder="請輸入建物門牌"
@@ -175,7 +182,6 @@
 </template>
 
 <script setup>
-import { reactive, watch } from 'vue'
 
 /**
  * Props
@@ -201,80 +207,46 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  initialData: {
+  modelValue: {
     type: Object,
-    default: () => ({
-      county: '',
-      district: '',
-      section: '',
-      building_number_main: '',
-      building_number_sub: '',
-      building_area: '',
-      ownership_numerator: '',
-      ownership_denominator: '',
-      building_address: ''
-    })
+    required: true
   }
 })
 
 /**
  * Emits
  */
-const emit = defineEmits(['close', 'submit', 'fillTestData', 'countyChange', 'districtChange'])
+const emit = defineEmits(['close', 'submit', 'fillTestData', 'countyChange', 'districtChange', 'update:modelValue'])
 
 /**
- * 表單資料
+ * 更新單一欄位
  */
-const formData = reactive({
-  county: '',
-  district: '',
-  section: '',
-  building_number_main: '',
-  building_number_sub: '',
-  building_area: '',
-  ownership_numerator: '',
-  ownership_denominator: '',
-  building_address: ''
-})
-
-/**
- * 當 Modal 開啟時,載入初始資料
- */
-watch(() => props.isOpen, (newVal) => {
-  if (newVal) {
-    Object.assign(formData, props.initialData)
-  }
-})
+const updateField = (field, value) => {
+  emit('update:modelValue', {
+    ...props.modelValue,
+    [field]: value
+  })
+}
 
 /**
  * 處理縣市改變
  */
 const handleCountyChange = () => {
-  emit('countyChange', formData.county)
+  emit('countyChange', props.modelValue.county)
 }
 
 /**
  * 處理行政區改變
  */
 const handleDistrictChange = () => {
-  emit('districtChange', formData.county, formData.district)
+  emit('districtChange', props.modelValue.county, props.modelValue.district)
 }
 
 /**
  * 處理表單提交
  */
 const handleSubmit = () => {
-  emit('submit', { ...formData })
-
-  // 重置表單
-  formData.county = ''
-  formData.district = ''
-  formData.section = ''
-  formData.building_number_main = ''
-  formData.building_number_sub = ''
-  formData.building_area = ''
-  formData.ownership_numerator = ''
-  formData.ownership_denominator = ''
-  formData.building_address = ''
+  emit('submit', { ...props.modelValue })
+  // 表單重置交給父元件的 resetBuildingForm() 處理，避免破壞 reactive 物件
 }
 </script>

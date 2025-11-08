@@ -36,7 +36,8 @@
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">地號</label>
               <select
-                v-model="formData.plot_number"
+                :value="modelValue.plot_number"
+                @input="updateField('plot_number', $event.target.value)"
                 required
                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
               >
@@ -56,7 +57,8 @@
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">土地總面積(平方公尺)</label>
               <input
-                v-model="formData.total_area"
+                :value="modelValue.total_area"
+                @input="updateField('total_area', $event.target.value)"
                 type="number"
                 step="0.01"
                 required
@@ -70,7 +72,8 @@
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">持有比例分子</label>
                 <input
-                  v-model="formData.ownership_numerator"
+                  :value="modelValue.ownership_numerator"
+                  @input="updateField('ownership_numerator', $event.target.value)"
                   type="number"
                   required
                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -80,7 +83,8 @@
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">持有比例分母</label>
                 <input
-                  v-model="formData.ownership_denominator"
+                  :value="modelValue.ownership_denominator"
+                  @input="updateField('ownership_denominator', $event.target.value)"
                   type="number"
                   required
                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -113,7 +117,7 @@
 </template>
 
 <script setup>
-import { reactive, watch } from 'vue'
+import { computed } from 'vue'
 
 /**
  * Props
@@ -131,51 +135,32 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  initialData: {
+  modelValue: {
     type: Object,
-    default: () => ({
-      plot_number: '',
-      total_area: '',
-      ownership_numerator: '',
-      ownership_denominator: ''
-    })
+    required: true
   }
 })
 
 /**
  * Emits
  */
-const emit = defineEmits(['close', 'submit', 'fillTestData'])
+const emit = defineEmits(['close', 'submit', 'fillTestData', 'update:modelValue'])
 
 /**
- * 表單資料
+ * 更新單一欄位
  */
-const formData = reactive({
-  plot_number: '',
-  total_area: '',
-  ownership_numerator: '',
-  ownership_denominator: ''
-})
-
-/**
- * 當 Modal 開啟時,載入初始資料
- */
-watch(() => props.isOpen, (newVal) => {
-  if (newVal) {
-    Object.assign(formData, props.initialData)
-  }
-})
+const updateField = (field, value) => {
+  emit('update:modelValue', {
+    ...props.modelValue,
+    [field]: value
+  })
+}
 
 /**
  * 處理表單提交
  */
 const handleSubmit = () => {
-  emit('submit', { ...formData })
-
-  // 重置表單
-  formData.plot_number = ''
-  formData.total_area = ''
-  formData.ownership_numerator = ''
-  formData.ownership_denominator = ''
+  emit('submit', { ...props.modelValue })
+  // 表單重置交給父元件的 resetLandForm() 處理，避免破壞 reactive 物件
 }
 </script>
