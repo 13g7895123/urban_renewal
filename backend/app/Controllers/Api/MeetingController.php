@@ -2,13 +2,13 @@
 
 namespace App\Controllers\Api;
 
-use App\Controllers\BaseController;
+use CodeIgniter\RESTful\ResourceController;
 use App\Models\MeetingModel;
 use App\Models\UrbanRenewalModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use App\Traits\HasRbacPermissions;
 
-class MeetingController extends BaseController
+class MeetingController extends ResourceController
 {
     use HasRbacPermissions;
 
