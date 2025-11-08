@@ -452,10 +452,21 @@ onMounted(async () => {
       const meeting = response.data.data || response.data
 
       console.log('[Basic Info] Meeting loaded:', meeting)
+      console.log('[Basic Info] urban_renewal_name:', meeting.urban_renewal_name)
+      console.log('[Basic Info] meeting_type:', meeting.meeting_type)
 
       // Initialize form fields with existing data
-      renewalGroup.value = meeting.urban_renewal_name || meeting.renewal_group || meeting.renewalGroup || ''
-      meetingType.value = meeting.meeting_type || '會員大會'
+      // 使用 trim() 和空字串檢查確保正確處理
+      renewalGroup.value = (meeting.urban_renewal_name && meeting.urban_renewal_name.trim() !== '')
+                          ? meeting.urban_renewal_name
+                          : (meeting.renewal_group || meeting.renewalGroup || '')
+
+      meetingType.value = (meeting.meeting_type && meeting.meeting_type.trim() !== '')
+                         ? meeting.meeting_type
+                         : '會員大會'
+
+      console.log('[Basic Info] renewalGroup set to:', renewalGroup.value)
+      console.log('[Basic Info] meetingType set to:', meetingType.value)
 
       // Set selectedMeeting with normalized fields for display
       selectedMeeting.value = {
