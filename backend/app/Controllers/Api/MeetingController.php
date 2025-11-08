@@ -663,8 +663,11 @@ class MeetingController extends ResourceController
     public function exportNotice($id = null)
     {
         try {
+            log_message('info', '[ExportNotice] Start exporting meeting notice for ID: ' . $id);
+
             $meeting = $this->meetingModel->getMeetingWithDetails($id);
             if (!$meeting) {
+                log_message('warning', '[ExportNotice] Meeting not found for ID: ' . $id);
                 return $this->fail([
                     'success' => false,
                     'error' => [
@@ -674,14 +677,29 @@ class MeetingController extends ResourceController
                 ], 404);
             }
 
+            log_message('info', '[ExportNotice] Meeting found: ' . json_encode([
+                'id' => $meeting['id'],
+                'title' => $meeting['title'] ?? 'N/A',
+                'urban_renewal_id' => $meeting['urban_renewal_id'] ?? 'N/A'
+            ]));
+
             // Get authenticated user and check permission
             $user = $_SERVER['AUTH_USER'] ?? null;
+            log_message('info', '[ExportNotice] User info: ' . json_encode([
+                'user_id' => $user['id'] ?? 'N/A',
+                'role' => $user['role'] ?? 'N/A',
+                'is_company_manager' => $user['is_company_manager'] ?? 'N/A',
+                'urban_renewal_id' => $user['urban_renewal_id'] ?? 'N/A'
+            ]));
+
             $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
             $isCompanyManager = $user && isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
 
             // Check permission for company managers
             if (!$isAdmin && $isCompanyManager) {
                 if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $meeting['urban_renewal_id']) {
+                    log_message('warning', '[ExportNotice] Permission denied - user urban_renewal_id: ' .
+                        ($user['urban_renewal_id'] ?? 'null') . ', meeting urban_renewal_id: ' . $meeting['urban_renewal_id']);
                     return $this->fail([
                         'success' => false,
                         'error' => [
@@ -692,11 +710,22 @@ class MeetingController extends ResourceController
                 }
             }
 
+            log_message('info', '[ExportNotice] Permission check passed');
+
             // 使用 WordExportService 匯出
+            log_message('info', '[ExportNotice] Calling WordExportService...');
             $wordExportService = new \App\Services\WordExportService();
             $result = $wordExportService->exportMeetingNotice($meeting);
 
+            log_message('info', '[ExportNotice] WordExportService result: ' . json_encode([
+                'success' => $result['success'] ?? false,
+                'filepath' => $result['filepath'] ?? 'N/A',
+                'filename' => $result['filename'] ?? 'N/A',
+                'error' => $result['error'] ?? 'N/A'
+            ]));
+
             if (!$result['success']) {
+                log_message('error', '[ExportNotice] WordExportService failed: ' . ($result['error'] ?? 'Unknown error'));
                 return $this->fail([
                     'success' => false,
                     'error' => [
@@ -710,7 +739,9 @@ class MeetingController extends ResourceController
             $filepath = $result['filepath'];
             $filename = $result['filename'];
 
+            log_message('info', '[ExportNotice] Checking file exists: ' . $filepath);
             if (!file_exists($filepath)) {
+                log_message('error', '[ExportNotice] File not found: ' . $filepath);
                 return $this->fail([
                     'success' => false,
                     'error' => [
@@ -720,11 +751,16 @@ class MeetingController extends ResourceController
                 ], 404);
             }
 
+            $filesize = filesize($filepath);
+            log_message('info', '[ExportNotice] File exists, size: ' . $filesize . ' bytes');
+
             // 設定檔案下載 header
             header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
             header('Content-Disposition: attachment; filename="' . urlencode($filename) . '"');
-            header('Content-Length: ' . filesize($filepath));
+            header('Content-Length: ' . $filesize);
             header('Cache-Control: max-age=0');
+
+            log_message('info', '[ExportNotice] Sending file to client: ' . $filename);
 
             // 讀取並輸出檔案
             readfile($filepath);
@@ -732,10 +768,12 @@ class MeetingController extends ResourceController
             // 刪除臨時檔案（可選）
             // unlink($filepath);
 
+            log_message('info', '[ExportNotice] Export completed successfully');
             exit;
 
         } catch (\Exception $e) {
-            log_message('error', 'Export meeting notice error: ' . $e->getMessage());
+            log_message('error', '[ExportNotice] Exception: ' . $e->getMessage());
+            log_message('error', '[ExportNotice] Stack trace: ' . $e->getTraceAsString());
             return $this->fail([
                 'success' => false,
                 'error' => [
