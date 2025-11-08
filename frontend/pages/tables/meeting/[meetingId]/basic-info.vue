@@ -36,44 +36,65 @@
           </div>
 
           <!-- Basic Meeting Info -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- 所屬更新會 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">所屬更新會</label>
-              <UInput
-                v-if="selectedMeeting"
-                :value="selectedMeeting.renewalGroup || ''"
-                readonly
-                class="bg-gray-50"
-              />
-              <UInput
-                v-else
-                v-model="renewalGroup"
-                placeholder="請輸入所屬更新會"
-              />
-            </div>
+          <!-- 所屬更新會 - 單一列 -->
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">所屬更新會</label>
+            <UInput
+              v-if="selectedMeeting"
+              :value="selectedMeeting.renewalGroup || renewalGroup"
+              readonly
+              class="bg-gray-50"
+            />
+            <USelectMenu
+              v-else
+              v-model="selectedUrbanRenewal"
+              :options="urbanRenewalOptions"
+              placeholder="請選擇所屬更新會"
+              option-attribute="label"
+              value-attribute="value"
+              class="w-full"
+            />
+          </div>
 
-            <!-- 會議名稱 -->
-            <div v-if="!selectedMeeting">
-              <label class="block text-sm font-medium text-gray-700 mb-2">會議名稱</label>
-              <UInput v-model="meetingName" placeholder="請輸入會議名稱" />
-            </div>
-
+          <!-- 會議類型與會議日期時間 - 兩欄 -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <!-- 會議類型 -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">會議類型</label>
-              <UInput 
-                :value="selectedMeeting?.meetingType || '會員大會'" 
-                readonly 
-                class="bg-gray-50" 
+              <UInput
+                v-if="selectedMeeting"
+                :value="selectedMeeting?.meetingType || '會員大會'"
+                readonly
+                class="bg-gray-50"
+              />
+              <USelectMenu
+                v-else
+                v-model="meetingType"
+                :options="meetingTypeOptions"
+                placeholder="請選擇會議類型"
+                class="w-full"
               />
             </div>
 
             <!-- 會議日期時間 -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">會議日期時間</label>
-              <UInput v-model="meetingDateTime" />
+              <input
+                v-model="meetingDateTime"
+                type="datetime-local"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+              />
             </div>
+          </div>
+
+          <!-- 會議名稱 - 單一列 -->
+          <div v-if="!selectedMeeting" class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">會議名稱</label>
+            <UInput v-model="meetingName" placeholder="請輸入會議名稱" />
+          </div>
+
+          <!-- 其他欄位 -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
             <!-- 開會地點 -->
             <div>
@@ -292,6 +313,7 @@ const meetingId = route.params.meetingId
 
 // API composables
 const { getMeeting, createMeeting, updateMeeting } = useMeetings()
+const { getUrbanRenewals } = useUrbanRenewal()
 const { showSuccess, showError } = useSweetAlert()
 
 // Loading state
@@ -299,6 +321,14 @@ const isLoading = ref(false)
 
 // Get meeting data (this would typically come from an API)
 const selectedMeeting = ref(null)
+
+// Urban renewal options
+const urbanRenewalOptions = ref([])
+const selectedUrbanRenewal = ref(null)
+
+// Meeting type options
+const meetingTypeOptions = ref(['會員大會', '理監事會', '公聽會'])
+const meetingType = ref('會員大會')
 
 // Basic info form fields
 const renewalGroup = ref('')
@@ -361,6 +391,18 @@ const meetings = [
 ]
 
 onMounted(async () => {
+  // Load urban renewal options
+  const urbanRenewalResponse = await getUrbanRenewals()
+  if (urbanRenewalResponse.success && urbanRenewalResponse.data) {
+    const renewals = urbanRenewalResponse.data.data || urbanRenewalResponse.data
+    urbanRenewalOptions.value = renewals.map(renewal => ({
+      label: renewal.name,
+      value: renewal.id,
+      name: renewal.name
+    }))
+    console.log('[Basic Info] Urban renewals loaded:', urbanRenewalOptions.value)
+  }
+
   if (meetingId === 'new') {
     // Creating new meeting
     selectedMeeting.value = null
@@ -440,6 +482,7 @@ onMounted(async () => {
 const resetFormFields = () => {
   renewalGroup.value = ''
   meetingName.value = ''
+  meetingType.value = '會員大會'
   meetingDateTime.value = ''
   meetingLocation.value = ''
   totalObservers.value = 0
@@ -510,9 +553,12 @@ const exportMeetingNotice = () => {
 
 // Fill test data function
 const fillMeetingTestData = () => {
-  renewalGroup.value = '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會'
+  // Select first urban renewal if available
+  if (urbanRenewalOptions.value.length > 0) {
+    selectedUrbanRenewal.value = urbanRenewalOptions.value[0]
+  }
   meetingName.value = '114年度第一屆第3次會員大會'
-  meetingDateTime.value = '2025年12月15日 下午2:00:00'
+  meetingDateTime.value = '2025-12-15T14:00'
   meetingLocation.value = '台北市南港區玉成街1號'
   totalObservers.value = 5
   landAreaRatioNumerator.value = 3
@@ -589,9 +635,12 @@ const saveBasicInfo = async () => {
       response = await updateMeeting(meetingId, formData)
     } else {
       // Creating new meeting
-      formData.renewal_group = renewalGroup.value
+      if (selectedUrbanRenewal.value) {
+        formData.urban_renewal_id = selectedUrbanRenewal.value.value
+        formData.renewal_group = selectedUrbanRenewal.value.name || selectedUrbanRenewal.value.label
+      }
       formData.meeting_name = meetingName.value
-      formData.meeting_type = '會員大會'
+      formData.meeting_type = meetingType.value
       console.log('[Basic Info] Creating new meeting:', formData)
       response = await createMeeting(formData)
     }
