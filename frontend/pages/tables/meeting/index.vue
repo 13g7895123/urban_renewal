@@ -310,13 +310,13 @@ const loadMeetings = async () => {
     meetings.value = Array.isArray(meetingsData) ? meetingsData.map(m => ({
       id: m.id,
       name: m.meeting_name || m.name || '',
-      renewalGroup: m.renewal_group || m.renewalGroup || '',
+      renewalGroup: m.urban_renewal_name || m.renewal_group || m.renewalGroup || '',
       date: m.meeting_date || m.date || '',
       time: m.meeting_time || m.time || '',
-      attendees: m.attendees || 0,
-      totalCountedAttendees: m.total_counted_attendees || m.totalCountedAttendees || 0,
-      totalObservers: m.total_observers || m.totalObservers || 0,
-      votingTopicCount: m.voting_topic_count || m.votingTopicCount || 0
+      attendees: m.attendee_count || m.attendees || 0,
+      totalCountedAttendees: m.calculated_total_count || m.total_counted_attendees || m.totalCountedAttendees || 0,
+      totalObservers: m.observer_count || m.total_observers || m.totalObservers || 0,
+      votingTopicCount: m.voting_topics_count || m.voting_topic_count || m.votingTopicCount || 0
     })) : []
 
     console.log('[Meeting Index] Meetings loaded:', meetings.value.length)

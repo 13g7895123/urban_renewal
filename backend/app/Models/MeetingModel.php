@@ -154,16 +154,36 @@ class MeetingModel extends Model
         }
 
         // 取得出席統計
-        $attendanceModel = model('MeetingAttendanceModel');
-        $meeting['attendance_summary'] = $attendanceModel->getAttendanceSummary($meetingId);
+        try {
+            $attendanceModel = model('MeetingAttendanceModel');
+            $meeting['attendance_summary'] = $attendanceModel->getDetailedAttendanceStatistics($meetingId);
+        } catch (\Exception $e) {
+            log_message('warning', 'Failed to get attendance summary: ' . $e->getMessage());
+            $meeting['attendance_summary'] = null;
+        }
 
         // 取得投票議題數量
-        $votingTopicModel = model('VotingTopicModel');
-        $meeting['voting_topics_count'] = $votingTopicModel->where('meeting_id', $meetingId)->countAllResults();
+        try {
+            $votingTopicModel = model('VotingTopicModel');
+            $meeting['voting_topics_count'] = $votingTopicModel->where('meeting_id', $meetingId)->countAllResults();
+        } catch (\Exception $e) {
+            log_message('warning', 'Failed to get voting topics count: ' . $e->getMessage());
+            $meeting['voting_topics_count'] = 0;
+        }
 
         // 取得列席者數量
-        $observerModel = model('MeetingObserverModel');
-        $meeting['observers_count'] = $observerModel->where('meeting_id', $meetingId)->countAllResults();
+        try {
+            // MeetingObserverModel may not exist, handle gracefully
+            if (class_exists('App\Models\MeetingObserverModel')) {
+                $observerModel = model('MeetingObserverModel');
+                $meeting['observers_count'] = $observerModel->where('meeting_id', $meetingId)->countAllResults();
+            } else {
+                $meeting['observers_count'] = 0;
+            }
+        } catch (\Exception $e) {
+            log_message('warning', 'Failed to get observers count: ' . $e->getMessage());
+            $meeting['observers_count'] = 0;
+        }
 
         return $meeting;
     }

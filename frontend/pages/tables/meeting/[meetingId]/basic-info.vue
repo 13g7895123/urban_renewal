@@ -36,69 +36,104 @@
           </div>
 
           <!-- Basic Meeting Info -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- 所屬更新會 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">所屬更新會</label>
-              <UInput
-                v-if="selectedMeeting"
-                :value="selectedMeeting.renewalGroup || ''"
-                readonly
-                class="bg-gray-50"
-              />
-              <UInput
-                v-else
-                v-model="renewalGroup"
-                placeholder="請輸入所屬更新會"
-              />
-            </div>
+          <!-- 所屬更新會 - 單一列 -->
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">所屬更新會</label>
+            <UInput
+              v-if="selectedMeeting"
+              :value="selectedMeeting.renewalGroup || renewalGroup"
+              readonly
+              class="bg-gray-50"
+            />
+            <USelectMenu
+              v-else
+              v-model="selectedUrbanRenewal"
+              :options="urbanRenewalOptions"
+              placeholder="請選擇所屬更新會"
+              option-attribute="label"
+              class="w-full"
+            />
+          </div>
 
-            <!-- 會議名稱 -->
-            <div v-if="!selectedMeeting">
-              <label class="block text-sm font-medium text-gray-700 mb-2">會議名稱</label>
-              <UInput v-model="meetingName" placeholder="請輸入會議名稱" />
-            </div>
-
+          <!-- 會議類型與會議日期時間 - 兩欄 -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <!-- 會議類型 -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">會議類型</label>
-              <UInput 
-                :value="selectedMeeting?.meetingType || '會員大會'" 
-                readonly 
-                class="bg-gray-50" 
+              <UInput
+                v-if="selectedMeeting"
+                :value="selectedMeeting?.meetingType || '會員大會'"
+                readonly
+                class="bg-gray-50"
+              />
+              <USelectMenu
+                v-else
+                v-model="meetingType"
+                :options="meetingTypeOptions"
+                placeholder="請選擇會議類型"
+                class="w-full"
               />
             </div>
 
             <!-- 會議日期時間 -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">會議日期時間</label>
-              <UInput v-model="meetingDateTime" />
+              <input
+                v-model="meetingDateTime"
+                type="datetime-local"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+              />
             </div>
+          </div>
 
-            <!-- 開會地點 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">開會地點</label>
-              <UInput v-model="meetingLocation" />
-            </div>
+          <!-- 會議名稱 - 單一列 -->
+          <div v-if="!selectedMeeting" class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">會議名稱</label>
+            <UInput v-model="meetingName" placeholder="請輸入會議名稱" />
+          </div>
 
+          <!-- 開會地址 - 單一列 -->
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">開會地址</label>
+            <UInput v-model="meetingLocation" placeholder="選擇更新會後自動帶入" />
+          </div>
+
+          <!-- 出席人數、納入計算總人數、列席總人數 -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <!-- 出席人數 (readonly) -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">出席人數</label>
-              <UInput :value="selectedMeeting?.attendees" readonly class="bg-gray-50" />
+              <UInput v-model="attendees" readonly class="bg-gray-50" />
             </div>
 
-            <!-- 納入計算總人數 (readonly) -->
+            <!-- 納入計算總人數 (readonly) with checkbox -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">納入計算總人數</label>
-              <UInput :value="selectedMeeting?.totalCountedAttendees" readonly class="bg-gray-50" />
+              <div class="space-y-2">
+                <UInput v-model="totalCountedAttendees" readonly class="bg-gray-50" />
+                <div class="flex items-center">
+                  <input
+                    v-model="excludeOwnerFromCount"
+                    type="checkbox"
+                    id="excludeOwner"
+                    class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                  />
+                  <label for="excludeOwner" class="ml-2 text-sm text-gray-600">
+                    排除所有權人不列計
+                  </label>
+                </div>
+              </div>
             </div>
 
             <!-- 列席總人數 -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">列席總人數</label>
-              <UInput v-model="totalObservers" type="number" />
+              <UInput v-model="totalObservers" readonly class="bg-gray-50" />
             </div>
           </div>
+
+          <!-- 其他欄位 -->
+          <!-- <div class="grid grid-cols-1 md:grid-cols-2 gap-6"> -->
 
           <!-- Meeting Ratios and Areas -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -160,24 +195,16 @@
                   <thead class="bg-gray-50 sticky top-0">
                     <tr>
                       <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">姓名</th>
-                      <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">職稱</th>
-                      <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">聯絡電話</th>
-                      <th class="px-4 py-2 text-center text-sm font-medium text-gray-700">操作</th>
+                      <th class="px-4 py-2 text-center text-sm font-medium text-gray-700 w-24">操作</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-if="observers.length === 0">
-                      <td colspan="4" class="px-4 py-8 text-center text-gray-500">暫無列席者資料</td>
+                      <td colspan="2" class="px-4 py-8 text-center text-gray-500">暫無列席者資料</td>
                     </tr>
                     <tr v-for="(observer, index) in observers" :key="index" class="border-b border-gray-100">
                       <td class="px-4 py-2">
-                        <UInput v-model="observer.name" size="sm" />
-                      </td>
-                      <td class="px-4 py-2">
-                        <UInput v-model="observer.title" size="sm" />
-                      </td>
-                      <td class="px-4 py-2">
-                        <UInput v-model="observer.phone" size="sm" />
+                        <UInput v-model="observer.name" size="sm" placeholder="請輸入姓名" />
                       </td>
                       <td class="px-4 py-2 text-center">
                         <UButton color="red" size="xs" @click="removeObserver(index)">刪除</UButton>
@@ -279,7 +306,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, navigateTo } from '#app'
 
 definePageMeta({
@@ -292,6 +319,7 @@ const meetingId = route.params.meetingId
 
 // API composables
 const { getMeeting, createMeeting, updateMeeting } = useMeetings()
+const { getUrbanRenewals } = useUrbanRenewal()
 const { showSuccess, showError } = useSweetAlert()
 
 // Loading state
@@ -300,12 +328,37 @@ const isLoading = ref(false)
 // Get meeting data (this would typically come from an API)
 const selectedMeeting = ref(null)
 
+// Urban renewal options
+const urbanRenewalOptions = ref([])
+const selectedUrbanRenewal = ref(null)
+
+// Meeting type options
+const meetingTypeOptions = ref(['會員大會', '理監事會', '公聽會'])
+const meetingType = ref('會員大會')
+
+// Attendance fields
+const attendees = ref(0)
+const baseAttendees = ref(0) // 原始所有權人數
+const excludeOwnerFromCount = ref(false)
+
+// Computed: 納入計算總人數（根據勾選狀態）
+const totalCountedAttendees = computed(() => {
+  if (excludeOwnerFromCount.value) {
+    return Math.max(0, baseAttendees.value - 1)
+  }
+  return baseAttendees.value
+})
+
+// Computed: 列席總人數（自動計算有名字的列席者）
+const totalObservers = computed(() => {
+  return observers.value.filter(observer => observer.name && observer.name.trim() !== '').length
+})
+
 // Basic info form fields
 const renewalGroup = ref('')
 const meetingName = ref('')
 const meetingDateTime = ref('')
 const meetingLocation = ref('')
-const totalObservers = ref(0)
 const landAreaRatioNumerator = ref(0)
 const landAreaRatioDenominator = ref(0)
 const totalLandArea = ref(0)
@@ -361,6 +414,28 @@ const meetings = [
 ]
 
 onMounted(async () => {
+  // Load urban renewal options (request all items without pagination)
+  const urbanRenewalResponse = await getUrbanRenewals({ per_page: 9999 })
+  console.log('[Basic Info] API Response:', urbanRenewalResponse)
+
+  if (urbanRenewalResponse.success && urbanRenewalResponse.data) {
+    // Backend returns: { status, message, data: [...], pagination }
+    const renewals = urbanRenewalResponse.data.data || urbanRenewalResponse.data
+    console.log('[Basic Info] Renewals array:', renewals)
+    console.log('[Basic Info] First renewal:', renewals[0])
+
+    urbanRenewalOptions.value = renewals.map(renewal => ({
+      label: renewal.name,
+      value: renewal.id,
+      name: renewal.name,
+      address: renewal.address,
+      member_count: renewal.member_count,
+      chairman_name: renewal.chairman_name,
+      chairman_phone: renewal.chairman_phone
+    }))
+    console.log('[Basic Info] Urban renewals loaded:', urbanRenewalOptions.value)
+  }
+
   if (meetingId === 'new') {
     // Creating new meeting
     selectedMeeting.value = null
@@ -381,9 +456,18 @@ onMounted(async () => {
 
       // Initialize form fields with existing data
       renewalGroup.value = meeting.renewal_group || meeting.renewalGroup || ''
-      meetingDateTime.value = meeting.meeting_datetime || meeting.meetingDateTime || ''
+
+      // 組合 meeting_date 和 meeting_time 為 meeting_datetime (符合 datetime-local 格式)
+      if (meeting.meeting_date && meeting.meeting_time) {
+        // meeting_time 格式可能是 "HH:MM:SS" 或 "HH:MM",取前 5 個字元 "HH:MM"
+        const timeStr = meeting.meeting_time.substring(0, 5)
+        meetingDateTime.value = `${meeting.meeting_date}T${timeStr}`
+      } else {
+        meetingDateTime.value = ''
+      }
+
       meetingLocation.value = meeting.meeting_location || meeting.meetingLocation || meeting.location || ''
-      totalObservers.value = meeting.total_observers || meeting.totalObservers || 0
+      // totalObservers 現在是 computed property，會自動計算
 
       // Load ratio and area data
       landAreaRatioNumerator.value = meeting.land_area_ratio_numerator || 0
@@ -396,12 +480,10 @@ onMounted(async () => {
       peopleRatioDenominator.value = meeting.people_ratio_denominator || 0
       totalPeopleCount.value = meeting.total_people_count || 0
 
-      // Load observers
+      // Load observers (只載入 name 欄位)
       if (meeting.observers && Array.isArray(meeting.observers)) {
         observers.value = meeting.observers.map(o => ({
-          name: o.name || '',
-          title: o.title || '',
-          phone: o.phone || ''
+          name: o.name || ''
         }))
       }
 
@@ -429,20 +511,54 @@ onMounted(async () => {
       // Use fallback mock data if API fails
       selectedMeeting.value = meetings.find(m => m.id === meetingId)
       if (selectedMeeting.value) {
-        meetingDateTime.value = `${selectedMeeting.value.date} ${selectedMeeting.value.time}`
+        // 組合日期和時間為 datetime-local 格式
+        meetingDateTime.value = `${selectedMeeting.value.date}T${selectedMeeting.value.time}`
         meetingLocation.value = selectedMeeting.value.location || ''
-        totalObservers.value = selectedMeeting.value.totalObservers || 0
+        // totalObservers 會由 computed property 自動計算
       }
     }
+  }
+})
+
+// Watch for urban renewal selection changes
+watch(selectedUrbanRenewal, (newValue) => {
+  if (newValue && !selectedMeeting.value) {
+    console.log('[Basic Info] Urban renewal selected:', newValue)
+    console.log('[Basic Info] Address:', newValue.address)
+    console.log('[Basic Info] Member count:', newValue.member_count)
+    console.log('[Basic Info] Chairman name:', newValue.chairman_name)
+
+    // 自動帶入開會地址
+    meetingLocation.value = newValue.address || ''
+
+    // 自動帶入所有權人數
+    const memberCount = newValue.member_count || 0
+    attendees.value = memberCount
+    baseAttendees.value = memberCount
+
+    // 自動帶入理事長姓名
+    chairmanName.value = newValue.chairman_name || ''
+
+    console.log('[Basic Info] Auto-filled data:', {
+      address: meetingLocation.value,
+      memberCount: memberCount,
+      attendees: attendees.value,
+      baseAttendees: baseAttendees.value,
+      chairmanName: chairmanName.value
+    })
   }
 })
 
 const resetFormFields = () => {
   renewalGroup.value = ''
   meetingName.value = ''
+  meetingType.value = '會員大會'
   meetingDateTime.value = ''
   meetingLocation.value = ''
-  totalObservers.value = 0
+  attendees.value = 0
+  baseAttendees.value = 0
+  excludeOwnerFromCount.value = false
+  // totalObservers 由 computed property 自動計算
   landAreaRatioNumerator.value = 0
   landAreaRatioDenominator.value = 0
   totalLandArea.value = 0
@@ -467,9 +583,7 @@ const resetFormFields = () => {
 // Observer management functions
 const addObserver = () => {
   observers.value.push({
-    name: '',
-    title: '',
-    phone: ''
+    name: ''
   })
 }
 
@@ -510,11 +624,14 @@ const exportMeetingNotice = () => {
 
 // Fill test data function
 const fillMeetingTestData = () => {
-  renewalGroup.value = '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會'
+  // Select first urban renewal if available
+  // (理事長姓名、開會地址、所有權人數會由 watch 自動帶入)
+  if (urbanRenewalOptions.value.length > 0) {
+    selectedUrbanRenewal.value = urbanRenewalOptions.value[0]
+  }
   meetingName.value = '114年度第一屆第3次會員大會'
-  meetingDateTime.value = '2025年12月15日 下午2:00:00'
-  meetingLocation.value = '台北市南港區玉成街1號'
-  totalObservers.value = 5
+  meetingDateTime.value = '2025-12-15T14:00'
+  // totalObservers 由 computed property 自動計算（根據 observers 陣列）
   landAreaRatioNumerator.value = 3
   landAreaRatioDenominator.value = 4
   totalLandArea.value = 1500
@@ -526,15 +643,16 @@ const fillMeetingTestData = () => {
   totalPeopleCount.value = 75
 
   observers.value = [
-    { name: '張三', title: '市政府代表', phone: '02-1234-5678' },
-    { name: '李四', title: '建築師', phone: '02-2345-6789' }
+    { name: '張三' },
+    { name: '李四' },
+    { name: '王五' }
   ]
 
   noticeDocNumber.value = '北市都更'
   noticeWordNumber.value = '字第'
   noticeMidNumber.value = '1140001'
   noticeEndNumber.value = '號'
-  chairmanName.value = '王理事長'
+  // chairmanName 由 watch 自動帶入,不在此處設定
   contactName.value = '陳小明'
   contactPhone.value = '02-3456-7890'
   attachments.value = '會議議程、投票單'
@@ -556,9 +674,22 @@ const saveBasicInfo = async () => {
   isLoading.value = true
 
   try {
+    // 拆分 meeting_datetime 為 meeting_date 和 meeting_time
+    let meetingDate = ''
+    let meetingTime = ''
+    if (meetingDateTime.value) {
+      const [date, time] = meetingDateTime.value.split('T')
+      meetingDate = date || ''
+      meetingTime = time || '00:00'
+    }
+
     const formData = {
-      meeting_datetime: meetingDateTime.value,
+      meeting_date: meetingDate,
+      meeting_time: meetingTime,
       meeting_location: meetingLocation.value,
+      attendees: parseInt(attendees.value) || 0,
+      total_counted_attendees: parseInt(totalCountedAttendees.value) || 0,
+      exclude_owner_from_count: excludeOwnerFromCount.value,
       total_observers: parseInt(totalObservers.value) || 0,
       land_area_ratio_numerator: parseInt(landAreaRatioNumerator.value) || 0,
       land_area_ratio_denominator: parseInt(landAreaRatioDenominator.value) || 0,
@@ -589,9 +720,16 @@ const saveBasicInfo = async () => {
       response = await updateMeeting(meetingId, formData)
     } else {
       // Creating new meeting
-      formData.renewal_group = renewalGroup.value
+      if (selectedUrbanRenewal.value) {
+        // selectedUrbanRenewal is now the full object: { label, value, name, address, member_count }
+        formData.urban_renewal_id = selectedUrbanRenewal.value.value || selectedUrbanRenewal.value.id
+        formData.renewal_group = selectedUrbanRenewal.value.name || selectedUrbanRenewal.value.label
+        console.log('[Basic Info] Selected urban renewal:', selectedUrbanRenewal.value)
+        console.log('[Basic Info] urban_renewal_id:', formData.urban_renewal_id)
+        console.log('[Basic Info] renewal_group:', formData.renewal_group)
+      }
       formData.meeting_name = meetingName.value
-      formData.meeting_type = '會員大會'
+      formData.meeting_type = meetingType.value
       console.log('[Basic Info] Creating new meeting:', formData)
       response = await createMeeting(formData)
     }
