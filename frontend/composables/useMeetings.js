@@ -79,34 +79,20 @@ export const useMeetings = () => {
    */
   const exportMeetingNotice = async (id) => {
     try {
-      // Use relative path to go through Nuxt devProxy in development
-      // This ensures the request goes through the proxy configured in nuxt.config.ts
-      const apiUrl = '/api'
+      const config = useRuntimeConfig()
+      const { getAuthToken } = useApi()
 
-      // Get auth token from Pinia store (same logic as useApi)
-      let token = null
-      if (process.client) {
-        try {
-          const authStore = useAuthStore()
-          token = authStore.token
-          console.log('[Export] Token from authStore:', token ? 'Token exists' : 'No token')
-        } catch (error) {
-          console.warn('[Export] Could not access auth store, falling back to sessionStorage', error)
-          // Fallback to sessionStorage if store not initialized
-          const persistedAuth = sessionStorage.getItem('auth')
-          if (persistedAuth) {
-            try {
-              const authData = JSON.parse(persistedAuth)
-              token = authData.token || null
-              console.log('[Export] Token from sessionStorage:', token ? 'Token exists' : 'No token')
-            } catch (e) {
-              console.error('[Export] Failed to parse auth from sessionStorage:', e)
-            }
-          }
-        }
-      }
+      // 使用 runtimeConfig 取得正確的後端 URL
+      const backendUrl = config.public.backendUrl ||
+                        config.public.apiBaseUrl?.replace('/api', '') ||
+                        `http://localhost:${config.public.backendPort || 9228}`
 
-      console.log('[Export] Final token status:', token ? 'Has token' : 'No token')
+      console.log('[Export] Using backend URL:', backendUrl)
+
+      // 使用 useApi 的 getAuthToken 方法取得 token
+      const token = getAuthToken()
+      console.log('[Export] Token status:', token ? 'Token exists' : 'No token')
+
       if (!token) {
         console.error('[Export] No authentication token found')
         return {
@@ -115,8 +101,8 @@ export const useMeetings = () => {
         }
       }
 
-      // Make request to download file
-      const response = await fetch(`${apiUrl}/meetings/${id}/export-notice`, {
+      // 使用完整的後端 URL 發送請求
+      const response = await fetch(`${backendUrl}/api/meetings/${id}/export-notice`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
