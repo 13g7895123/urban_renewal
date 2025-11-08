@@ -800,26 +800,45 @@ class PropertyOwnerController extends ResourceController
             $db = \Config\Database::connect();
             $db->transStart();
 
+            log_message('info', "Deleting property owner ID: $id");
+
             // Delete ownership relationships
             $buildingOwnerships = $this->ownerBuildingModel->getByPropertyOwnerId($id);
+            log_message('info', "Found " . count($buildingOwnerships) . " building ownerships to delete");
             foreach ($buildingOwnerships as $ownership) {
-                $this->ownerBuildingModel->delete($ownership['id']);
+                $result = $this->ownerBuildingModel->delete($ownership['id']);
+                log_message('info', "Deleted building ownership {$ownership['id']}: " . ($result ? 'success' : 'failed'));
             }
 
             $landOwnerships = $this->ownerLandModel->getByPropertyOwnerId($id);
+            log_message('info', "Found " . count($landOwnerships) . " land ownerships to delete");
             foreach ($landOwnerships as $ownership) {
-                $this->ownerLandModel->delete($ownership['id']);
+                $result = $this->ownerLandModel->delete($ownership['id']);
+                log_message('info', "Deleted land ownership {$ownership['id']}: " . ($result ? 'success' : 'failed'));
             }
 
             // Delete property owner
             $deleted = $this->propertyOwnerModel->delete($id);
+            log_message('info', "Delete property owner result: " . var_export($deleted, true));
 
             $db->transComplete();
 
-            if ($db->transStatus() === false || !$deleted) {
+            $transStatus = $db->transStatus();
+            log_message('info', "Transaction status: " . ($transStatus === false ? 'FAILED' : 'SUCCESS'));
+
+            if ($transStatus === false) {
+                log_message('error', "Transaction failed when deleting property owner ID: $id");
                 return $this->respond([
                     'status' => 'error',
-                    'message' => 'Failed to delete property owner'
+                    'message' => 'Failed to delete property owner: transaction failed'
+                ], 500);
+            }
+
+            if ($deleted === false) {
+                log_message('error', "Model delete returned false for property owner ID: $id");
+                return $this->respond([
+                    'status' => 'error',
+                    'message' => 'Failed to delete property owner: delete returned false'
                 ], 500);
             }
 
@@ -830,9 +849,10 @@ class PropertyOwnerController extends ResourceController
 
         } catch (\Exception $e) {
             log_message('error', 'Error deleting property owner: ' . $e->getMessage());
+            log_message('error', 'Stack trace: ' . $e->getTraceAsString());
             return $this->respond([
                 'status' => 'error',
-                'message' => 'Failed to delete property owner'
+                'message' => 'Failed to delete property owner: ' . $e->getMessage()
             ], 500);
         }
     }
