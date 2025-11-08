@@ -379,10 +379,18 @@ const fetchCompanyManagers = async () => {
   try {
     const response = await get('/urban-renewals/company-managers')
 
+    console.log('Company managers response:', response)
+
     if (response.success && response.data.status === 'success') {
       companyManagers.value = response.data.data || []
+      console.log('Company managers loaded:', companyManagers.value)
     } else {
       console.error('Failed to fetch company managers:', response)
+      // 嘗試直接使用 response.data.data
+      if (response.data && response.data.data) {
+        companyManagers.value = response.data.data
+        console.log('Company managers loaded (fallback):', companyManagers.value)
+      }
     }
   } catch (err) {
     console.error('Fetch company managers error:', err)

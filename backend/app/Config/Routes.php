@@ -78,6 +78,8 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         $routes->get('(:num)/property-owners', 'PropertyOwnerController::getByUrbanRenewal/$1'); // GET /api/urban-renewals/{id}/property-owners
 
         // Handle OPTIONS for specific routes
+        $routes->options('batch-assign', 'UrbanRenewalController::options');
+        $routes->options('company-managers', 'UrbanRenewalController::options');
         $routes->options('/', 'UrbanRenewalController::options');
         $routes->options('(:num)', 'UrbanRenewalController::options');
         $routes->options('(:num)/land-plots', 'LandPlotController::options');

@@ -27,14 +27,6 @@
           </button>
         </div>
 
-        <!-- 說明文字 -->
-        <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-          <p class="text-sm text-blue-800">
-            <Icon name="heroicons:information-circle" class="w-5 h-5 inline mr-1" />
-            請為每個更新會選擇負責的企業管理者。未分配的更新會將保持未分配狀態。
-          </p>
-        </div>
-
         <!-- 更新會列表 -->
         <div class="max-h-96 overflow-y-auto">
           <table class="min-w-full divide-y divide-gray-200">
@@ -55,6 +47,12 @@
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
+              <!-- Debug 資訊 -->
+              <tr v-if="companyManagers.length === 0" class="bg-yellow-50">
+                <td colspan="4" class="px-4 py-3 text-sm text-yellow-800">
+                  警告：沒有可用的企業管理者（共 {{ companyManagers.length }} 位）
+                </td>
+              </tr>
               <tr v-for="renewal in urbanRenewals" :key="renewal.id" class="hover:bg-gray-50">
                 <td class="px-4 py-3 text-sm font-medium text-gray-900">
                   {{ renewal.name }}
@@ -136,6 +134,11 @@ const props = defineProps({
     required: true
   }
 })
+
+// Debug: 監控 props 變化
+watch(() => props.companyManagers, (newVal) => {
+  console.log('Company managers in modal:', newVal)
+}, { immediate: true })
 
 const emit = defineEmits(['close', 'submit'])
 
