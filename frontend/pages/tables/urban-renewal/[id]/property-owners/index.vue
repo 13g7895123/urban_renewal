@@ -374,7 +374,10 @@ const importOwners = async () => {
 
   fileInput.onchange = async (e) => {
     const file = e.target.files[0]
-    if (!file) return
+    if (!file) {
+      console.log('[Import] 使用者取消選擇檔案')
+      return
+    }
 
     // Validate file type
     const extension = file.name.split('.').pop().toLowerCase()
@@ -383,9 +386,17 @@ const importOwners = async () => {
       return
     }
 
+    // Validate file size (10MB limit)
+    const maxSizeInBytes = 10 * 1024 * 1024 // 10MB
+    if (file.size > maxSizeInBytes) {
+      showError('檔案太大', `檔案大小不能超過 10MB，目前檔案大小為 ${(file.size / 1024 / 1024).toFixed(2)}MB`)
+      return
+    }
+
     try {
       // Show loading
       showLoading('匯入中...', '正在驗證並匯入資料，請稍候...')
+      console.log('[Import] 開始上傳檔案:', file.name, `大小: ${(file.size / 1024).toFixed(2)}KB`)
 
       const isDev = process.dev || process.env.NODE_ENV === 'development'
       // Create form data
@@ -397,29 +408,40 @@ const importOwners = async () => {
 
       console.log('[Import] Response:', response)
 
-      if (response.status === 'success') {
-        let message = response.message || '匯入完成'
+      // Close loading first
+      close()
+
+      // Check if API call was successful
+      if (!response.success) {
+        // API call failed (network error, HTTP error status, etc.)
+        showError(
+          '匯入失敗',
+          response.error?.message || '匯入失敗，請稍後再試'
+        )
+        return
+      }
+
+      // API call succeeded, check backend response status
+      if (response.data?.status === 'success') {
+        let message = response.data.message || '匯入完成'
 
         // Show errors if any
-        if (response.data?.errors && response.data.errors.length > 0) {
+        if (response.data?.data?.errors && response.data.data.errors.length > 0) {
           message += '<br><br><div class="text-left"><strong>錯誤訊息：</strong><br><ul class="list-disc list-inside mt-2">'
-          response.data.errors.slice(0, 10).forEach(error => {
+          response.data.data.errors.slice(0, 10).forEach(error => {
             message += `<li class="text-sm text-red-600">${error}</li>`
           })
           message += '</ul>'
-          if (response.data.errors.length > 10) {
-            message += `<p class="text-sm text-gray-600 mt-2">...以及其他 ${response.data.errors.length - 10} 個錯誤</p>`
+          if (response.data.data.errors.length > 10) {
+            message += `<p class="text-sm text-gray-600 mt-2">...以及其他 ${response.data.data.errors.length - 10} 個錯誤</p>`
           }
           message += '</div>'
         }
 
-        // Close loading and show result
-        close()
-
         await showCustom({
           title: '匯入完成！',
           html: message,
-          icon: response.data?.error_count > 0 ? 'warning' : 'success',
+          icon: response.data?.data?.error_count > 0 ? 'warning' : 'success',
           timer: null, // Don't auto-close for detailed results
           showConfirmButton: true,
           confirmButtonText: '關閉',
@@ -432,11 +454,16 @@ const importOwners = async () => {
         // Refresh the list
         await fetchPropertyOwners()
       } else {
-        throw new Error(response.message || '匯入失敗')
+        // Backend returned error status
+        showError(
+          '匯入失敗',
+          response.data?.message || '匯入失敗，請稍後再試'
+        )
       }
     } catch (err) {
       console.error('[Import] Error:', err)
-      showError('匯入失敗', err.data?.message || err.message || '匯入失敗，請稍後再試')
+      close()
+      showError('匯入失敗', err.message || '匯入失敗，請稍後再試')
     }
   }
 

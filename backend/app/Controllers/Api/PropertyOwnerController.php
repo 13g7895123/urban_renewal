@@ -1176,6 +1176,8 @@ class PropertyOwnerController extends ResourceController
                 }
 
                 // Check for duplicates within the import file
+                $shouldInsert = true; // Flag to determine if we should insert new record
+
                 if (!empty($data['owner_code'])) {
                     if (in_array($data['owner_code'], $seenOwnerCodes)) {
                         $errors[] = "第 {$rowNumber} 列：所有權人編號 '{$data['owner_code']}' 在匯入檔案中重複";
@@ -1184,21 +1186,63 @@ class PropertyOwnerController extends ResourceController
                     }
                     $seenOwnerCodes[] = $data['owner_code'];
 
-                    // Check if owner_code already exists in database
+                    // Check if owner_code already exists in database (including soft deleted)
                     $existing = $this->propertyOwnerModel
+                        ->withDeleted() // Include soft deleted records
                         ->where('owner_code', $data['owner_code'])
                         ->where('urban_renewal_id', $urbanRenewalId)
                         ->first();
 
                     if ($existing) {
-                        $errors[] = "第 {$rowNumber} 列：所有權人編號 '{$data['owner_code']}' 已存在於資料庫";
-                        $errorCount++;
-                        continue;
+                        // Check if the record is soft deleted
+                        // deleted_at can be null (not deleted) or a datetime string (soft deleted)
+                        $isDeleted = isset($existing['deleted_at']) && $existing['deleted_at'] !== null;
+
+                        // Log for debugging
+                        log_message('debug', "匯入檢查：owner_code='{$data['owner_code']}', deleted_at='" . ($existing['deleted_at'] ?? 'NULL') . "', isDeleted=" . ($isDeleted ? 'true' : 'false'));
+
+                        if ($isDeleted) {
+                            // Restore and update soft deleted record
+                            try {
+                                // Skip validation for restoring soft deleted records to avoid is_unique conflicts
+                                // Use set() to force update deleted_at field (not in allowedFields)
+                                $updateResult = $this->propertyOwnerModel
+                                    ->skipValidation(true)
+                                    ->set($data)
+                                    ->set('deleted_at', null)
+                                    ->update($existing['id']);
+
+                                if ($updateResult) {
+                                    $successCount++;
+                                    log_message('info', "匯入：恢復軟刪除的所有權人 ID={$existing['id']}, owner_code='{$data['owner_code']}'");
+                                } else {
+                                    // Get validation errors from model
+                                    $validationErrors = $this->propertyOwnerModel->errors();
+                                    $errorDetail = !empty($validationErrors) ? implode('、', $validationErrors) : '更新失敗';
+                                    $errors[] = "第 {$rowNumber} 列：匯入所有權人 '{$data['owner_code']}' 失敗 - {$errorDetail}";
+                                    $errorCount++;
+                                    log_message('error', "匯入錯誤：所有權人 '{$data['owner_code']}' 更新失敗 - {$errorDetail}");
+                                }
+                            } catch (\Exception $e) {
+                                $errors[] = "第 {$rowNumber} 列：匯入所有權人 '{$data['owner_code']}' 時發生錯誤 - {$e->getMessage()}";
+                                $errorCount++;
+                                log_message('error', "匯入錯誤：所有權人 '{$data['owner_code']}' 發生例外 - {$e->getMessage()}");
+                            }
+
+                            $shouldInsert = false;
+                            continue;
+                        } else {
+                            // Record exists and is not deleted - skip and report error
+                            $errors[] = "第 {$rowNumber} 列：所有權人編號 '{$data['owner_code']}' 已存在於資料庫";
+                            $errorCount++;
+                            $shouldInsert = false;
+                            continue;
+                        }
                     }
                 }
 
-                // Check for duplicate ID numbers within the import file
-                if (!empty($data['id_number'])) {
+                // Only check ID number if owner_code is empty (id_number is secondary check)
+                if ($shouldInsert && empty($data['owner_code']) && !empty($data['id_number'])) {
                     if (in_array($data['id_number'], $seenIdNumbers)) {
                         $errors[] = "第 {$rowNumber} 列：身分證字號 '{$data['id_number']}' 在匯入檔案中重複";
                         $errorCount++;
@@ -1206,17 +1250,64 @@ class PropertyOwnerController extends ResourceController
                     }
                     $seenIdNumbers[] = $data['id_number'];
 
-                    // Check if ID number already exists in database for this urban renewal
+                    // Check if ID number already exists in database for this urban renewal (including soft deleted)
                     $existing = $this->propertyOwnerModel
+                        ->withDeleted() // Include soft deleted records
                         ->where('id_number', $data['id_number'])
                         ->where('urban_renewal_id', $urbanRenewalId)
                         ->first();
 
                     if ($existing) {
-                        $errors[] = "第 {$rowNumber} 列：身分證字號 '{$data['id_number']}' 已存在於資料庫";
-                        $errorCount++;
-                        continue;
+                        // Check if the record is soft deleted
+                        // deleted_at can be null (not deleted) or a datetime string (soft deleted)
+                        $isDeleted = isset($existing['deleted_at']) && $existing['deleted_at'] !== null;
+
+                        // Log for debugging
+                        log_message('debug', "匯入檢查：id_number='{$data['id_number']}', deleted_at='" . ($existing['deleted_at'] ?? 'NULL') . "', isDeleted=" . ($isDeleted ? 'true' : 'false'));
+
+                        if ($isDeleted) {
+                            // Restore and update soft deleted record
+                            try {
+                                // Skip validation for restoring soft deleted records to avoid is_unique conflicts
+                                // Use set() to force update deleted_at field (not in allowedFields)
+                                $updateResult = $this->propertyOwnerModel
+                                    ->skipValidation(true)
+                                    ->set($data)
+                                    ->set('deleted_at', null)
+                                    ->update($existing['id']);
+
+                                if ($updateResult) {
+                                    $successCount++;
+                                    log_message('info', "匯入：恢復軟刪除的所有權人 ID={$existing['id']}, id_number='{$data['id_number']}'");
+                                } else {
+                                    // Get validation errors from model
+                                    $validationErrors = $this->propertyOwnerModel->errors();
+                                    $errorDetail = !empty($validationErrors) ? implode('、', $validationErrors) : '更新失敗';
+                                    $errors[] = "第 {$rowNumber} 列：匯入身分證字號 '{$data['id_number']}' 的所有權人失敗 - {$errorDetail}";
+                                    $errorCount++;
+                                    log_message('error', "匯入錯誤：身分證字號 '{$data['id_number']}' 更新失敗 - {$errorDetail}");
+                                }
+                            } catch (\Exception $e) {
+                                $errors[] = "第 {$rowNumber} 列：匯入身分證字號 '{$data['id_number']}' 的所有權人時發生錯誤 - {$e->getMessage()}";
+                                $errorCount++;
+                                log_message('error', "匯入錯誤：身分證字號 '{$data['id_number']}' 發生例外 - {$e->getMessage()}");
+                            }
+
+                            $shouldInsert = false;
+                            continue;
+                        } else {
+                            // Record exists and is not deleted - skip and report error
+                            $errors[] = "第 {$rowNumber} 列：身分證字號 '{$data['id_number']}' 已存在於資料庫";
+                            $errorCount++;
+                            $shouldInsert = false;
+                            continue;
+                        }
                     }
+                }
+
+                // Only insert if shouldInsert flag is true
+                if (!$shouldInsert) {
+                    continue;
                 }
 
                 try {

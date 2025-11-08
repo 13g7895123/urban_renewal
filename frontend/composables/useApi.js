@@ -116,12 +116,19 @@ export const useApi = () => {
    */
   const apiRequest = async (endpoint, options = {}) => {
     const authHeaders = getAuthHeaders()
-    
+
+    // 檢查 body 是否為 FormData,如果是則不設定 Content-Type
+    // 讓瀏覽器自動設定正確的 multipart/form-data boundary
+    const isFormData = options.body instanceof FormData
+
     const defaultOptions = {
       baseURL,
       headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        // 如果是 FormData,不設定 Content-Type
+        ...(isFormData ? {} : {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }),
         ...authHeaders,
         ...options.headers
       },
