@@ -20,7 +20,8 @@ class UrbanRenewalModel extends Model
         'chairman_name',
         'chairman_phone',
         'address',
-        'representative'
+        'representative',
+        'assigned_admin_id'
     ];
 
     protected $useTimestamps = true;
@@ -146,5 +147,51 @@ class UrbanRenewalModel extends Model
     {
         $companyModel = new \App\Models\CompanyModel();
         return $companyModel->where('urban_renewal_id', $urbanRenewalId)->first();
+    }
+
+    /**
+     * Batch assign admin to multiple urban renewals
+     * @param array $assignments Array of ['urban_renewal_id' => admin_id]
+     * @return bool
+     */
+    public function batchAssignAdmin($assignments)
+    {
+        $db = \Config\Database::connect();
+        $db->transStart();
+
+        try {
+            foreach ($assignments as $urbanRenewalId => $adminId) {
+                $this->update($urbanRenewalId, [
+                    'assigned_admin_id' => $adminId === '' || $adminId === null ? null : $adminId
+                ]);
+            }
+
+            $db->transComplete();
+            return $db->transStatus();
+        } catch (\Exception $e) {
+            $db->transRollback();
+            log_message('error', 'Batch assign admin failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Get urban renewals with assigned admin info
+     * @param int $page Page number
+     * @param int $perPage Items per page
+     * @param int|null $urbanRenewalId Filter by urban_renewal_id
+     * @return array
+     */
+    public function getUrbanRenewalsWithAdmin($page = 1, $perPage = 10, $urbanRenewalId = null)
+    {
+        $builder = $this->select('urban_renewals.*, users.full_name as assigned_admin_name, users.email as assigned_admin_email')
+                        ->join('users', 'users.id = urban_renewals.assigned_admin_id', 'left')
+                        ->orderBy('urban_renewals.created_at', 'DESC');
+
+        if ($urbanRenewalId !== null) {
+            $builder->where('urban_renewals.id', $urbanRenewalId);
+        }
+
+        return $builder->paginate($perPage, 'default', $page);
     }
 }

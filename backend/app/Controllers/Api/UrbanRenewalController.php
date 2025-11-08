@@ -378,4 +378,113 @@ class UrbanRenewalController extends BaseController
             ]);
         }
     }
+
+    /**
+     * Batch assign admins to urban renewals
+     * POST /api/urban-renewals/batch-assign
+     */
+    public function batchAssign()
+    {
+        try {
+            // 權限驗證：檢查用戶身份
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            if (!$user) {
+                return $this->response->setStatusCode(401)->setJSON([
+                    'status' => 'error',
+                    'message' => '未授權訪問'
+                ]);
+            }
+
+            // 只有系統管理員可以分配更新會
+            if ($user['role'] !== 'admin') {
+                return $this->response->setStatusCode(403)->setJSON([
+                    'status' => 'error',
+                    'message' => '權限不足，只有系統管理員可以分配更新會'
+                ]);
+            }
+
+            $data = $this->request->getJSON(true);
+
+            if (!isset($data['assignments']) || !is_array($data['assignments'])) {
+                return $this->response->setStatusCode(400)->setJSON([
+                    'status' => 'error',
+                    'message' => '請提供有效的分配資料'
+                ]);
+            }
+
+            // 驗證每個分配的管理者是否存在且為企業管理者
+            $userModel = new \App\Models\UserModel();
+            foreach ($data['assignments'] as $urbanRenewalId => $adminId) {
+                if ($adminId !== null && $adminId !== '') {
+                    $admin = $userModel->find($adminId);
+                    if (!$admin) {
+                        return $this->response->setStatusCode(400)->setJSON([
+                            'status' => 'error',
+                            'message' => "管理者 ID {$adminId} 不存在"
+                        ]);
+                    }
+                    if (!$admin['is_company_manager']) {
+                        return $this->response->setStatusCode(400)->setJSON([
+                            'status' => 'error',
+                            'message' => "使用者 {$admin['full_name']} 不是企業管理者"
+                        ]);
+                    }
+                }
+            }
+
+            $result = $this->urbanRenewalModel->batchAssignAdmin($data['assignments']);
+
+            if ($result) {
+                return $this->response->setJSON([
+                    'status' => 'success',
+                    'message' => '分配成功'
+                ]);
+            } else {
+                return $this->response->setStatusCode(500)->setJSON([
+                    'status' => 'error',
+                    'message' => '分配失敗'
+                ]);
+            }
+        } catch (\Exception $e) {
+            log_message('error', 'Batch assign error: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON([
+                'status' => 'error',
+                'message' => '分配失敗：' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Get company managers list
+     * GET /api/urban-renewals/company-managers
+     */
+    public function getCompanyManagers()
+    {
+        try {
+            // 權限驗證
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            if (!$user) {
+                return $this->response->setStatusCode(401)->setJSON([
+                    'status' => 'error',
+                    'message' => '未授權訪問'
+                ]);
+            }
+
+            $userModel = new \App\Models\UserModel();
+            $managers = $userModel->where('is_company_manager', 1)
+                                  ->where('is_active', 1)
+                                  ->orderBy('full_name', 'ASC')
+                                  ->findAll();
+
+            return $this->response->setJSON([
+                'status' => 'success',
+                'data' => $managers
+            ]);
+        } catch (\Exception $e) {
+            return $this->response->setStatusCode(500)->setJSON([
+                'status' => 'error',
+                'message' => '取得企業管理者列表失敗：' . $e->getMessage()
+            ]);
+        }
+    }
 }

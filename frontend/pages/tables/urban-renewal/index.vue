@@ -16,7 +16,7 @@
       <!-- Action Buttons -->
       <div class="flex justify-end gap-4 mb-6">
         <button
-          @click="allocateRenewal"
+          @click="openAssignAdminModal"
           class="inline-flex items-center px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors duration-200"
         >
           <Icon name="heroicons:users" class="w-5 h-5 mr-2" />
@@ -30,6 +30,15 @@
           新建更新會
         </button>
       </div>
+
+      <!-- Assign Admin Modal -->
+      <UrbanRenewalAssignAdminModal
+        :is-open="showAssignAdminModal"
+        :urban-renewals="renewals"
+        :company-managers="companyManagers"
+        @close="showAssignAdminModal = false"
+        @submit="handleAssignSubmit"
+      />
 
       <!-- Create Urban Renewal Modal -->
       <div v-if="showCreateModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
@@ -166,12 +175,13 @@
                 <th class="p-4 text-left text-sm font-medium text-green-600">所有權人數</th>
                 <th class="p-4 text-left text-sm font-medium text-green-600">理事長姓名</th>
                 <th class="p-4 text-left text-sm font-medium text-green-600">理事長電話</th>
+                <th class="p-4 text-left text-sm font-medium text-green-600">歸屬管理者</th>
                 <th class="p-4 text-center text-sm font-medium text-green-600">操作</th>
               </tr>
             </thead>
             <tbody>
               <tr v-if="loading">
-                <td colspan="6" class="p-8 text-center text-gray-500">
+                <td colspan="7" class="p-8 text-center text-gray-500">
                   <div class="flex items-center justify-center">
                     <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -182,7 +192,7 @@
                 </td>
               </tr>
               <tr v-else-if="renewals.length === 0">
-                <td colspan="6" class="p-8 text-center text-gray-500">
+                <td colspan="7" class="p-8 text-center text-gray-500">
                   暫無資料，請點擊「新建更新會」新增資料
                 </td>
               </tr>
@@ -192,6 +202,16 @@
                 <td class="p-4 text-sm text-gray-900 text-center">{{ renewal.member_count }}</td>
                 <td class="p-4 text-sm text-gray-900">{{ renewal.chairman_name }}</td>
                 <td class="p-4 text-sm text-gray-900">{{ renewal.chairman_phone }}</td>
+                <td class="p-4 text-sm">
+                  <span v-if="renewal.assigned_admin_name" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <Icon name="heroicons:user" class="w-3 h-3 mr-1" />
+                    {{ renewal.assigned_admin_name }}
+                  </span>
+                  <span v-else class="text-gray-400 text-xs">
+                    <Icon name="heroicons:minus-circle" class="w-4 h-4 inline mr-1" />
+                    未分配
+                  </span>
+                </td>
                 <td class="p-4 text-center">
                   <div class="flex justify-center gap-2 flex-wrap">
                     <button
@@ -286,6 +306,7 @@ const { $swal } = useNuxtApp()
 
 const pageSize = ref(10)
 const showCreateModal = ref(false)
+const showAssignAdminModal = ref(false)
 const loading = ref(false)
 const isSubmitting = ref(false)
 const error = ref('')
@@ -300,6 +321,7 @@ const formData = reactive({
 })
 
 const renewals = ref([])
+const companyManagers = ref([])
 const runtimeConfig = useRuntimeConfig()
 const router = useRouter()
 
@@ -352,10 +374,69 @@ const deleteUrbanRenewal = async (id) => {
   }
 }
 
+// Fetch company managers
+const fetchCompanyManagers = async () => {
+  try {
+    const response = await get('/urban-renewals/company-managers')
+
+    console.log('Company managers response:', response)
+
+    if (response.success && response.data.status === 'success') {
+      companyManagers.value = response.data.data || []
+      console.log('Company managers loaded:', companyManagers.value)
+    } else {
+      console.error('Failed to fetch company managers:', response)
+      // 嘗試直接使用 response.data.data
+      if (response.data && response.data.data) {
+        companyManagers.value = response.data.data
+        console.log('Company managers loaded (fallback):', companyManagers.value)
+      }
+    }
+  } catch (err) {
+    console.error('Fetch company managers error:', err)
+  }
+}
+
 // UI Functions
-const allocateRenewal = () => {
-  console.log('Allocating renewal meeting')
-  // TODO: Implement allocate functionality
+const openAssignAdminModal = async () => {
+  // 先載入企業管理者列表
+  await fetchCompanyManagers()
+  showAssignAdminModal.value = true
+}
+
+const handleAssignSubmit = async (assignments) => {
+  try {
+    const response = await post('/urban-renewals/batch-assign', {
+      assignments
+    })
+
+    if (response.success && response.data.status === 'success') {
+      await $swal.fire({
+        title: '分配成功',
+        text: '更新會已成功分配給企業管理者',
+        icon: 'success',
+        confirmButtonColor: '#22c55e'
+      })
+
+      showAssignAdminModal.value = false
+      await fetchRenewals() // 重新載入列表
+    } else {
+      await $swal.fire({
+        title: '分配失敗',
+        text: response.data?.message || '分配失敗，請稍後再試',
+        icon: 'error',
+        confirmButtonColor: '#ef4444'
+      })
+    }
+  } catch (err) {
+    console.error('Assign error:', err)
+    await $swal.fire({
+      title: '分配失敗',
+      text: err.message || '分配失敗，請稍後再試',
+      icon: 'error',
+      confirmButtonColor: '#ef4444'
+    })
+  }
 }
 
 const createRenewal = () => {

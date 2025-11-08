@@ -58,6 +58,10 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
 
     // Urban Renewals API
     $routes->group('urban-renewals', function ($routes) {
+        // Batch operations must come before single resource routes
+        $routes->post('batch-assign', 'UrbanRenewalController::batchAssign');     // POST /api/urban-renewals/batch-assign
+        $routes->get('company-managers', 'UrbanRenewalController::getCompanyManagers'); // GET /api/urban-renewals/company-managers
+
         $routes->get('/', 'UrbanRenewalController::index');           // GET /api/urban-renewals
         $routes->get('(:num)', 'UrbanRenewalController::show/$1');    // GET /api/urban-renewals/{id}
         $routes->post('/', 'UrbanRenewalController::create');         // POST /api/urban-renewals
@@ -74,6 +78,8 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         $routes->get('(:num)/property-owners', 'PropertyOwnerController::getByUrbanRenewal/$1'); // GET /api/urban-renewals/{id}/property-owners
 
         // Handle OPTIONS for specific routes
+        $routes->options('batch-assign', 'UrbanRenewalController::options');
+        $routes->options('company-managers', 'UrbanRenewalController::options');
         $routes->options('/', 'UrbanRenewalController::options');
         $routes->options('(:num)', 'UrbanRenewalController::options');
         $routes->options('(:num)/land-plots', 'LandPlotController::options');
