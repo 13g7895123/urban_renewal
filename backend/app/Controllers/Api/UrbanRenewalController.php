@@ -455,7 +455,7 @@ class UrbanRenewalController extends BaseController
     }
 
     /**
-     * Get company managers list
+     * Get company managers list grouped by urban_renewal_id
      * GET /api/urban-renewals/company-managers
      */
     public function getCompanyManagers()
@@ -473,12 +473,23 @@ class UrbanRenewalController extends BaseController
             $userModel = new \App\Models\UserModel();
             $managers = $userModel->where('is_company_manager', 1)
                                   ->where('is_active', 1)
+                                  ->where('urban_renewal_id IS NOT NULL')
                                   ->orderBy('full_name', 'ASC')
                                   ->findAll();
 
+            // 按 urban_renewal_id 分組
+            $groupedManagers = [];
+            foreach ($managers as $manager) {
+                $renewalId = $manager['urban_renewal_id'];
+                if (!isset($groupedManagers[$renewalId])) {
+                    $groupedManagers[$renewalId] = [];
+                }
+                $groupedManagers[$renewalId][] = $manager;
+            }
+
             return $this->response->setJSON([
                 'status' => 'success',
-                'data' => $managers
+                'data' => $groupedManagers
             ]);
         } catch (\Exception $e) {
             return $this->response->setStatusCode(500)->setJSON([
