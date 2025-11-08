@@ -40,8 +40,8 @@
           <div class="mb-6">
             <label class="block text-sm font-medium text-gray-700 mb-2">所屬更新會</label>
             <UInput
-              v-if="selectedMeeting"
-              :value="renewalGroup"
+              v-if="!!selectedMeeting"
+              :model-value="renewalGroup"
               readonly
               class="bg-gray-50"
             />
@@ -62,7 +62,7 @@
               <label class="block text-sm font-medium text-gray-700 mb-2">會議類型</label>
               <UInput
                 v-if="selectedMeeting"
-                :value="meetingType"
+                :model-value="meetingType"
                 readonly
                 class="bg-gray-50"
               />
@@ -317,7 +317,7 @@ definePageMeta({
 const route = useRoute()
 const meetingId = route.params.meetingId
 
-// API composables
+// API composables (Nuxt 3 auto-imports these, but explicit import for TypeScript)
 const { getMeeting, createMeeting, updateMeeting, exportMeetingNotice: exportMeetingNoticeApi } = useMeetings()
 const { getUrbanRenewals } = useUrbanRenewal()
 const { showSuccess, showError } = useSweetAlert()
@@ -332,8 +332,8 @@ const selectedMeeting = ref(null)
 const urbanRenewalOptions = ref([])
 const selectedUrbanRenewal = ref(null)
 
-// Meeting type options
-const meetingTypeOptions = ref(['會員大會', '理監事會', '公聽會'])
+// Meeting type options (與 API enum 一致)
+const meetingTypeOptions = ref(['會員大會', '理事會', '監事會', '臨時會議'])
 const meetingType = ref('會員大會')
 
 // Attendance fields
@@ -482,13 +482,6 @@ onMounted(async () => {
       console.log('[Basic Info] renewalGroup set to:', renewalGroup.value)
       console.log('[Basic Info] meetingType set to:', meetingType.value)
 
-      // Set selectedMeeting with normalized fields for display
-      selectedMeeting.value = {
-        ...meeting,
-        renewalGroup: renewalGroup.value,
-        meetingType: meetingType.value
-      }
-
       // 組合 meeting_date 和 meeting_time 為 meeting_datetime (符合 datetime-local 格式)
       if (meeting.meeting_date && meeting.meeting_time) {
         // meeting_time 格式可能是 "HH:MM:SS" 或 "HH:MM",取前 5 個字元 "HH:MM"
@@ -541,6 +534,14 @@ onMounted(async () => {
       }
 
       console.log('[Basic Info] Form initialized successfully')
+
+      // ⚠️ 重要：在所有欄位都載入完成後，最後才設定 selectedMeeting
+      // 這樣可以確保頁面切換到編輯模式時，所有資料都已經準備好
+      selectedMeeting.value = {
+        ...meeting,
+        renewalGroup: renewalGroup.value,
+        meetingType: meetingType.value
+      }
     } else {
       console.error('[Basic Info] Failed to load meeting:', response.error)
       showError('載入會議資料失敗', response.error?.message || '無法載入會議資料')
