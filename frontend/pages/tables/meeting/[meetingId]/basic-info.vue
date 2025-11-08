@@ -456,7 +456,16 @@ onMounted(async () => {
 
       // Initialize form fields with existing data
       renewalGroup.value = meeting.renewal_group || meeting.renewalGroup || ''
-      meetingDateTime.value = meeting.meeting_datetime || meeting.meetingDateTime || ''
+
+      // 組合 meeting_date 和 meeting_time 為 meeting_datetime (符合 datetime-local 格式)
+      if (meeting.meeting_date && meeting.meeting_time) {
+        // meeting_time 格式可能是 "HH:MM:SS" 或 "HH:MM",取前 5 個字元 "HH:MM"
+        const timeStr = meeting.meeting_time.substring(0, 5)
+        meetingDateTime.value = `${meeting.meeting_date}T${timeStr}`
+      } else {
+        meetingDateTime.value = ''
+      }
+
       meetingLocation.value = meeting.meeting_location || meeting.meetingLocation || meeting.location || ''
       // totalObservers 現在是 computed property，會自動計算
 
@@ -502,7 +511,8 @@ onMounted(async () => {
       // Use fallback mock data if API fails
       selectedMeeting.value = meetings.find(m => m.id === meetingId)
       if (selectedMeeting.value) {
-        meetingDateTime.value = `${selectedMeeting.value.date} ${selectedMeeting.value.time}`
+        // 組合日期和時間為 datetime-local 格式
+        meetingDateTime.value = `${selectedMeeting.value.date}T${selectedMeeting.value.time}`
         meetingLocation.value = selectedMeeting.value.location || ''
         // totalObservers 會由 computed property 自動計算
       }
@@ -664,8 +674,18 @@ const saveBasicInfo = async () => {
   isLoading.value = true
 
   try {
+    // 拆分 meeting_datetime 為 meeting_date 和 meeting_time
+    let meetingDate = ''
+    let meetingTime = ''
+    if (meetingDateTime.value) {
+      const [date, time] = meetingDateTime.value.split('T')
+      meetingDate = date || ''
+      meetingTime = time || '00:00'
+    }
+
     const formData = {
-      meeting_datetime: meetingDateTime.value,
+      meeting_date: meetingDate,
+      meeting_time: meetingTime,
       meeting_location: meetingLocation.value,
       attendees: parseInt(attendees.value) || 0,
       total_counted_attendees: parseInt(totalCountedAttendees.value) || 0,
