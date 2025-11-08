@@ -35,6 +35,7 @@
 
 ```bash
 ./create-company-manager.sh testmanager pass123
+./create-company-manager.sh t1101 Test1101!
 ```
 
 這會使用:
