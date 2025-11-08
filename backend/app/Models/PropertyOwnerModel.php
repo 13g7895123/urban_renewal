@@ -11,7 +11,7 @@ class PropertyOwnerModel extends Model
 
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
-    protected $useSoftDeletes = true;
+    protected $useSoftDeletes = false;
 
     protected $allowedFields = [
         'urban_renewal_id',
