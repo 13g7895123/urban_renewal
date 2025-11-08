@@ -79,14 +79,36 @@ export const useMeetings = () => {
    */
   const exportMeetingNotice = async (id) => {
     try {
-      const config = useRuntimeConfig()
-      // Use the same URL configuration as useApi
-      const baseUrl = config.public.apiBaseUrl || config.public.backendUrl || 'http://localhost:4002'
-      const apiUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`
+      // Use relative path to go through Nuxt devProxy in development
+      // This ensures the request goes through the proxy configured in nuxt.config.ts
+      const apiUrl = '/api'
 
-      // Get auth token
-      const token = localStorage.getItem('token')
+      // Get auth token from Pinia store (same logic as useApi)
+      let token = null
+      if (process.client) {
+        try {
+          const authStore = useAuthStore()
+          token = authStore.token
+          console.log('[Export] Token from authStore:', token ? 'Token exists' : 'No token')
+        } catch (error) {
+          console.warn('[Export] Could not access auth store, falling back to sessionStorage', error)
+          // Fallback to sessionStorage if store not initialized
+          const persistedAuth = sessionStorage.getItem('auth')
+          if (persistedAuth) {
+            try {
+              const authData = JSON.parse(persistedAuth)
+              token = authData.token || null
+              console.log('[Export] Token from sessionStorage:', token ? 'Token exists' : 'No token')
+            } catch (e) {
+              console.error('[Export] Failed to parse auth from sessionStorage:', e)
+            }
+          }
+        }
+      }
+
+      console.log('[Export] Final token status:', token ? 'Has token' : 'No token')
       if (!token) {
+        console.error('[Export] No authentication token found')
         return {
           success: false,
           error: { message: '請先登入' }
