@@ -2,7 +2,7 @@
 
 namespace App\Controllers\Api;
 
-use App\Controllers\BaseController;
+use CodeIgniter\RESTful\ResourceController;
 use App\Models\MeetingAttendanceModel;
 use App\Models\MeetingModel;
 use App\Models\PropertyOwnerModel;
@@ -10,7 +10,7 @@ use CodeIgniter\HTTP\ResponseInterface;
 use App\Traits\HasRbacPermissions;
 use App\Services\ExcelExportService;
 
-class MeetingAttendanceController extends BaseController
+class MeetingAttendanceController extends ResourceController
 {
     use HasRbacPermissions;
 
