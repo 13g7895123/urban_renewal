@@ -80,7 +80,9 @@ export const useMeetings = () => {
   const exportMeetingNotice = async (id) => {
     try {
       const config = useRuntimeConfig()
-      const apiUrl = config.public.apiUrl || 'http://localhost:4002'
+      // Use the same URL configuration as useApi
+      const baseUrl = config.public.apiBaseUrl || config.public.backendUrl || 'http://localhost:4002'
+      const apiUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`
 
       // Get auth token
       const token = localStorage.getItem('token')
