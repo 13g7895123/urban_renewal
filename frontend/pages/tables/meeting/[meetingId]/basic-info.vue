@@ -429,7 +429,9 @@ onMounted(async () => {
       value: renewal.id,
       name: renewal.name,
       address: renewal.address,
-      member_count: renewal.member_count
+      member_count: renewal.member_count,
+      chairman_name: renewal.chairman_name,
+      chairman_phone: renewal.chairman_phone
     }))
     console.log('[Basic Info] Urban renewals loaded:', urbanRenewalOptions.value)
   }
@@ -514,6 +516,7 @@ watch(selectedUrbanRenewal, (newValue) => {
     console.log('[Basic Info] Urban renewal selected:', newValue)
     console.log('[Basic Info] Address:', newValue.address)
     console.log('[Basic Info] Member count:', newValue.member_count)
+    console.log('[Basic Info] Chairman name:', newValue.chairman_name)
 
     // 自動帶入開會地址
     meetingLocation.value = newValue.address || ''
@@ -523,11 +526,15 @@ watch(selectedUrbanRenewal, (newValue) => {
     attendees.value = memberCount
     baseAttendees.value = memberCount
 
+    // 自動帶入理事長姓名
+    chairmanName.value = newValue.chairman_name || ''
+
     console.log('[Basic Info] Auto-filled data:', {
       address: meetingLocation.value,
       memberCount: memberCount,
       attendees: attendees.value,
-      baseAttendees: baseAttendees.value
+      baseAttendees: baseAttendees.value,
+      chairmanName: chairmanName.value
     })
   }
 })
@@ -608,12 +615,12 @@ const exportMeetingNotice = () => {
 // Fill test data function
 const fillMeetingTestData = () => {
   // Select first urban renewal if available
+  // (理事長姓名、開會地址、所有權人數會由 watch 自動帶入)
   if (urbanRenewalOptions.value.length > 0) {
     selectedUrbanRenewal.value = urbanRenewalOptions.value[0]
   }
   meetingName.value = '114年度第一屆第3次會員大會'
   meetingDateTime.value = '2025-12-15T14:00'
-  meetingLocation.value = '台北市南港區玉成街1號'
   // totalObservers 由 computed property 自動計算（根據 observers 陣列）
   landAreaRatioNumerator.value = 3
   landAreaRatioDenominator.value = 4
@@ -635,7 +642,7 @@ const fillMeetingTestData = () => {
   noticeWordNumber.value = '字第'
   noticeMidNumber.value = '1140001'
   noticeEndNumber.value = '號'
-  chairmanName.value = '王理事長'
+  // chairmanName 由 watch 自動帶入,不在此處設定
   contactName.value = '陳小明'
   contactPhone.value = '02-3456-7890'
   attachments.value = '會議議程、投票單'
