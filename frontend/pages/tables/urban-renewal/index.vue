@@ -321,7 +321,7 @@ const formData = reactive({
 })
 
 const renewals = ref([])
-const companyManagers = ref([])
+const companyManagers = ref({}) // 按 urban_renewal_id 分組的管理者
 const runtimeConfig = useRuntimeConfig()
 const router = useRouter()
 
@@ -374,7 +374,7 @@ const deleteUrbanRenewal = async (id) => {
   }
 }
 
-// Fetch company managers
+// Fetch company managers grouped by urban_renewal_id
 const fetchCompanyManagers = async () => {
   try {
     const response = await get('/urban-renewals/company-managers')
@@ -382,8 +382,9 @@ const fetchCompanyManagers = async () => {
     console.log('Company managers response:', response)
 
     if (response.success && response.data.status === 'success') {
-      companyManagers.value = response.data.data || []
-      console.log('Company managers loaded:', companyManagers.value)
+      // 後端返回的是按 urban_renewal_id 分組的物件
+      companyManagers.value = response.data.data || {}
+      console.log('Company managers loaded (grouped by renewal):', companyManagers.value)
     } else {
       console.error('Failed to fetch company managers:', response)
       // 嘗試直接使用 response.data.data

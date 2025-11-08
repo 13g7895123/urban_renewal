@@ -47,12 +47,6 @@
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-              <!-- Debug 資訊 -->
-              <tr v-if="companyManagers.length === 0" class="bg-yellow-50">
-                <td colspan="4" class="px-4 py-3 text-sm text-yellow-800">
-                  警告：沒有可用的企業管理者（共 {{ companyManagers.length }} 位）
-                </td>
-              </tr>
               <tr v-for="renewal in urbanRenewals" :key="renewal.id" class="hover:bg-gray-50">
                 <td class="px-4 py-3 text-sm font-medium text-gray-900">
                   {{ renewal.name }}
@@ -74,16 +68,20 @@
                   <select
                     v-model="assignments[renewal.id]"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    :disabled="!getManagersForRenewal(renewal.id) || getManagersForRenewal(renewal.id).length === 0"
                   >
                     <option value="">-- 未分配 --</option>
                     <option
-                      v-for="manager in companyManagers"
+                      v-for="manager in getManagersForRenewal(renewal.id)"
                       :key="manager.id"
                       :value="manager.id"
                     >
                       {{ manager.full_name }} ({{ manager.email }})
                     </option>
                   </select>
+                  <p v-if="!getManagersForRenewal(renewal.id) || getManagersForRenewal(renewal.id).length === 0" class="mt-1 text-xs text-gray-500">
+                    此更新會無可用管理者
+                  </p>
                 </td>
               </tr>
             </tbody>
@@ -130,20 +128,25 @@ const props = defineProps({
     required: true
   },
   companyManagers: {
-    type: Array,
+    type: Object, // 按 urban_renewal_id 分組的管理者物件
     required: true
   }
 })
 
 // Debug: 監控 props 變化
 watch(() => props.companyManagers, (newVal) => {
-  console.log('Company managers in modal:', newVal)
+  console.log('Company managers in modal (grouped):', newVal)
 }, { immediate: true })
 
 const emit = defineEmits(['close', 'submit'])
 
 const assignments = ref({})
 const isSubmitting = ref(false)
+
+// 根據更新會 ID 取得該更新會的管理者列表
+const getManagersForRenewal = (renewalId) => {
+  return props.companyManagers[renewalId] || []
+}
 
 // 當 Modal 打開時，初始化分配資料
 watch(() => props.isOpen, (newVal) => {
