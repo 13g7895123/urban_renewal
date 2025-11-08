@@ -249,7 +249,6 @@ class PropertyOwnerModel extends Model
     public function getByUrbanRenewalId(int $urbanRenewalId): array
     {
         return $this->where('urban_renewal_id', $urbanRenewalId)
-                    ->where('deleted_at', null)
                     ->orderBy('created_at', 'DESC')
                     ->findAll();
     }
