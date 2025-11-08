@@ -395,11 +395,17 @@ class UrbanRenewalController extends BaseController
                 ]);
             }
 
-            // 只有系統管理員可以分配更新會
-            if ($user['role'] !== 'admin') {
+            // 系統管理員和企業管理者都可以分配更新會
+            $isAdmin = isset($user['role']) && $user['role'] === 'admin';
+            $isCompanyManager = isset($user['is_company_manager']) &&
+                               ($user['is_company_manager'] === 1 ||
+                                $user['is_company_manager'] === '1' ||
+                                $user['is_company_manager'] === true);
+
+            if (!$isAdmin && !$isCompanyManager) {
                 return $this->response->setStatusCode(403)->setJSON([
                     'status' => 'error',
-                    'message' => '權限不足，只有系統管理員可以分配更新會'
+                    'message' => '權限不足，只有系統管理員或企業管理者可以分配更新會'
                 ]);
             }
 
@@ -410,6 +416,20 @@ class UrbanRenewalController extends BaseController
                     'status' => 'error',
                     'message' => '請提供有效的分配資料'
                 ]);
+            }
+
+            // 企業管理者只能分配自己所屬的更新會
+            if (!$isAdmin && $isCompanyManager) {
+                $userUrbanRenewalId = $user['urban_renewal_id'] ?? null;
+
+                foreach ($data['assignments'] as $urbanRenewalId => $adminId) {
+                    if ((int)$urbanRenewalId !== (int)$userUrbanRenewalId) {
+                        return $this->response->setStatusCode(403)->setJSON([
+                            'status' => 'error',
+                            'message' => '權限不足，您只能分配自己所屬的更新會'
+                        ]);
+                    }
+                }
             }
 
             // 驗證每個分配的管理者是否存在且為企業管理者
