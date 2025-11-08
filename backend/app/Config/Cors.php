@@ -40,7 +40,8 @@ class Cors extends BaseConfig
             'http://localhost:9228',  // Backend API port (for direct testing)
             'http://localhost:3000',  // Alternative frontend port
             'http://localhost:3001',  // Production environment port
-            'http://localhost:4001'   // Production environment port
+            'http://localhost:4001',   // Production environment port
+            'http://localhost:4002'   // Production environment port
         ],
 
         /**
