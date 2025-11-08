@@ -11,7 +11,7 @@ class OwnerLandOwnershipModel extends Model
 
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
-    protected $useSoftDeletes = true;
+    protected $useSoftDeletes = false;
 
     protected $allowedFields = [
         'property_owner_id',
@@ -97,7 +97,6 @@ class OwnerLandOwnershipModel extends Model
     public function getByPropertyOwnerId(int $propertyOwnerId): array
     {
         $result = $this->where('property_owner_id', $propertyOwnerId)
-                       ->where('deleted_at IS NULL')
                        ->findAll();
 
         return $result !== false ? $result : [];
@@ -109,7 +108,6 @@ class OwnerLandOwnershipModel extends Model
     public function getByLandPlotId(int $landPlotId): array
     {
         $result = $this->where('land_plot_id', $landPlotId)
-                       ->where('deleted_at IS NULL')
                        ->findAll();
 
         return $result !== false ? $result : [];
@@ -122,7 +120,6 @@ class OwnerLandOwnershipModel extends Model
     {
         $count = $this->where('property_owner_id', $propertyOwnerId)
                       ->where('land_plot_id', $landPlotId)
-                      ->where('deleted_at IS NULL')
                       ->countAllResults();
 
         return $count !== false && $count > 0;
@@ -136,14 +133,13 @@ class OwnerLandOwnershipModel extends Model
         // Log the data being processed
         log_message('info', 'Creating/updating land ownership: ' . json_encode($data, JSON_UNESCAPED_UNICODE));
 
-        // First check for active (non-deleted) records
+        // Check if record exists
         $existing = $this->where('property_owner_id', $data['property_owner_id'])
                          ->where('land_plot_id', $data['land_plot_id'])
-                         ->where('deleted_at IS NULL')
                          ->first();
 
         if ($existing) {
-            log_message('info', 'Existing active ownership found, updating: ' . json_encode($existing, JSON_UNESCAPED_UNICODE));
+            log_message('info', 'Existing ownership found, updating: ' . json_encode($existing, JSON_UNESCAPED_UNICODE));
 
             // Check if data actually needs updating
             $needsUpdate = false;
@@ -163,34 +159,16 @@ class OwnerLandOwnershipModel extends Model
                 return true; // Consider as success since data is already correct
             }
         } else {
-            // Check if there's a soft-deleted record we can restore
-            $softDeleted = $this->withDeleted()
-                                ->where('property_owner_id', $data['property_owner_id'])
-                                ->where('land_plot_id', $data['land_plot_id'])
-                                ->first();
+            log_message('info', 'Creating new ownership record');
+            $result = $this->insert($data);
+            log_message('info', 'Insert result: ' . ($result !== false ? 'success (ID: ' . $result . ')' : 'failed'));
 
-            if ($softDeleted && $softDeleted['deleted_at'] !== null) {
-                log_message('info', 'Found soft-deleted record, restoring and updating: ' . json_encode($softDeleted, JSON_UNESCAPED_UNICODE));
-                
-                // Restore the record first
-                $this->builder()->where('id', $softDeleted['id'])->update(['deleted_at' => null]);
-                
-                // Then update with new data
-                $result = $this->update($softDeleted['id'], $data);
-                log_message('info', 'Restore and update result: ' . ($result ? 'success' : 'failed'));
-                return $result;
-            } else {
-                log_message('info', 'Creating new ownership record');
-                $result = $this->insert($data);
-                log_message('info', 'Insert result: ' . ($result !== false ? 'success (ID: ' . $result . ')' : 'failed'));
-
-                if ($result === false) {
-                    $errors = $this->errors();
-                    log_message('error', 'Insert failed with errors: ' . json_encode($errors, JSON_UNESCAPED_UNICODE));
-                }
-
-                return $result !== false;
+            if ($result === false) {
+                $errors = $this->errors();
+                log_message('error', 'Insert failed with errors: ' . json_encode($errors, JSON_UNESCAPED_UNICODE));
             }
+
+            return $result !== false;
         }
     }
 }

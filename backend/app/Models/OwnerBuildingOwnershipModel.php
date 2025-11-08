@@ -11,7 +11,7 @@ class OwnerBuildingOwnershipModel extends Model
 
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
-    protected $useSoftDeletes = true;
+    protected $useSoftDeletes = false;
 
     protected $allowedFields = [
         'property_owner_id',
@@ -96,7 +96,6 @@ class OwnerBuildingOwnershipModel extends Model
     public function getByPropertyOwnerId(int $propertyOwnerId): array
     {
         $result = $this->where('property_owner_id', $propertyOwnerId)
-                       ->where('deleted_at IS NULL')
                        ->findAll();
 
         return $result !== false ? $result : [];
@@ -108,7 +107,6 @@ class OwnerBuildingOwnershipModel extends Model
     public function getByBuildingId(int $buildingId): array
     {
         $result = $this->where('building_id', $buildingId)
-                       ->where('deleted_at IS NULL')
                        ->findAll();
 
         return $result !== false ? $result : [];
@@ -121,7 +119,6 @@ class OwnerBuildingOwnershipModel extends Model
     {
         $count = $this->where('property_owner_id', $propertyOwnerId)
                       ->where('building_id', $buildingId)
-                      ->where('deleted_at IS NULL')
                       ->countAllResults();
 
         return $count !== false && $count > 0;
@@ -132,30 +129,15 @@ class OwnerBuildingOwnershipModel extends Model
      */
     public function createOrUpdate(array $data): bool
     {
-        // First check for active (non-deleted) records
+        // Check if record exists
         $existing = $this->where('property_owner_id', $data['property_owner_id'])
                          ->where('building_id', $data['building_id'])
-                         ->where('deleted_at IS NULL')
                          ->first();
 
         if ($existing) {
             return $this->update($existing['id'], $data);
         } else {
-            // Check if there's a soft-deleted record we can restore
-            $softDeleted = $this->withDeleted()
-                                ->where('property_owner_id', $data['property_owner_id'])
-                                ->where('building_id', $data['building_id'])
-                                ->first();
-
-            if ($softDeleted && $softDeleted['deleted_at'] !== null) {
-                // Restore the record first
-                $this->builder()->where('id', $softDeleted['id'])->update(['deleted_at' => null]);
-
-                // Then update with new data
-                return $this->update($softDeleted['id'], $data);
-            } else {
-                return $this->insert($data) !== false;
-            }
+            return $this->insert($data) !== false;
         }
     }
 }
