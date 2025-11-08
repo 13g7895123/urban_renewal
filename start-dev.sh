@@ -52,12 +52,55 @@ else
     exit 1
 fi
 
-# 檢查容器是否正在運行
+# 檢查容器是否存在（包含 running 和 stopped）
 echo "🔍 檢查現有容器狀態..."
-if $DOCKER_COMPOSE -f docker-compose.dev.yml ps --quiet 2>/dev/null | grep -q .; then
-    echo "⚠️  發現開發環境容器正在運行，先停止現有服務..."
+CONTAINER_NAMES=(
+    "urban_renewal_backend_dev"
+    "urban_renewal_db_dev"
+    "urban_renewal_phpmyadmin_dev"
+    "urban_renewal_cron_dev"
+)
+
+FOUND_CONTAINERS=false
+for container in "${CONTAINER_NAMES[@]}"; do
+    if docker ps -a --format '{{.Names}}' | grep -q "^${container}$"; then
+        FOUND_CONTAINERS=true
+        STATUS=$(docker inspect -f '{{.State.Status}}' "$container" 2>/dev/null)
+        echo "  ⚠️  發現容器: $container (狀態: $STATUS)"
+    fi
+done
+
+if [ "$FOUND_CONTAINERS" = true ]; then
+    echo ""
+    echo "📦 停止並移除現有容器..."
     $DOCKER_COMPOSE -f docker-compose.dev.yml --env-file .env down
-    echo "✅ 現有服務已停止"
+
+    # 額外檢查並強制移除任何殘留容器
+    for container in "${CONTAINER_NAMES[@]}"; do
+        if docker ps -a --format '{{.Names}}' | grep -q "^${container}$"; then
+            echo "  🗑️  強制移除殘留容器: $container"
+            docker rm -f "$container" 2>/dev/null || true
+        fi
+    done
+
+    echo "✅ 現有服務已停止並清理"
+    echo ""
+fi
+
+# 檢查 Port 是否被佔用
+echo "🔍 檢查 Port 可用性..."
+PORTS_IN_USE=false
+for port in "${BACKEND_PORT}" "${DB_PORT}" "${PHPMYADMIN_PORT}"; do
+    if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+        echo "  ⚠️  Port $port 已被使用"
+        PORTS_IN_USE=true
+    fi
+done
+
+if [ "$PORTS_IN_USE" = true ]; then
+    echo ""
+    echo "⚠️  警告：部分 Port 已被佔用，可能導致啟動失敗"
+    echo "提示：使用 'lsof -i :<port>' 查看佔用程序"
     echo ""
 fi
 
