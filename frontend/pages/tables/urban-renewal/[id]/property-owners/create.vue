@@ -240,47 +240,67 @@ const fillTestData = () => {
 
 // 填入地號測試資料
 const fillLandTestData = () => {
-  if (availablePlots.length > 0) {
-    const randomPlot = availablePlots[Math.floor(Math.random() * availablePlots.length)]
-    landForm.plot_number = randomPlot.landNumber || randomPlot.plot_number
-    landForm.total_area = (Math.random() * 1000 + 100).toFixed(2)
-    landForm.ownership_numerator = Math.floor(Math.random() * 10) + 1
-    landForm.ownership_denominator = Math.floor(Math.random() * 100) + 10
-    showSuccess('地號測試資料已填入', 'Modal 表單已自動填入測試資料')
+  if (availablePlots.length === 0) {
+    showSuccess('無可用地號', '請先新增地號到更新會')
+    return
   }
+
+  // Select random plot - use landNumber or plot_number to match the select value
+  const randomPlot = availablePlots[Math.floor(Math.random() * availablePlots.length)]
+  landForm.plot_number = randomPlot.landNumber || randomPlot.plot_number
+
+  // Random area and ownership
+  landForm.total_area = (Math.random() * 500 + 100).toFixed(2)
+  landForm.ownership_numerator = Math.floor(Math.random() * 10) + 1
+  landForm.ownership_denominator = Math.floor(Math.random() * 100) + 10
+
+  showSuccess('測試地號已填入', '地號表單已自動填入測試資料')
 }
 
 // 填入建號測試資料
-const fillBuildingTestData = () => {
-  if (counties.length > 0) {
-    const randomCounty = counties[Math.floor(Math.random() * counties.length)]
-    buildingForm.county = randomCounty.code
-    onBuildingCountyChange(randomCounty.code)
-
-    setTimeout(() => {
-      if (buildingDistricts.length > 0) {
-        const randomDistrict = buildingDistricts[Math.floor(Math.random() * buildingDistricts.length)]
-        buildingForm.district = randomDistrict.code
-        onBuildingDistrictChange(randomCounty.code, randomDistrict.code)
-
-        setTimeout(() => {
-          if (buildingSections.length > 0) {
-            const randomSection = buildingSections[Math.floor(Math.random() * buildingSections.length)]
-            buildingForm.section = randomSection.code
-          }
-        }, 100)
-      }
-    }, 100)
-
-    buildingForm.building_number_main = String(Math.floor(Math.random() * 99999) + 1).padStart(5, '0')
-    buildingForm.building_number_sub = String(Math.floor(Math.random() * 999)).padStart(3, '0')
-    buildingForm.building_area = (Math.random() * 500 + 50).toFixed(2)
-    buildingForm.ownership_numerator = Math.floor(Math.random() * 10) + 1
-    buildingForm.ownership_denominator = Math.floor(Math.random() * 100) + 10
-    buildingForm.building_address = `測試路${Math.floor(Math.random() * 999) + 1}號`
-
-    showSuccess('建號測試資料已填入', 'Modal 表單已自動填入測試資料')
+const fillBuildingTestData = async () => {
+  if (counties.length === 0) {
+    showSuccess('無可用縣市', '請稍後再試')
+    return
   }
+
+  // Select random county from available options
+  const randomCounty = counties[Math.floor(Math.random() * counties.length)]
+  buildingForm.county = randomCounty.code
+
+  // Fetch districts for selected county
+  await onBuildingCountyChange()
+
+  if (buildingDistricts.length === 0) {
+    showSuccess('無可用行政區', '該縣市沒有可用的行政區資料')
+    return
+  }
+
+  // Select random district
+  const randomDistrict = buildingDistricts[Math.floor(Math.random() * buildingDistricts.length)]
+  buildingForm.district = randomDistrict.code
+
+  // Fetch sections for selected district
+  await onBuildingDistrictChange()
+
+  if (buildingSections.length === 0) {
+    showSuccess('無可用段小段', '該行政區沒有可用的段小段資料')
+    return
+  }
+
+  // Select random section
+  const randomSection = buildingSections[Math.floor(Math.random() * buildingSections.length)]
+  buildingForm.section = randomSection.code
+
+  // Fill other fields
+  buildingForm.building_number_main = String(Math.floor(Math.random() * 9999) + 1).padStart(5, '0')
+  buildingForm.building_number_sub = String(Math.floor(Math.random() * 999)).padStart(3, '0')
+  buildingForm.building_area = (Math.random() * 200 + 50).toFixed(2)
+  buildingForm.ownership_numerator = Math.floor(Math.random() * 10) + 1
+  buildingForm.ownership_denominator = Math.floor(Math.random() * 100) + 10
+  buildingForm.building_address = `${randomCounty.name}${randomDistrict.name}測試路${Math.floor(Math.random() * 999) + 1}號`
+
+  showSuccess('測試建號已填入', '建號表單已自動填入測試資料')
 }
 
 // Initialize
