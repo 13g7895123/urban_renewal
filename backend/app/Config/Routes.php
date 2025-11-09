@@ -72,6 +72,7 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         $routes->get('(:num)/land-plots', 'LandPlotController::index/$1');        // GET /api/urban-renewals/{id}/land-plots
         $routes->post('(:num)/land-plots', 'LandPlotController::create/$1');      // POST /api/urban-renewals/{id}/land-plots
 
+        $routes->get('(:num)/property-owners/all-buildings', 'PropertyOwnerController::getAllBuildingsByUrbanRenewal/$1'); // GET /api/urban-renewals/{id}/property-owners/all-buildings
         // Property Owners nested routes (specific routes must come before general routes)
         $routes->get('(:num)/property-owners/export', 'PropertyOwnerController::export/$1'); // GET /api/urban-renewals/{id}/property-owners/export
         $routes->post('(:num)/property-owners/import', 'PropertyOwnerController::import/$1'); // POST /api/urban-renewals/{id}/property-owners/import
@@ -84,6 +85,7 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         $routes->options('(:num)', 'UrbanRenewalController::options');
         $routes->options('(:num)/land-plots', 'LandPlotController::options');
         $routes->options('(:num)/property-owners', 'PropertyOwnerController::options');
+        $routes->options('(:num)/property-owners/all-buildings', 'PropertyOwnerController::options');
         $routes->options('(:num)/property-owners/export', 'PropertyOwnerController::options');
         $routes->options('(:num)/property-owners/import', 'PropertyOwnerController::options');
     });

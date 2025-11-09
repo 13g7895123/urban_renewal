@@ -111,6 +111,111 @@ class PropertyOwnerController extends ResourceController
     }
 
     /**
+     * Get all buildings owned by all property owners in an urban renewal
+     */
+    public function getAllBuildingsByUrbanRenewal($urbanRenewalId): ResponseInterface
+    {
+        try {
+            if (!is_numeric($urbanRenewalId)) {
+                return $this->respond([
+                    'status' => 'error',
+                    'message' => 'Invalid urban renewal ID'
+                ], 400);
+            }
+
+            // 權限驗證：檢查用戶身份
+            $user = $_SERVER['AUTH_USER'] ?? null;
+
+            if (ENVIRONMENT !== 'production') {
+                log_message('debug', 'PropertyOwnerController::getAllBuildingsByUrbanRenewal - Request ID: ' . $urbanRenewalId);
+                log_message('debug', 'PropertyOwnerController::getAllBuildingsByUrbanRenewal - User: ' . json_encode($user));
+            }
+
+            if (!$user) {
+                log_message('error', 'PropertyOwnerController::getAllBuildingsByUrbanRenewal - No user found');
+                return $this->respond([
+                    'status' => 'error',
+                    'message' => '未授權：無法識別用戶身份'
+                ], 401);
+            }
+
+            // 系統管理員可以查看所有資料
+            $isAdmin = isset($user['role']) && $user['role'] === 'admin';
+
+            // 非管理員需要驗證權限
+            if (!$isAdmin) {
+                $isCompanyManager = isset($user['is_company_manager']) &&
+                                   ($user['is_company_manager'] === 1 ||
+                                    $user['is_company_manager'] === '1' ||
+                                    $user['is_company_manager'] === true);
+
+                if (!$isCompanyManager) {
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => '權限不足：您沒有查看建物資料的權限'
+                    ], 403);
+                }
+
+                $userUrbanRenewalId = $user['urban_renewal_id'] ?? null;
+                if (!$userUrbanRenewalId || (int)$userUrbanRenewalId !== (int)$urbanRenewalId) {
+                    return $this->respond([
+                        'status' => 'error',
+                        'message' => '權限不足：您無權存取其他企業的資料'
+                    ], 403);
+                }
+            }
+
+            // 查詢該都市更新會下所有所有權人
+            $propertyOwners = $this->propertyOwnerModel->getByUrbanRenewalId((int)$urbanRenewalId);
+
+            if (empty($propertyOwners)) {
+                return $this->respond([
+                    'status' => 'success',
+                    'data' => [],
+                    'message' => 'No property owners found'
+                ]);
+            }
+
+            // 收集所有建物資料，去重
+            $allBuildings = [];
+            $buildingIds = [];
+
+            foreach ($propertyOwners as $owner) {
+                if (isset($owner['buildings']) && is_array($owner['buildings'])) {
+                    foreach ($owner['buildings'] as $building) {
+                        $buildingId = $building['id'];
+
+                        // 去重：如果建物已經被收集過，就不重複加入
+                        if (!in_array($buildingId, $buildingIds)) {
+                            $buildingIds[] = $buildingId;
+                            $allBuildings[] = $building;
+                        }
+                    }
+                }
+            }
+
+            log_message('debug', 'PropertyOwnerController::getAllBuildingsByUrbanRenewal - Total buildings found: ' . count($allBuildings));
+
+            return $this->respond([
+                'status' => 'success',
+                'data' => $allBuildings,
+                'message' => 'Buildings retrieved successfully',
+                'meta' => [
+                    'total_buildings' => count($allBuildings),
+                    'urban_renewal_id' => (int)$urbanRenewalId
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Error fetching all buildings: ' . $e->getMessage());
+            return $this->respond([
+                'status' => 'error',
+                'message' => 'Failed to retrieve buildings'
+            ], 500);
+        }
+    }
+
+    /**
      * Get all property owners
      */
     public function index(): ResponseInterface

@@ -68,6 +68,10 @@ $section->addText('${urban_renewal_name}', $titleStyle, array_merge($centerParag
 // 2. 標題：開會通知單（置中）
 $section->addText('開會通知單', ['name' => '標楷體', 'size' => 18, 'bold' => true], array_merge($centerParagraph, ['spaceAfter' => 300]));
 
+// 2.5 受文者：出席人員清單
+$section->addText('受文者：', ['name' => '標楷體', 'size' => 14, 'bold' => true], array_merge($leftParagraph, ['spaceAfter' => 100]));
+$section->addText('${attendees}', $normalStyle, array_merge($leftParagraph, ['spaceAfter' => 300]));
+
 // 3. 發文字號
 $section->addText(
     '發文字號：${notice_doc_number}${notice_word_number}${notice_mid_number}${notice_end_number}',
@@ -165,6 +169,7 @@ try {
     echo "\n";
     echo "範本包含以下變數:\n";
     echo "  \${urban_renewal_name}     - 所屬更新會名稱\n";
+    echo "  \${attendees}              - 出席人員清單\n";
     echo "  \${notice_doc_number}      - 發文字號前綴\n";
     echo "  \${notice_word_number}     - 字第\n";
     echo "  \${notice_mid_number}      - 發文號碼\n";

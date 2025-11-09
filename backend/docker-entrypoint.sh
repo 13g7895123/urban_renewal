@@ -18,6 +18,15 @@ if [ -f .env ]; then
     fi
 fi
 
+# Install composer dependencies if needed
+echo "Checking composer dependencies..."
+if [ ! -d "vendor/phpoffice/phpword" ]; then
+    echo "Installing composer dependencies..."
+    composer install --no-interaction --optimize-autoloader
+else
+    echo "Composer dependencies already installed."
+fi
+
 echo "Waiting for database to be ready..."
 # Wait for database to be ready
 until php -r "new PDO('mysql:host=${DB_HOST};dbname=${DB_DATABASE}', '${DB_USERNAME}', '${DB_PASSWORD}');" &> /dev/null; do
