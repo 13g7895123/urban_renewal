@@ -72,3 +72,7 @@ frontend/playwright-report/
 frontend/test-results/
 playwright-report/
 test-results/
+
+# Worktrees and exports
+worktree/
+backend/writable/exports/
