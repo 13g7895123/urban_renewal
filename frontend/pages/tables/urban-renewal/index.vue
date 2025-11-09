@@ -175,13 +175,12 @@
                 <th class="p-4 text-left text-sm font-medium text-green-600">所有權人數</th>
                 <th class="p-4 text-left text-sm font-medium text-green-600">理事長姓名</th>
                 <th class="p-4 text-left text-sm font-medium text-green-600">理事長電話</th>
-                <th class="p-4 text-left text-sm font-medium text-green-600">歸屬管理者</th>
                 <th class="p-4 text-center text-sm font-medium text-green-600">操作</th>
               </tr>
             </thead>
             <tbody>
               <tr v-if="loading">
-                <td colspan="7" class="p-8 text-center text-gray-500">
+                <td colspan="6" class="p-8 text-center text-gray-500">
                   <div class="flex items-center justify-center">
                     <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -192,7 +191,7 @@
                 </td>
               </tr>
               <tr v-else-if="renewals.length === 0">
-                <td colspan="7" class="p-8 text-center text-gray-500">
+                <td colspan="6" class="p-8 text-center text-gray-500">
                   暫無資料，請點擊「新建更新會」新增資料
                 </td>
               </tr>
@@ -202,16 +201,6 @@
                 <td class="p-4 text-sm text-gray-900 text-center">{{ renewal.member_count }}</td>
                 <td class="p-4 text-sm text-gray-900">{{ renewal.chairman_name }}</td>
                 <td class="p-4 text-sm text-gray-900">{{ renewal.chairman_phone }}</td>
-                <td class="p-4 text-sm">
-                  <span v-if="renewal.assigned_admin_name" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    <Icon name="heroicons:user" class="w-3 h-3 mr-1" />
-                    {{ renewal.assigned_admin_name }}
-                  </span>
-                  <span v-else class="text-gray-400 text-xs">
-                    <Icon name="heroicons:minus-circle" class="w-4 h-4 inline mr-1" />
-                    未分配
-                  </span>
-                </td>
                 <td class="p-4 text-center">
                   <div class="flex justify-center gap-2 flex-wrap">
                     <button
@@ -302,7 +291,6 @@ definePageMeta({
 // Use composables
 const { get, post, delete: del } = useApi()
 const alert = useAlert()
-const { $swal } = useNuxtApp()
 
 const pageSize = ref(10)
 const showCreateModal = ref(false)
@@ -412,31 +400,16 @@ const handleAssignSubmit = async (assignments) => {
     })
 
     if (response.success && response.data.status === 'success') {
-      await $swal.fire({
-        title: '分配成功',
-        text: '更新會已成功分配給企業管理者',
-        icon: 'success',
-        confirmButtonColor: '#22c55e'
-      })
+      alert.success('分配成功！', '更新會已成功分配給企業管理者')
 
       showAssignAdminModal.value = false
       await fetchRenewals() // 重新載入列表
     } else {
-      await $swal.fire({
-        title: '分配失敗',
-        text: response.data?.message || '分配失敗，請稍後再試',
-        icon: 'error',
-        confirmButtonColor: '#ef4444'
-      })
+      alert.error('分配失敗', response.data?.message || '分配失敗，請稍後再試')
     }
   } catch (err) {
     console.error('Assign error:', err)
-    await $swal.fire({
-      title: '分配失敗',
-      text: err.message || '分配失敗，請稍後再試',
-      icon: 'error',
-      confirmButtonColor: '#ef4444'
-    })
+    alert.error('分配失敗', err.message || '分配失敗，請稍後再試')
   }
 }
 
