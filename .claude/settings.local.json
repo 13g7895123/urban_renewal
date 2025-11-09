@@ -60,7 +60,8 @@
       "Bash(/home/jarvis/project/bonus/urban_renewal/test-update-owner.sh)",
       "Bash(/home/jarvis/project/bonus/urban_renewal/test-update-with-land.sh)",
       "Bash(git merge:*)",
-      "Bash(docker port:*)"
+      "Bash(docker port:*)",
+      "Bash(md5sum:*)"
     ],
     "deny": [],
     "ask": []
