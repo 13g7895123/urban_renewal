@@ -224,7 +224,6 @@ class WordExportService
             // 查詢該更新會的所有權人
             $owners = $propertyOwnerModel
                 ->where('urban_renewal_id', $urban_renewal_id)
-                ->where('deleted_at', null)
                 ->orderBy('owner_code', 'ASC')
                 ->findAll();
 
