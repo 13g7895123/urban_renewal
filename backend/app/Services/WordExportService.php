@@ -115,48 +115,88 @@ class WordExportService
      */
     private function replaceMeetingNoticeVariables(TemplateProcessor $templateProcessor, array $data): void
     {
+        // 記錄傳入的所有資料鍵值
+        log_message('info', '[TemplateVariables] Input data keys: ' . implode(', ', array_keys($data)));
+        log_message('debug', '[TemplateVariables] Full input data: ' . json_encode($data, JSON_UNESCAPED_UNICODE));
+
         // 基本資訊
-        $templateProcessor->setValue('urban_renewal_name', $data['urban_renewal_name'] ?? '');
-        $templateProcessor->setValue('meeting_name', $data['meeting_name'] ?? '');
-        $templateProcessor->setValue('meeting_type', $data['meeting_type'] ?? '');
+        $urban_renewal_name = $data['urban_renewal_name'] ?? '';
+        $meeting_name = $data['meeting_name'] ?? '';
+        $meeting_type = $data['meeting_type'] ?? '';
+
+        log_message('info', '[TemplateVariables] Basic info - urban_renewal_name: "' . $urban_renewal_name .
+                   '", meeting_name: "' . $meeting_name . '", meeting_type: "' . $meeting_type . '"');
+
+        $templateProcessor->setValue('urban_renewal_name', $urban_renewal_name);
+        $templateProcessor->setValue('meeting_name', $meeting_name);
+        $templateProcessor->setValue('meeting_type', $meeting_type);
 
         // 日期時間處理
         if (isset($data['meeting_date'])) {
-            $templateProcessor->setValue('meeting_date', $this->formatDate($data['meeting_date']));
+            $formatted_date = $this->formatDate($data['meeting_date']);
+            log_message('info', '[TemplateVariables] meeting_date: "' . $data['meeting_date'] . '" -> formatted: "' . $formatted_date . '"');
+            $templateProcessor->setValue('meeting_date', $formatted_date);
         }
         if (isset($data['meeting_time'])) {
+            log_message('info', '[TemplateVariables] meeting_time: "' . $data['meeting_time'] . '"');
             $templateProcessor->setValue('meeting_time', $data['meeting_time']);
         }
 
         // 地點
-        $templateProcessor->setValue('meeting_location', $data['meeting_location'] ?? '');
+        $meeting_location = $data['meeting_location'] ?? '';
+        log_message('info', '[TemplateVariables] meeting_location: "' . $meeting_location . '"');
+        $templateProcessor->setValue('meeting_location', $meeting_location);
 
         // 發文字號
-        $templateProcessor->setValue('notice_doc_number', $data['notice_doc_number'] ?? '');
-        $templateProcessor->setValue('notice_word_number', $data['notice_word_number'] ?? '');
-        $templateProcessor->setValue('notice_mid_number', $data['notice_mid_number'] ?? '');
-        $templateProcessor->setValue('notice_end_number', $data['notice_end_number'] ?? '');
+        $notice_doc_number = $data['notice_doc_number'] ?? '';
+        $notice_word_number = $data['notice_word_number'] ?? '';
+        $notice_mid_number = $data['notice_mid_number'] ?? '';
+        $notice_end_number = $data['notice_end_number'] ?? '';
+
+        log_message('info', '[TemplateVariables] Notice numbers - doc: "' . $notice_doc_number .
+                   '", word: "' . $notice_word_number . '", mid: "' . $notice_mid_number .
+                   '", end: "' . $notice_end_number . '"');
+
+        $templateProcessor->setValue('notice_doc_number', $notice_doc_number);
+        $templateProcessor->setValue('notice_word_number', $notice_word_number);
+        $templateProcessor->setValue('notice_mid_number', $notice_mid_number);
+        $templateProcessor->setValue('notice_end_number', $notice_end_number);
 
         // 聯絡資訊
-        $templateProcessor->setValue('chairman_name', $data['chairman_name'] ?? '');
-        $templateProcessor->setValue('contact_name', $data['contact_name'] ?? '');
-        $templateProcessor->setValue('contact_phone', $data['contact_phone'] ?? '');
-        $templateProcessor->setValue('attachments', $data['attachments'] ?? '');
+        $chairman_name = $data['chairman_name'] ?? '';
+        $contact_name = $data['contact_name'] ?? '';
+        $contact_phone = $data['contact_phone'] ?? '';
+        $attachments = $data['attachments'] ?? '';
+
+        log_message('info', '[TemplateVariables] Contact info - chairman: "' . $chairman_name .
+                   '", contact_name: "' . $contact_name . '", phone: "' . $contact_phone . '"');
+
+        $templateProcessor->setValue('chairman_name', $chairman_name);
+        $templateProcessor->setValue('contact_name', $contact_name);
+        $templateProcessor->setValue('contact_phone', $contact_phone);
+        $templateProcessor->setValue('attachments', $attachments);
 
         // 處理發文說明（如果有多筆）
         if (isset($data['descriptions']) && is_array($data['descriptions'])) {
+            log_message('info', '[TemplateVariables] descriptions is array with ' . count($data['descriptions']) . ' items');
             $descriptionsText = '';
             foreach ($data['descriptions'] as $index => $desc) {
                 $chineseNum = $this->getChineseNumber($index + 1);
                 $descriptionsText .= $chineseNum . '、' . $desc . "\n";
             }
+            log_message('info', '[TemplateVariables] descriptions text: "' . trim($descriptionsText) . '"');
             $templateProcessor->setValue('descriptions', $descriptionsText);
         } else {
-            $templateProcessor->setValue('descriptions', $data['descriptions'] ?? '');
+            $descriptions = $data['descriptions'] ?? '';
+            log_message('info', '[TemplateVariables] descriptions (string): "' . $descriptions . '"');
+            $templateProcessor->setValue('descriptions', $descriptions);
         }
 
         // 出席者清單
-        $templateProcessor->setValue('attendees', $this->getAttendeesList($data));
+        log_message('info', '[TemplateVariables] Processing attendees list...');
+        $attendees = $this->getAttendeesList($data);
+        log_message('info', '[TemplateVariables] Final attendees list: "' . $attendees . '"');
+        $templateProcessor->setValue('attendees', $attendees);
     }
 
     /**
@@ -170,25 +210,43 @@ class WordExportService
         try {
             // 檢查是否有 urban_renewal_id
             if (!isset($data['urban_renewal_id'])) {
+                log_message('warning', '[GetAttendeesList] urban_renewal_id not found in data');
+                log_message('debug', '[GetAttendeesList] Available keys: ' . implode(', ', array_keys($data)));
                 return '';
             }
+
+            $urban_renewal_id = $data['urban_renewal_id'];
+            log_message('info', '[GetAttendeesList] Looking for owners with urban_renewal_id: ' . $urban_renewal_id);
 
             // 載入 PropertyOwnerModel
             $propertyOwnerModel = new \App\Models\PropertyOwnerModel();
 
             // 查詢該更新會的所有權人
             $owners = $propertyOwnerModel
-                ->where('urban_renewal_id', $data['urban_renewal_id'])
+                ->where('urban_renewal_id', $urban_renewal_id)
                 ->where('deleted_at', null)
                 ->orderBy('owner_code', 'ASC')
                 ->findAll();
 
+            log_message('info', '[GetAttendeesList] Found ' . count($owners) . ' owners');
+
+            if (empty($owners)) {
+                log_message('warning', '[GetAttendeesList] No owners found for urban_renewal_id: ' . $urban_renewal_id);
+                return '';
+            }
+
             // 提取姓名並用頓號連接
             $names = array_column($owners, 'name');
-            return implode('、', $names);
+            log_message('debug', '[GetAttendeesList] Owner names: ' . json_encode($names, JSON_UNESCAPED_UNICODE));
+
+            $attendeesList = implode('、', $names);
+            log_message('info', '[GetAttendeesList] Final attendees list: "' . $attendeesList . '"');
+
+            return $attendeesList;
 
         } catch (\Exception $e) {
-            log_message('error', 'Failed to get attendees list: ' . $e->getMessage());
+            log_message('error', '[GetAttendeesList] Exception: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine());
+            log_message('debug', '[GetAttendeesList] Stack trace: ' . $e->getTraceAsString());
             return '';
         }
     }
