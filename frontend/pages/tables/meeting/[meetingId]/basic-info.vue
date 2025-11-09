@@ -40,8 +40,8 @@
           <div class="mb-6">
             <label class="block text-sm font-medium text-gray-700 mb-2">所屬更新會</label>
             <UInput
-              v-if="selectedMeeting"
-              :value="renewalGroup"
+              v-if="!!selectedMeeting"
+              :model-value="renewalGroup"
               readonly
               class="bg-gray-50"
             />
@@ -62,7 +62,7 @@
               <label class="block text-sm font-medium text-gray-700 mb-2">會議類型</label>
               <UInput
                 v-if="selectedMeeting"
-                :value="meetingType"
+                :model-value="meetingType"
                 readonly
                 class="bg-gray-50"
               />
@@ -317,7 +317,7 @@ definePageMeta({
 const route = useRoute()
 const meetingId = route.params.meetingId
 
-// API composables
+// API composables (Nuxt 3 auto-imports these, but explicit import for TypeScript)
 const { getMeeting, createMeeting, updateMeeting, exportMeetingNotice: exportMeetingNoticeApi } = useMeetings()
 const { getUrbanRenewals } = useUrbanRenewal()
 const { showSuccess, showError } = useSweetAlert()
@@ -332,8 +332,8 @@ const selectedMeeting = ref(null)
 const urbanRenewalOptions = ref([])
 const selectedUrbanRenewal = ref(null)
 
-// Meeting type options
-const meetingTypeOptions = ref(['會員大會', '理監事會', '公聽會'])
+// Meeting type options (與 API enum 一致)
+const meetingTypeOptions = ref(['會員大會', '理事會', '監事會', '臨時會議'])
 const meetingType = ref('會員大會')
 
 // Attendance fields
@@ -449,31 +449,38 @@ onMounted(async () => {
     isLoading.value = false
 
     if (response.success && response.data) {
-      const meeting = response.data.data || response.data
+      // 處理雙層嵌套的 data 結構: useApi 包裝 + 後端回傳
+      // useApi 回傳: { success, data: { success, data: meeting } }
+      // 所以要取 response.data.data 才是真正的 meeting 資料
+      let meeting
+      if (response.data.data && typeof response.data.data === 'object') {
+        meeting = response.data.data
+      } else if (response.data && typeof response.data === 'object') {
+        meeting = response.data
+      } else {
+        console.error('[Basic Info] Invalid response structure:', response)
+        showError('載入會議資料失敗', '回傳資料格式錯誤')
+        return
+      }
 
       console.log('[Basic Info] Meeting loaded:', meeting)
       console.log('[Basic Info] urban_renewal_name:', meeting.urban_renewal_name)
       console.log('[Basic Info] meeting_type:', meeting.meeting_type)
 
-      // Initialize form fields with existing data
-      // 使用 trim() 和空字串檢查確保正確處理
-      renewalGroup.value = (meeting.urban_renewal_name && meeting.urban_renewal_name.trim() !== '')
-                          ? meeting.urban_renewal_name
-                          : (meeting.renewal_group || meeting.renewalGroup || '')
+      // 處理所屬更新會名稱 (確保正確處理 null/undefined/empty/whitespace)
+      const renewalName = meeting.urban_renewal_name || meeting.renewal_group || meeting.renewalGroup || ''
+      renewalGroup.value = typeof renewalName === 'string' && renewalName.trim() !== ''
+                          ? renewalName.trim()
+                          : ''
 
-      meetingType.value = (meeting.meeting_type && meeting.meeting_type.trim() !== '')
-                         ? meeting.meeting_type
+      // 處理會議類型 (確保正確處理 null/undefined/empty/whitespace)
+      const typeValue = meeting.meeting_type || ''
+      meetingType.value = typeof typeValue === 'string' && typeValue.trim() !== ''
+                         ? typeValue.trim()
                          : '會員大會'
 
       console.log('[Basic Info] renewalGroup set to:', renewalGroup.value)
       console.log('[Basic Info] meetingType set to:', meetingType.value)
-
-      // Set selectedMeeting with normalized fields for display
-      selectedMeeting.value = {
-        ...meeting,
-        renewalGroup: renewalGroup.value,
-        meetingType: meetingType.value
-      }
 
       // 組合 meeting_date 和 meeting_time 為 meeting_datetime (符合 datetime-local 格式)
       if (meeting.meeting_date && meeting.meeting_time) {
@@ -527,6 +534,14 @@ onMounted(async () => {
       }
 
       console.log('[Basic Info] Form initialized successfully')
+
+      // ⚠️ 重要：在所有欄位都載入完成後，最後才設定 selectedMeeting
+      // 這樣可以確保頁面切換到編輯模式時，所有資料都已經準備好
+      selectedMeeting.value = {
+        ...meeting,
+        renewalGroup: renewalGroup.value,
+        meetingType: meetingType.value
+      }
     } else {
       console.error('[Basic Info] Failed to load meeting:', response.error)
       showError('載入會議資料失敗', response.error?.message || '無法載入會議資料')

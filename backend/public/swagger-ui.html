@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>都更計票系統 - 會議 API 文件</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.10.5/swagger-ui.css" />
+    <link rel="icon" type="image/png" href="https://unpkg.com/swagger-ui-dist@5.10.5/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="https://unpkg.com/swagger-ui-dist@5.10.5/favicon-16x16.png" sizes="16x16" />
+    <style>
+        html {
+            box-sizing: border-box;
+            overflow: -moz-scrollbars-vertical;
+            overflow-y: scroll;
+        }
+
+        *,
+        *:before,
+        *:after {
+            box-sizing: inherit;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        .topbar {
+            background-color: #2FA633 !important;
+        }
+
+        .swagger-ui .topbar .download-url-wrapper .select-label {
+            color: #fff;
+        }
+
+        .swagger-ui .info .title {
+            color: #2FA633;
+        }
+
+        .swagger-ui .opblock.opblock-get .opblock-summary-method {
+            background: #61affe;
+        }
+
+        .swagger-ui .opblock.opblock-post .opblock-summary-method {
+            background: #49cc90;
+        }
+
+        .swagger-ui .opblock.opblock-put .opblock-summary-method {
+            background: #fca130;
+        }
+
+        .swagger-ui .opblock.opblock-delete .opblock-summary-method {
+            background: #f93e3e;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="swagger-ui"></div>
+
+    <script src="https://unpkg.com/swagger-ui-dist@5.10.5/swagger-ui-bundle.js" charset="UTF-8"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5.10.5/swagger-ui-standalone-preset.js" charset="UTF-8"></script>
+    <script>
+        window.onload = function() {
+            // 從當前 URL 獲取 base URL
+            const protocol = window.location.protocol;
+            const host = window.location.host;
+            const pathArray = window.location.pathname.split('/');
+            pathArray.pop(); // 移除 swagger-ui.html
+            const basePath = pathArray.join('/');
+
+            // OpenAPI 文件的 URL
+            const openapiUrl = `${protocol}//${host}${basePath}/openapi/meetings-api.yaml`;
+
+            // 初始化 Swagger UI
+            window.ui = SwaggerUIBundle({
+                url: openapiUrl,
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout",
+                defaultModelsExpandDepth: 1,
+                defaultModelExpandDepth: 1,
+                docExpansion: "list",
+                filter: true,
+                showRequestHeaders: true,
+                supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
+                validatorUrl: null,
+                // 自動填充認證 token（可選）
+                onComplete: function() {
+                    // 如果 localStorage 有 token，自動填入
+                    const token = localStorage.getItem('auth_token');
+                    if (token) {
+                        ui.preauthorizeApiKey('bearerAuth', token);
+                    }
+                }
+            });
+
+            // 監聽認證事件，儲存 token 到 localStorage
+            window.addEventListener('message', function(event) {
+                if (event.data && event.data.type === 'auth_token') {
+                    localStorage.setItem('auth_token', event.data.token);
+                }
+            });
+        };
+
+        // 提供一個全域函數讓使用者可以手動設定 token
+        function setAuthToken(token) {
+            localStorage.setItem('auth_token', token);
+            window.ui.preauthorizeApiKey('bearerAuth', token);
+            console.log('認證 Token 已設定');
+        }
+
+        // 清除 token
+        function clearAuthToken() {
+            localStorage.removeItem('auth_token');
+            console.log('認證 Token 已清除');
+        }
+    </script>
+</body>
+</html>

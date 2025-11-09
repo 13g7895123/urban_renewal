@@ -1,0 +1,49 @@
+{
+  "metadata": {
+    "title": "會議通知範本變數替換記錄",
+    "version": "1.0.0",
+    "modifiedDate": "2025-11-09",
+    "templatePath": "backend/writable/templates/meeting_notice_template.docx"
+  },
+  "replacements": [
+    {
+      "from": "臺北市南港區玉成段二小段435地號等17筆土地更新單元都市更新會",
+      "to": "${urban_renewal_name}",
+      "category": "基本資訊"
+    },
+    {
+      "from": "114年度第一屆第1次會員大會",
+      "to": "${meeting_name}",
+      "category": "基本資訊"
+    },
+    {
+      "from": "114年03月15日 (星期六) 14時00分",
+      "to": "${meeting_date} ${meeting_time}",
+      "category": "基本資訊"
+    },
+    {
+      "from": "臺北市立成德國民小學/仁愛樓一樓樂齡堂教室",
+      "to": "${meeting_location}",
+      "category": "基本資訊"
+    },
+    {
+      "from": "None",
+      "to": "${notice_doc_number}${notice_word_number}${notice_mid_number}${notice_end_number}",
+      "category": "發文資訊"
+    },
+    {
+      "from": "王文杞",
+      "to": "${chairman_name}",
+      "category": "聯絡資訊"
+    },
+    {
+      "from": "0933734063",
+      "to": "${contact_phone}",
+      "category": "聯絡資訊"
+    }
+  ],
+  "summary": {
+    "totalReplacements": 7,
+    "totalVariables": 11
+  }
+}

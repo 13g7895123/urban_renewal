@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 文件 - 都更計票系統</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2FA633 0%, #72BB29 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 50px;
+        }
+
+        h1 {
+            color: #2FA633;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(47, 166, 51, 0.2);
+        }
+
+        .card h2 {
+            color: #2FA633;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .card p {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #2FA633 0%, #72BB29 100%);
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(47, 166, 51, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(47, 166, 51, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+        }
+
+        .info-box {
+            background: #e7f3e8;
+            border-left: 4px solid #2FA633;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .info-box h3 {
+            color: #2FA633;
+            margin-bottom: 10px;
+        }
+
+        .info-box p {
+            color: #555;
+            margin: 5px 0;
+        }
+
+        .code {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        .endpoints {
+            list-style: none;
+            margin: 15px 0;
+        }
+
+        .endpoints li {
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 5px;
+            border-left: 3px solid #2FA633;
+        }
+
+        .method {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-weight: bold;
+            font-size: 0.85em;
+            margin-right: 10px;
+        }
+
+        .get { background: #61affe; color: white; }
+        .post { background: #49cc90; color: white; }
+        .put { background: #fca130; color: white; }
+        .delete { background: #f93e3e; color: white; }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 API 文件</h1>
+        <p class="subtitle">都更計票系統 - 會議管理 API</p>
+
+        <div class="card">
+            <h2>📖 互動式 API 文件</h2>
+            <p>使用 Swagger UI 瀏覽和測試所有 API endpoints。支援直接在頁面上發送請求並查看回應。</p>
+            <a href="swagger-ui.html" class="btn">開啟 Swagger UI</a>
+        </div>
+
+        <div class="info-box">
+            <h3>🔑 如何使用</h3>
+            <p><strong>步驟 1:</strong> 開啟 Swagger UI</p>
+            <p><strong>步驟 2:</strong> 點擊右上角的「Authorize」按鈕</p>
+            <p><strong>步驟 3:</strong> 輸入你的 JWT Token</p>
+            <p><strong>步驟 4:</strong> 選擇任一 API endpoint 進行測試</p>
+        </div>
+
+        <div class="card">
+            <h2>🔐 取得 Token</h2>
+            <p>所有 API 都需要 JWT 認證。使用以下方式取得 Token：</p>
+            <div class="code">curl -X POST http://localhost:4002/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}'</div>
+        </div>
+
+        <div class="card">
+            <h2>📋 可用的 API</h2>
+            <ul class="endpoints">
+                <li><span class="method get">GET</span> /api/meetings - 取得會議列表</li>
+                <li><span class="method get">GET</span> /api/meetings/{id} - 取得會議詳情</li>
+                <li><span class="method post">POST</span> /api/meetings - 建立新會議</li>
+                <li><span class="method put">PUT</span> /api/meetings/{id} - 更新會議</li>
+                <li><span class="method delete">DELETE</span> /api/meetings/{id} - 刪除會議</li>
+                <li><span class="method put">PUT</span> /api/meetings/{id}/status - 更新狀態</li>
+                <li><span class="method get">GET</span> /api/meetings/{id}/statistics - 取得統計</li>
+                <li><span class="method get">GET</span> /api/meetings/{id}/export-notice - 匯出通知</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>📦 其他資源</h2>
+            <p>下載 OpenAPI 規範文件或 Postman Collection 進行本地測試。</p>
+            <a href="openapi/meetings-api.yaml" class="btn btn-secondary" download>下載 OpenAPI YAML</a>
+        </div>
+
+        <div class="info-box">
+            <h3>💡 提示</h3>
+            <p>• Token 有效期為 1 小時</p>
+            <p>• 支援自動 Token 刷新</p>
+            <p>• 管理員可存取所有資料</p>
+            <p>• 公司管理者只能存取所屬更新會的資料</p>
+        </div>
+    </div>
+</body>
+</html>

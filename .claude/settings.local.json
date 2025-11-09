@@ -61,7 +61,9 @@
       "Bash(/home/jarvis/project/bonus/urban_renewal/test-update-with-land.sh)",
       "Bash(mysql:*)",
       "Bash(./test-delete-owner.sh:*)",
-      "Bash(./test-delete-api.sh:*)"
+      "Bash(./test-delete-api.sh:*)",
+      "Bash(git merge:*)",
+      "Bash(docker port:*)"
     ],
     "deny": [],
     "ask": []

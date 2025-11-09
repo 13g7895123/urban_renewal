@@ -1,0 +1,1318 @@
+openapi: 3.0.3
+info:
+  title: Urban Renewal Meeting API
+  description: |
+    都更計票系統 - 會議管理 API
+
+    提供會議的建立、查詢、更新、刪除等功能，以及會議統計和文件匯出功能。
+
+    ## 認證方式
+    使用 JWT Bearer Token 進行認證，請在 Header 中加入：
+    ```
+    Authorization: Bearer {your_token}
+    ```
+
+    ## 權限說明
+    - **admin**: 系統管理員，可以存取所有資料
+    - **company_manager**: 公司管理者，只能存取自己公司所屬更新會的資料
+
+  version: 1.0.0
+  contact:
+    name: Urban Renewal System Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:4002/api
+    description: Development Server (Port 4002)
+  - url: http://localhost:9228/api
+    description: Development Server (Port 9228)
+  - url: https://api.example.com/api
+    description: Production Server
+
+tags:
+  - name: Meetings
+    description: 會議管理相關 API
+  - name: Meeting Statistics
+    description: 會議統計相關 API
+  - name: Meeting Export
+    description: 會議文件匯出相關 API
+
+paths:
+  /meetings:
+    get:
+      tags:
+        - Meetings
+      summary: 取得會議列表
+      description: |
+        取得會議列表，支援分頁和篩選功能。
+
+        **權限要求**:
+        - admin: 可查詢所有會議
+        - company_manager: 只能查詢自己公司所屬更新會的會議
+      operationId: getMeetings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: 頁碼（從 1 開始）
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: per_page
+          in: query
+          description: 每頁資料筆數
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+        - name: urban_renewal_id
+          in: query
+          description: 更新會 ID（篩選特定更新會的會議）
+          required: false
+          schema:
+            type: integer
+        - name: status
+          in: query
+          description: 會議狀態
+          required: false
+          schema:
+            type: string
+            enum: [draft, scheduled, in_progress, completed, cancelled]
+        - name: search
+          in: query
+          description: 搜尋關鍵字（會議名稱、地點、更新會名稱）
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功取得會議列表
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MeetingListItem'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  message:
+                    type: string
+                    example: 取得會議列表成功
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Meetings
+      summary: 建立新會議
+      description: |
+        建立新會議。
+
+        **權限要求**:
+        - admin: 可為任何更新會建立會議
+        - company_manager: 只能為自己公司所屬更新會建立會議
+      operationId: createMeeting
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMeetingRequest'
+      responses:
+        '201':
+          description: 會議建立成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/MeetingDetail'
+                  message:
+                    type: string
+                    example: 會議建立成功
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          description: 指定的更新會不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  code: NOT_FOUND
+                  message: 指定的更新會不存在
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /meetings/{id}:
+    get:
+      tags:
+        - Meetings
+      summary: 取得會議詳情
+      description: |
+        取得指定會議的詳細資訊，包含更新會名稱、出席統計、投票議題數量等。
+
+        **權限要求**:
+        - admin: 可查詢任何會議
+        - company_manager: 只能查詢自己公司所屬更新會的會議
+      operationId: getMeeting
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: 會議 ID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功取得會議詳情
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/MeetingDetail'
+                  message:
+                    type: string
+                    example: 取得會議詳情成功
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          description: 會議不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  code: NOT_FOUND
+                  message: 會議不存在
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Meetings
+      summary: 更新會議資料
+      description: |
+        更新指定會議的資料。
+
+        **權限要求**:
+        - admin: 可更新任何會議
+        - company_manager: 只能更新自己公司所屬更新會的會議
+      operationId: updateMeeting
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: 會議 ID
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMeetingRequest'
+      responses:
+        '200':
+          description: 會議更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/MeetingDetail'
+                  message:
+                    type: string
+                    example: 會議更新成功
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          description: 會議不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Meetings
+      summary: 刪除會議
+      description: |
+        刪除指定會議。
+
+        **限制**:
+        - 進行中或已完成的會議不能刪除
+        - 有投票議題的會議不能刪除
+
+        **權限要求**:
+        - admin: 可刪除任何會議
+        - company_manager: 只能刪除自己公司所屬更新會的會議
+      operationId: deleteMeeting
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: 會議 ID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 會議刪除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 會議刪除成功
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          description: 會議不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 業務邏輯錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                in_progress:
+                  summary: 會議狀態不允許刪除
+                  value:
+                    success: false
+                    error:
+                      code: BUSINESS_LOGIC_ERROR
+                      message: 進行中或已完成的會議不能刪除
+                has_topics:
+                  summary: 有關聯的投票議題
+                  value:
+                    success: false
+                    error:
+                      code: BUSINESS_LOGIC_ERROR
+                      message: 有投票議題的會議不能刪除，請先刪除相關議題
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /meetings/{id}/status:
+    put:
+      tags:
+        - Meetings
+      summary: 更新會議狀態
+      description: |
+        更新指定會議的狀態。
+
+        **狀態轉換規則**:
+        - draft → scheduled, cancelled
+        - scheduled → in_progress, cancelled
+        - in_progress → completed, cancelled
+        - completed → (不能變更)
+        - cancelled → draft
+
+        **權限要求**:
+        - admin: 可更新任何會議狀態
+        - company_manager: 只能更新自己公司所屬更新會的會議狀態
+      operationId: updateMeetingStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: 會議 ID
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [draft, scheduled, in_progress, completed, cancelled]
+                  description: 新的會議狀態
+      responses:
+        '200':
+          description: 會議狀態更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/MeetingDetail'
+                  message:
+                    type: string
+                    example: 會議狀態更新成功
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          description: 會議不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 狀態轉換不合法
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  code: BUSINESS_LOGIC_ERROR
+                  message: 無法從狀態「completed」變更為「draft」
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /meetings/{id}/statistics:
+    get:
+      tags:
+        - Meeting Statistics
+      summary: 取得會議統計資料
+      description: |
+        取得指定會議的統計資料，包含出席統計、投票議題統計、成會門檻檢查等。
+
+        **權限要求**:
+        - admin: 可查詢任何會議統計
+        - company_manager: 只能查詢自己公司所屬更新會的會議統計
+      operationId: getMeetingStatistics
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: 會議 ID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功取得會議統計資料
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/MeetingStatistics'
+                  message:
+                    type: string
+                    example: 取得會議統計成功
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          description: 會議不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /meetings/{id}/export-notice:
+    get:
+      tags:
+        - Meeting Export
+      summary: 匯出會議通知
+      description: |
+        匯出指定會議的通知文件（Word 格式）。
+
+        **權限要求**:
+        - admin: 可匯出任何會議通知
+        - company_manager: 只能匯出自己公司所屬更新會的會議通知
+      operationId: exportMeetingNotice
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: 會議 ID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功匯出會議通知
+          content:
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              description: 包含檔案名稱的下載 header
+              schema:
+                type: string
+                example: attachment; filename="會議通知.docx"
+            Content-Length:
+              description: 檔案大小（bytes）
+              schema:
+                type: integer
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          description: 會議不存在或檔案不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                meeting_not_found:
+                  summary: 會議不存在
+                  value:
+                    success: false
+                    error:
+                      code: NOT_FOUND
+                      message: 會議不存在
+                file_not_found:
+                  summary: 檔案不存在
+                  value:
+                    success: false
+                    error:
+                      code: FILE_NOT_FOUND
+                      message: 匯出檔案不存在
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /urban-renewals/{urbanRenewalId}/meetings:
+    get:
+      tags:
+        - Meetings
+      summary: 取得特定更新會的會議列表
+      description: |
+        取得指定更新會的所有會議，支援分頁和狀態篩選。
+
+        **權限要求**:
+        - admin: 可查詢任何更新會的會議
+        - company_manager: 只能查詢自己公司所屬更新會的會議
+      operationId: getMeetingsByUrbanRenewal
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: urbanRenewalId
+          in: path
+          description: 更新會 ID
+          required: true
+          schema:
+            type: integer
+        - name: page
+          in: query
+          description: 頁碼（從 1 開始）
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: per_page
+          in: query
+          description: 每頁資料筆數
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+        - name: status
+          in: query
+          description: 會議狀態
+          required: false
+          schema:
+            type: string
+            enum: [draft, scheduled, in_progress, completed, cancelled]
+      responses:
+        '200':
+          description: 成功取得會議列表
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MeetingListItem'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  message:
+                    type: string
+                    example: 取得會議列表成功
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          description: 更新會不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  code: NOT_FOUND
+                  message: 更新會不存在
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT 認證 Token
+
+  schemas:
+    MeetingListItem:
+      type: object
+      description: 會議列表項目
+      properties:
+        id:
+          type: integer
+          description: 會議 ID
+          example: 1
+        urban_renewal_id:
+          type: integer
+          description: 所屬更新會 ID
+          example: 6
+        urban_renewal_name:
+          type: string
+          description: 所屬更新會名稱
+          example: 測試公司001更新會
+        meeting_name:
+          type: string
+          description: 會議名稱
+          example: 114年度第一屆第3次會員大會
+        meeting_type:
+          type: string
+          description: 會議類型
+          enum: [會員大會, 理事會, 監事會, 臨時會議]
+          example: 會員大會
+        meeting_date:
+          type: string
+          format: date
+          description: 會議日期
+          example: '2025-12-15'
+        meeting_time:
+          type: string
+          description: 會議時間
+          example: '14:00:00'
+        meeting_location:
+          type: string
+          description: 會議地點
+          example: 台北市南港區玉成街1號
+        meeting_status:
+          type: string
+          description: 會議狀態
+          enum: [draft, scheduled, in_progress, completed, cancelled]
+          example: draft
+        attendee_count:
+          type: integer
+          description: 出席人數
+          example: 73
+        calculated_total_count:
+          type: integer
+          description: 納入計算總人數
+          example: 72
+        observer_count:
+          type: integer
+          description: 列席人數
+          example: 3
+        created_at:
+          type: string
+          format: date-time
+          description: 建立時間
+          example: '2025-11-08T10:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新時間
+          example: '2025-11-08T15:45:00Z'
+
+    MeetingDetail:
+      allOf:
+        - $ref: '#/components/schemas/MeetingListItem'
+        - type: object
+          properties:
+            chairman_name:
+              type: string
+              description: 理事長姓名
+              example: 王大明
+            chairman_phone:
+              type: string
+              description: 理事長電話
+              example: '0912345678'
+            quorum_land_area_numerator:
+              type: integer
+              description: 成會土地面積比例分子
+              example: 3
+            quorum_land_area_denominator:
+              type: integer
+              description: 成會土地面積比例分母
+              example: 4
+            quorum_land_area:
+              type: number
+              format: float
+              description: 成會土地面積(平方公尺)
+              example: 1500.5
+            quorum_building_area_numerator:
+              type: integer
+              description: 成會建物面積比例分子
+              example: 2
+            quorum_building_area_denominator:
+              type: integer
+              description: 成會建物面積比例分母
+              example: 3
+            quorum_building_area:
+              type: number
+              format: float
+              description: 成會建物面積(平方公尺)
+              example: 2000.0
+            quorum_member_numerator:
+              type: integer
+              description: 成會人數比例分子
+              example: 50
+            quorum_member_denominator:
+              type: integer
+              description: 成會人數比例分母
+              example: 100
+            quorum_member_count:
+              type: integer
+              description: 成會人數
+              example: 75
+            exclude_owner_from_count:
+              type: boolean
+              description: 是否排除所有權人不列計
+              example: false
+            observers:
+              type: array
+              description: 列席者清單
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: 張三
+            notice_doc_number:
+              type: string
+              description: 發文字號
+              example: 北市都更
+            notice_word_number:
+              type: string
+              description: 字第
+              example: 字第
+            notice_mid_number:
+              type: string
+              description: 文號中間部分
+              example: '1140001'
+            notice_end_number:
+              type: string
+              description: 號
+              example: 號
+            contact_name:
+              type: string
+              description: 聯絡人姓名
+              example: 陳小明
+            contact_phone:
+              type: string
+              description: 聯絡人電話
+              example: 02-3456-7890
+            attachments:
+              type: string
+              description: 附件
+              example: 會議議程、投票單
+            descriptions:
+              type: array
+              description: 發文說明
+              items:
+                type: string
+              example:
+                - 請各位會員準時出席會議
+                - 會議當日請攜帶身分證明文件
+            attendance_summary:
+              type: object
+              nullable: true
+              description: 出席統計摘要
+              properties:
+                present_count:
+                  type: integer
+                  description: 親自出席人數
+                proxy_count:
+                  type: integer
+                  description: 委託出席人數
+                total_land_area:
+                  type: number
+                  description: 總土地面積
+                total_building_area:
+                  type: number
+                  description: 總建物面積
+            voting_topics_count:
+              type: integer
+              description: 投票議題數量
+              example: 5
+
+    CreateMeetingRequest:
+      type: object
+      required:
+        - urban_renewal_id
+        - meeting_name
+        - meeting_type
+        - meeting_date
+        - meeting_time
+      properties:
+        urban_renewal_id:
+          type: integer
+          description: 所屬更新會 ID
+          example: 6
+        meeting_name:
+          type: string
+          description: 會議名稱
+          maxLength: 255
+          example: 114年度第一屆第3次會員大會
+        meeting_type:
+          type: string
+          description: 會議類型
+          enum: [會員大會, 理事會, 監事會, 臨時會議]
+          example: 會員大會
+        meeting_date:
+          type: string
+          format: date
+          description: 會議日期
+          example: '2025-12-15'
+        meeting_time:
+          type: string
+          description: 會議時間（HH:mm 或 HH:mm:ss）
+          example: '14:00'
+        meeting_location:
+          type: string
+          description: 會議地點
+          maxLength: 500
+          example: 台北市南港區玉成街1號
+        attendee_count:
+          type: integer
+          description: 出席人數
+          default: 0
+          example: 73
+        calculated_total_count:
+          type: integer
+          description: 納入計算總人數
+          default: 0
+          example: 72
+        exclude_owner_from_count:
+          type: boolean
+          description: 是否排除所有權人不列計
+          default: false
+          example: false
+        observer_count:
+          type: integer
+          description: 列席人數
+          default: 0
+          example: 3
+        quorum_land_area_numerator:
+          type: integer
+          description: 成會土地面積比例分子
+          default: 0
+          example: 3
+        quorum_land_area_denominator:
+          type: integer
+          description: 成會土地面積比例分母
+          default: 1
+          example: 4
+        quorum_land_area:
+          type: number
+          format: float
+          description: 成會土地面積(平方公尺)
+          default: 0
+          example: 1500.5
+        quorum_building_area_numerator:
+          type: integer
+          description: 成會建物面積比例分子
+          default: 0
+          example: 2
+        quorum_building_area_denominator:
+          type: integer
+          description: 成會建物面積比例分母
+          default: 1
+          example: 3
+        quorum_building_area:
+          type: number
+          format: float
+          description: 成會建物面積(平方公尺)
+          default: 0
+          example: 2000.0
+        quorum_member_numerator:
+          type: integer
+          description: 成會人數比例分子
+          default: 0
+          example: 50
+        quorum_member_denominator:
+          type: integer
+          description: 成會人數比例分母
+          default: 1
+          example: 100
+        quorum_member_count:
+          type: integer
+          description: 成會人數
+          default: 0
+          example: 75
+        observers:
+          type: array
+          description: 列席者清單
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+          example:
+            - name: 張三
+            - name: 李四
+        notice_doc_number:
+          type: string
+          description: 發文字號
+          example: 北市都更
+        notice_word_number:
+          type: string
+          description: 字第
+          example: 字第
+        notice_mid_number:
+          type: string
+          description: 文號中間部分
+          example: '1140001'
+        notice_end_number:
+          type: string
+          description: 號
+          example: 號
+        chairman_name:
+          type: string
+          description: 理事長姓名
+          example: 王大明
+        contact_name:
+          type: string
+          description: 聯絡人姓名
+          example: 陳小明
+        contact_phone:
+          type: string
+          description: 聯絡人電話
+          example: 02-3456-7890
+        attachments:
+          type: string
+          description: 附件
+          example: 會議議程、投票單
+        descriptions:
+          type: array
+          description: 發文說明（陣列中的每個元素是一行說明）
+          items:
+            type: string
+          example:
+            - 請各位會員準時出席會議
+            - 會議當日請攜帶身分證明文件
+
+    UpdateMeetingRequest:
+      type: object
+      description: 更新會議請求（所有欄位都是可選的）
+      properties:
+        meeting_name:
+          type: string
+          description: 會議名稱
+          maxLength: 255
+          example: 114年度第一屆第3次會員大會
+        meeting_type:
+          type: string
+          description: 會議類型
+          enum: [會員大會, 理事會, 監事會, 臨時會議]
+          example: 會員大會
+        meeting_date:
+          type: string
+          format: date
+          description: 會議日期
+          example: '2025-12-15'
+        meeting_time:
+          type: string
+          description: 會議時間（HH:mm 或 HH:mm:ss）
+          example: '14:00'
+        meeting_location:
+          type: string
+          description: 會議地點
+          maxLength: 500
+          example: 台北市南港區玉成街1號
+        meeting_status:
+          type: string
+          description: 會議狀態
+          enum: [draft, scheduled, in_progress, completed, cancelled]
+          example: scheduled
+        attendee_count:
+          type: integer
+          description: 出席人數
+          example: 73
+        calculated_total_count:
+          type: integer
+          description: 納入計算總人數
+          example: 72
+        exclude_owner_from_count:
+          type: boolean
+          description: 是否排除所有權人不列計
+          example: false
+        observer_count:
+          type: integer
+          description: 列席人數
+          example: 3
+        quorum_land_area_numerator:
+          type: integer
+          description: 成會土地面積比例分子
+          example: 3
+        quorum_land_area_denominator:
+          type: integer
+          description: 成會土地面積比例分母
+          example: 4
+        quorum_land_area:
+          type: number
+          format: float
+          description: 成會土地面積(平方公尺)
+          example: 1500.5
+        quorum_building_area_numerator:
+          type: integer
+          description: 成會建物面積比例分子
+          example: 2
+        quorum_building_area_denominator:
+          type: integer
+          description: 成會建物面積比例分母
+          example: 3
+        quorum_building_area:
+          type: number
+          format: float
+          description: 成會建物面積(平方公尺)
+          example: 2000.0
+        quorum_member_numerator:
+          type: integer
+          description: 成會人數比例分子
+          example: 50
+        quorum_member_denominator:
+          type: integer
+          description: 成會人數比例分母
+          example: 100
+        quorum_member_count:
+          type: integer
+          description: 成會人數
+          example: 75
+        observers:
+          type: array
+          description: 列席者清單
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+        notice_doc_number:
+          type: string
+          description: 發文字號
+        notice_word_number:
+          type: string
+          description: 字第
+        notice_mid_number:
+          type: string
+          description: 文號中間部分
+        notice_end_number:
+          type: string
+          description: 號
+        chairman_name:
+          type: string
+          description: 理事長姓名
+        contact_name:
+          type: string
+          description: 聯絡人姓名
+        contact_phone:
+          type: string
+          description: 聯絡人電話
+        attachments:
+          type: string
+          description: 附件
+        descriptions:
+          type: array
+          description: 發文說明
+          items:
+            type: string
+
+    MeetingStatistics:
+      type: object
+      description: 會議統計資料
+      properties:
+        meeting_info:
+          $ref: '#/components/schemas/MeetingDetail'
+        attendance:
+          type: object
+          description: 出席統計
+          properties:
+            present_count:
+              type: integer
+              description: 親自出席人數
+              example: 50
+            proxy_count:
+              type: integer
+              description: 委託出席人數
+              example: 23
+            absent_count:
+              type: integer
+              description: 缺席人數
+              example: 2
+            total_land_area:
+              type: number
+              description: 出席者土地面積總計
+              example: 1200.5
+            total_building_area:
+              type: number
+              description: 出席者建物面積總計
+              example: 1800.0
+        voting_topics:
+          type: array
+          description: 投票議題清單
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              topic_name:
+                type: string
+              status:
+                type: string
+        quorum_status:
+          type: object
+          description: 成會門檻檢查
+          properties:
+            land_area:
+              type: object
+              properties:
+                required:
+                  type: number
+                  description: 需要的土地面積
+                current:
+                  type: number
+                  description: 目前的土地面積
+                percentage:
+                  type: number
+                  description: 達成百分比
+                threshold:
+                  type: number
+                  description: 門檻百分比
+                met:
+                  type: boolean
+                  description: 是否達到門檻
+            building_area:
+              type: object
+              properties:
+                required:
+                  type: number
+                  description: 需要的建物面積
+                current:
+                  type: number
+                  description: 目前的建物面積
+                percentage:
+                  type: number
+                  description: 達成百分比
+                threshold:
+                  type: number
+                  description: 門檻百分比
+                met:
+                  type: boolean
+                  description: 是否達到門檻
+            member_count:
+              type: object
+              properties:
+                required:
+                  type: integer
+                  description: 需要的人數
+                current:
+                  type: integer
+                  description: 目前的人數
+                percentage:
+                  type: number
+                  description: 達成百分比
+                threshold:
+                  type: number
+                  description: 門檻百分比
+                met:
+                  type: boolean
+                  description: 是否達到門檻
+            overall_met:
+              type: boolean
+              description: 整體是否達到成會門檻
+
+    Pagination:
+      type: object
+      description: 分頁資訊
+      properties:
+        current_page:
+          type: integer
+          description: 目前頁碼
+          example: 1
+        per_page:
+          type: integer
+          description: 每頁筆數
+          example: 10
+        total:
+          type: integer
+          description: 總筆數
+          example: 45
+        total_pages:
+          type: integer
+          description: 總頁數
+          example: 5
+
+    ErrorResponse:
+      type: object
+      description: 錯誤回應格式
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: 錯誤代碼
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              description: 錯誤訊息
+              example: 驗證失敗
+            details:
+              type: object
+              description: 詳細錯誤資訊（僅在驗證錯誤時提供）
+              nullable: true
+              additionalProperties:
+                type: string
+              example:
+                meeting_name: 會議名稱為必填
+                meeting_date: 請輸入有效的日期格式 (YYYY-MM-DD)
+
+  responses:
+    UnauthorizedError:
+      description: 未授權 - 需要登入
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: UNAUTHORIZED
+              message: 登入已過期，請重新登入
+
+    ForbiddenError:
+      description: 禁止存取 - 權限不足
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: FORBIDDEN
+              message: 您沒有權限存取此資源
+
+    ValidationError:
+      description: 驗證錯誤 - 輸入資料不符合要求
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: VALIDATION_ERROR
+              message: 驗證失敗
+              details:
+                meeting_name: 會議名稱為必填
+                meeting_date: 請輸入有效的日期格式 (YYYY-MM-DD)
+
+    InternalServerError:
+      description: 伺服器內部錯誤
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: INTERNAL_ERROR
+              message: 伺服器錯誤，請稍後再試
