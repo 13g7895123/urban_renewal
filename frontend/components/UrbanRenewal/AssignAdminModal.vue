@@ -36,12 +36,6 @@
                   更新會名稱
                 </th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  所有權人數
-                </th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  當前歸屬
-                </th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   分配管理者
                 </th>
               </tr>
@@ -50,19 +44,6 @@
               <tr v-for="renewal in urbanRenewals" :key="renewal.id" class="hover:bg-gray-50">
                 <td class="px-4 py-3 text-sm font-medium text-gray-900">
                   {{ renewal.name }}
-                </td>
-                <td class="px-4 py-3 text-sm text-gray-500">
-                  {{ renewal.member_count }} 人
-                </td>
-                <td class="px-4 py-3 text-sm text-gray-500">
-                  <span v-if="renewal.assigned_admin_name" class="text-green-600">
-                    <Icon name="heroicons:user" class="w-4 h-4 inline mr-1" />
-                    {{ renewal.assigned_admin_name }}
-                  </span>
-                  <span v-else class="text-gray-400">
-                    <Icon name="heroicons:minus-circle" class="w-4 h-4 inline mr-1" />
-                    未分配
-                  </span>
                 </td>
                 <td class="px-4 py-3 text-sm">
                   <select

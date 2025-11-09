@@ -74,6 +74,7 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
 
         $routes->get('(:num)/property-owners/all-buildings', 'PropertyOwnerController::getAllBuildingsByUrbanRenewal/$1'); // GET /api/urban-renewals/{id}/property-owners/all-buildings
         // Property Owners nested routes (specific routes must come before general routes)
+        $routes->get('(:num)/property-owners/all-buildings', 'PropertyOwnerController::getAllBuildingsByUrbanRenewal/$1'); // GET /api/urban-renewals/{id}/property-owners/all-buildings
         $routes->get('(:num)/property-owners/export', 'PropertyOwnerController::export/$1'); // GET /api/urban-renewals/{id}/property-owners/export
         $routes->post('(:num)/property-owners/import', 'PropertyOwnerController::import/$1'); // POST /api/urban-renewals/{id}/property-owners/import
         $routes->get('(:num)/property-owners', 'PropertyOwnerController::getByUrbanRenewal/$1'); // GET /api/urban-renewals/{id}/property-owners
