@@ -154,6 +154,43 @@ class WordExportService
         } else {
             $templateProcessor->setValue('descriptions', $data['descriptions'] ?? '');
         }
+
+        // 出席者清單
+        $templateProcessor->setValue('attendees', $this->getAttendeesList($data));
+    }
+
+    /**
+     * 取得出席者清單
+     *
+     * @param array $data 會議資料
+     * @return string 出席者名單（頓號分隔）
+     */
+    private function getAttendeesList(array $data): string
+    {
+        try {
+            // 檢查是否有 urban_renewal_id
+            if (!isset($data['urban_renewal_id'])) {
+                return '';
+            }
+
+            // 載入 PropertyOwnerModel
+            $propertyOwnerModel = new \App\Models\PropertyOwnerModel();
+
+            // 查詢該更新會的所有權人
+            $owners = $propertyOwnerModel
+                ->where('urban_renewal_id', $data['urban_renewal_id'])
+                ->where('deleted_at', null)
+                ->orderBy('owner_code', 'ASC')
+                ->findAll();
+
+            // 提取姓名並用頓號連接
+            $names = array_column($owners, 'name');
+            return implode('、', $names);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Failed to get attendees list: ' . $e->getMessage());
+            return '';
+        }
     }
 
     /**
