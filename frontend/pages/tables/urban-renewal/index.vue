@@ -522,8 +522,7 @@ const viewMembers = (renewal) => {
 }
 
 const viewJointInfo = (renewal) => {
-  console.log('Viewing joint info for:', renewal)
-  // TODO: Implement view joint info functionality
+  router.push(`/tables/urban-renewal/${renewal.id}/joint-common-areas`)
 }
 
 const deleteRenewal = async (renewal) => {
