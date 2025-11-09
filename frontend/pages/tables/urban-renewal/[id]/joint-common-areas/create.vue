@@ -213,7 +213,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 
 definePageMeta({
   middleware: ['auth', 'company-manager'],
@@ -243,6 +243,11 @@ const isLoadingBuildings = ref(false)
 const error = ref('')
 const allBuildings = ref([])
 
+// Watch for allBuildings changes to help debug
+watch(allBuildings, (newVal) => {
+  console.log('[Joint Common Areas Create] ⚠️ allBuildings 已更新，新建物數:', newVal.length)
+}, { deep: false })
+
 // Form data
 const formData = reactive({
   county: '',
@@ -258,15 +263,40 @@ const formData = reactive({
 
 // Computed property to filter buildings based on selected county, district, section
 const filterCorrespondingBuildings = computed(() => {
-  if (!formData.county || !formData.district || !formData.section) {
+  const county = formData.county
+  const district = formData.district
+  const section = formData.section
+
+  // Debug logging
+  console.log('[Joint Common Areas Create] filterCorrespondingBuildings 觸發:')
+  console.log('  縣市:', county || '(未選擇)')
+  console.log('  行政區:', district || '(未選擇)')
+  console.log('  段小段:', section || '(未選擇)')
+  console.log('  所有建物數:', allBuildings.value.length)
+
+  // If any location field is not selected, return all buildings
+  if (!county || !district || !section) {
+    console.log('[Joint Common Areas Create] 有欄位未選擇，返回所有建物:', allBuildings.value.length)
     return allBuildings.value
   }
 
-  return allBuildings.value.filter(building =>
-    building.county === formData.county &&
-    building.district === formData.district &&
-    building.section === formData.section
-  )
+  // Filter buildings that match all three location fields
+  const filtered = allBuildings.value.filter(building => {
+    const match = building.county === county &&
+                  building.district === district &&
+                  building.section === section
+    if (!match) {
+      console.log(`[Joint Common Areas Create] 建物不匹配:`, {
+        building_id: building.id,
+        search: { county, district, section },
+        building: { county: building.county, district: building.district, section: building.section }
+      })
+    }
+    return match
+  })
+
+  console.log('[Joint Common Areas Create] 篩選後建物數:', filtered.length)
+  return filtered
 })
 
 // API Functions
@@ -289,10 +319,23 @@ const fetchAllBuildings = async () => {
       console.log('[Joint Common Areas Create] 原始建物數量:', rawData.length)
 
       // 將建物轉換為顯示格式
-      allBuildings.value = rawData.map(building => ({
-        ...building,
-        display_name: `${building.county}-${building.district}-${building.section}-${building.building_number_main}-${building.building_number_sub}`
-      }))
+      allBuildings.value = rawData.map(building => {
+        // 構建顯示名稱
+        let displayName = ''
+
+        if (building.location && building.location.trim() !== '') {
+          // 如果有完整的 location 資訊，使用中文顯示
+          displayName = `${building.location.replace(/\//g, '')} (${building.building_number_main}-${building.building_number_sub})`
+        } else {
+          // 否則使用代碼格式
+          displayName = `${building.county || ''}-${building.district || ''}-${building.section || ''}-${building.building_number_main}-${building.building_number_sub}`
+        }
+
+        return {
+          ...building,
+          display_name: displayName
+        }
+      })
 
       console.log('[Joint Common Areas Create] 轉換後的建物數量:', allBuildings.value.length)
       console.log('[Joint Common Areas Create] 建物資料結構範例（前 3 筆）:')
@@ -362,35 +405,39 @@ const onDistrictChange = async () => {
 }
 
 const fillTestData = async () => {
-  // 隨機選擇縣市
-  if (counties.value.length === 0) {
+  console.log('[Joint Common Areas Create] ===== 開始填入測試資料 =====')
+
+  // 首先載入所有建物資料，確保有可用的建物
+  console.log('[Joint Common Areas Create] 步驟 1: 載入建物資料...')
+  await fetchAllBuildings()
+
+  if (allBuildings.value.length === 0) {
+    console.error('[Joint Common Areas Create] 無可用建物資料，無法填入測試資料')
+    showError('失敗', '無可用建物資料，請先點擊「重新載入」')
     return
   }
 
-  const randomCounty = counties.value[Math.floor(Math.random() * counties.value.length)]
-  formData.county = randomCounty.code
+  console.log('[Joint Common Areas Create] 步驟 2: 從建物資料中隨機選擇地點...')
 
-  // 獲取該縣市的行政區
-  await locationOnCountyChange(randomCounty.code)
+  // 隨機選擇一個建物作為地點參考
+  const selectedBuilding = allBuildings.value[Math.floor(Math.random() * allBuildings.value.length)]
 
-  // 隨機選擇行政區
-  if (districts.value.length === 0) {
-    return
-  }
+  console.log('[Joint Common Areas Create] 選擇的地點:', {
+    county: selectedBuilding.county,
+    district: selectedBuilding.district,
+    section: selectedBuilding.section
+  })
 
-  const randomDistrict = districts.value[Math.floor(Math.random() * districts.value.length)]
-  formData.district = randomDistrict.code
+  // 填入地點資訊（根據選中的建物，確保下拉選單有可選項目）
+  formData.county = selectedBuilding.county
+  await locationOnCountyChange(selectedBuilding.county)
 
-  // 獲取該行政區的段小段
-  await locationOnDistrictChange(randomCounty.code, randomDistrict.code)
+  formData.district = selectedBuilding.district
+  await locationOnDistrictChange(selectedBuilding.county, selectedBuilding.district)
 
-  // 隨機選擇段小段
-  if (sections.value.length === 0) {
-    return
-  }
+  formData.section = selectedBuilding.section
 
-  const randomSection = sections.value[Math.floor(Math.random() * sections.value.length)]
-  formData.section = randomSection.code
+  console.log('[Joint Common Areas Create] 步驟 3: 填入建號和面積...')
 
   // 填入隨機建號
   formData.building_number_main = String(Math.floor(Math.random() * 10000)).padStart(5, '0')
@@ -399,12 +446,7 @@ const fillTestData = async () => {
   // 填入隨機建物總面積 (100-1000 平方公尺)
   formData.building_total_area = (Math.random() * 900 + 100).toFixed(2)
 
-  // 隨機選擇共有部分對應建物建號
-  const availableBuildings = filterCorrespondingBuildings.value
-  if (availableBuildings.length > 0) {
-    const randomBuilding = availableBuildings[Math.floor(Math.random() * availableBuildings.length)]
-    formData.corresponding_building_id = randomBuilding.id.toString()
-  }
+  console.log('[Joint Common Areas Create] 步驟 4: 填入持有比例...')
 
   // 填入隨機持有比例 (分子 1-10, 分母 2-20)
   const numerator = Math.floor(Math.random() * 10) + 1
@@ -412,6 +454,12 @@ const fillTestData = async () => {
 
   formData.ownership_numerator = numerator
   formData.ownership_denominator = denominator
+
+  console.log('[Joint Common Areas Create] 步驟 5: 對應建物欄位已重置，請手動選擇...')
+  // 不自動填入對應建物，讓使用者手動選擇
+
+  console.log('[Joint Common Areas Create] ===== 測試資料填入完成 =====')
+  showSuccess('成功', '測試資料已填入，請在下拉選單中選擇對應建物')
 }
 
 const onSubmit = async () => {
