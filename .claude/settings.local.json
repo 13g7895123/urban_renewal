@@ -61,7 +61,9 @@
       "Bash(/home/jarvis/project/bonus/urban_renewal/test-update-with-land.sh)",
       "Bash(git merge:*)",
       "Bash(docker port:*)",
-      "Bash(md5sum:*)"
+      "Bash(md5sum:*)",
+      "Bash(docker cp:*)",
+      "Bash(sudo cp:*)"
     ],
     "deny": [],
     "ask": []
