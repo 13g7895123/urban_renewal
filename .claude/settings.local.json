@@ -63,7 +63,10 @@
       "Bash(./test-delete-owner.sh:*)",
       "Bash(./test-delete-api.sh:*)",
       "Bash(git merge:*)",
-      "Bash(docker port:*)"
+      "Bash(docker port:*)",
+      "Bash(md5sum:*)",
+      "Bash(docker cp:*)",
+      "Bash(sudo cp:*)"
     ],
     "deny": [],
     "ask": []
