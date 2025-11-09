@@ -13,12 +13,37 @@
         </div>
       </div>
 
-      <!-- Form -->
-      <form @submit.prevent="onSubmit" class="max-w-4xl mx-auto bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <!-- 第一列：地號資訊 -->
-        <div class="border-b border-gray-200 pb-6 mb-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">地號資訊</h3>
-          <div class="grid grid-cols-3 gap-4">
+      <!-- Form Card -->
+      <UCard>
+        <!-- Test Data Button and Reload Button -->
+        <div class="flex justify-end gap-2 p-6 pb-0">
+          <button
+            type="button"
+            @click="fetchAllBuildings"
+            :disabled="isLoadingBuildings"
+            class="px-3 py-1 text-sm font-medium text-white bg-green-500 hover:bg-green-600 rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+          >
+            <Icon
+              name="heroicons:arrow-path"
+              :class="['w-4 h-4 mr-1 inline', { 'animate-spin': isLoadingBuildings }]"
+            />
+            {{ isLoadingBuildings ? '載入中...' : '重新載入' }}
+          </button>
+          <button
+            type="button"
+            @click="fillTestData"
+            class="px-3 py-1 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-md transition-colors duration-200"
+          >
+            <Icon name="heroicons:beaker" class="w-4 h-4 mr-1 inline" />
+            填入測試資料
+          </button>
+        </div>
+
+        <form @submit.prevent="onSubmit" class="space-y-6 p-6">
+          <!-- 第一列：地號資訊 -->
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">地號資訊</h3>
+            <div class="grid grid-cols-3 gap-4">
             <!-- 縣市 -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">縣市 <span class="text-red-500">*</span></label>
@@ -67,121 +92,122 @@
                 </option>
               </select>
             </div>
-          </div>
-        </div>
-
-        <!-- 第二列：建號與建物資訊 -->
-        <div class="border-b border-gray-200 pb-6 mb-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">建號與建物資訊</h3>
-
-          <!-- 建號母號和子號 -->
-          <div class="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">建號母號 <span class="text-red-500">*</span></label>
-              <input
-                v-model="formData.building_number_main"
-                type="text"
-                required
-                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="例：00001"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">建號子號 <span class="text-red-500">*</span></label>
-              <input
-                v-model="formData.building_number_sub"
-                type="text"
-                required
-                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="例：000"
-              />
             </div>
           </div>
 
-          <!-- 建物總面積 -->
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2">建物總面積(平方公尺) <span class="text-red-500">*</span></label>
-            <input
-              v-model="formData.building_total_area"
-              type="number"
-              step="0.01"
-              required
-              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              placeholder="請輸入建物總面積"
-            />
-          </div>
-
-          <!-- 共有部分對應建物建號 -->
+          <!-- 第二列：建號與建物資訊 -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">共有部分對應建物建號 <span class="text-red-500">*</span></label>
-            <select
-              v-model="formData.corresponding_building_id"
-              required
-              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">建號與建物資訊</h3>
+
+            <!-- 建號母號和子號 -->
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">建號母號 <span class="text-red-500">*</span></label>
+                <input
+                  v-model="formData.building_number_main"
+                  type="text"
+                  required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  placeholder="例：00001"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">建號子號 <span class="text-red-500">*</span></label>
+                <input
+                  v-model="formData.building_number_sub"
+                  type="text"
+                  required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  placeholder="例：000"
+                />
+              </div>
+            </div>
+
+            <!-- 建物總面積 -->
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-2">建物總面積(平方公尺) <span class="text-red-500">*</span></label>
+              <input
+                v-model="formData.building_total_area"
+                type="number"
+                step="0.01"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                placeholder="請輸入建物總面積"
+              />
+            </div>
+
+            <!-- 共有部分對應建物建號 -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">共有部分對應建物建號 <span class="text-red-500">*</span></label>
+              <select
+                v-model="formData.corresponding_building_id"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              >
+                <option value="">請選擇對應的建物</option>
+                <option v-for="building in filterCorrespondingBuildings" :key="building.id" :value="building.id">
+                  {{ building.display_name }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 第三列：持有比例 -->
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">持有比例</h3>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">持有比例分子 <span class="text-red-500">*</span></label>
+                <input
+                  v-model="formData.ownership_numerator"
+                  type="number"
+                  required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  placeholder="分子"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">持有比例分母 <span class="text-red-500">*</span></label>
+                <input
+                  v-model="formData.ownership_denominator"
+                  type="number"
+                  required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  placeholder="分母"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- 錯誤訊息 -->
+          <div v-if="error" class="p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {{ error }}
+          </div>
+
+          <!-- 按鈕區 -->
+          <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              @click="goBack"
+              :disabled="isSubmitting"
+              class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <option value="">請選擇對應的建物</option>
-              <option v-for="building in filterCorrespondingBuildings" :key="building.id" :value="building.id">
-                {{ building.display_name }}
-              </option>
-            </select>
+              取消
+            </button>
+            <button
+              type="submit"
+              :disabled="isSubmitting"
+              class="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+            >
+              <svg v-if="isSubmitting" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              {{ isSubmitting ? '儲存中...' : '儲存' }}
+            </button>
           </div>
-        </div>
-
-        <!-- 第三列：持有比例 -->
-        <div class="pb-6 mb-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">持有比例</h3>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">持有比例分子 <span class="text-red-500">*</span></label>
-              <input
-                v-model="formData.ownership_numerator"
-                type="number"
-                required
-                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="分子"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">持有比例分母 <span class="text-red-500">*</span></label>
-              <input
-                v-model="formData.ownership_denominator"
-                type="number"
-                required
-                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="分母"
-              />
-            </div>
-          </div>
-        </div>
-
-        <!-- 錯誤訊息 -->
-        <div v-if="error" class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-          {{ error }}
-        </div>
-
-        <!-- 按鈕區 -->
-        <div class="flex justify-end gap-4 pt-4 border-t border-gray-200">
-          <button
-            type="button"
-            @click="goBack"
-            :disabled="isSubmitting"
-            class="px-6 py-2 text-gray-700 bg-gray-200 border border-gray-300 rounded-lg hover:bg-gray-300 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            取消
-          </button>
-          <button
-            type="submit"
-            :disabled="isSubmitting"
-            class="px-6 py-2 text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-          >
-            <svg v-if="isSubmitting" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            {{ isSubmitting ? '儲存中...' : '儲存' }}
-          </button>
-        </div>
-      </form>
+        </form>
+      </UCard>
     </div>
   </NuxtLayout>
 </template>
@@ -213,6 +239,7 @@ const urbanRenewalId = computed(() => route.params.id)
 
 // State
 const isSubmitting = ref(false)
+const isLoadingBuildings = ref(false)
 const error = ref('')
 const allBuildings = ref([])
 
@@ -244,26 +271,61 @@ const filterCorrespondingBuildings = computed(() => {
 
 // API Functions
 const fetchAllBuildings = async () => {
-  try {
-    console.log('[Joint Common Areas Create] Fetching buildings from:', `/urban-renewals/${urbanRenewalId.value}/property-owners/all-buildings`)
+  isLoadingBuildings.value = true
 
-    const response = await get(`/urban-renewals/${urbanRenewalId.value}/property-owners/all-buildings`)
+  try {
+    const apiPath = `/urban-renewals/${urbanRenewalId.value}/property-owners/all-buildings`
+    console.log('[Joint Common Areas Create] ========== 開始載入建物資料 ==========')
+    console.log('[Joint Common Areas Create] API 端點:', apiPath)
+    console.log('[Joint Common Areas Create] Urban Renewal ID:', urbanRenewalId.value)
+
+    const response = await get(apiPath)
+
+    console.log('[Joint Common Areas Create] API 回應狀態:', response.success)
+    console.log('[Joint Common Areas Create] API 完整回應:', response)
 
     if (response.success && response.data.status === 'success') {
+      const rawData = response.data.data || []
+      console.log('[Joint Common Areas Create] 原始建物數量:', rawData.length)
+
       // 將建物轉換為顯示格式
-      allBuildings.value = (response.data.data || []).map(building => ({
+      allBuildings.value = rawData.map(building => ({
         ...building,
         display_name: `${building.county}-${building.district}-${building.section}-${building.building_number_main}-${building.building_number_sub}`
       }))
-      console.log('[Joint Common Areas Create] Buildings loaded:', allBuildings.value.length, 'records')
+
+      console.log('[Joint Common Areas Create] 轉換後的建物數量:', allBuildings.value.length)
+      console.log('[Joint Common Areas Create] 建物資料結構範例（前 3 筆）:')
+      allBuildings.value.slice(0, 3).forEach((building, index) => {
+        console.log(`  [建物 ${index + 1}]:`, {
+          id: building.id,
+          county: building.county,
+          district: building.district,
+          section: building.section,
+          building_number_main: building.building_number_main,
+          building_number_sub: building.building_number_sub,
+          display_name: building.display_name
+        })
+      })
+
+      showSuccess('載入成功！', `已載入 ${allBuildings.value.length} 筆建物資料`)
+      console.log('[Joint Common Areas Create] ========== 建物資料載入完成 ==========')
     } else {
-      console.error('Failed to fetch buildings:', response.data?.message || response.error?.message)
+      const errorMsg = response.data?.message || response.error?.message || '未知錯誤'
+      console.error('[Joint Common Areas Create] API 返回失敗:', errorMsg)
+      console.error('[Joint Common Areas Create] 回應內容:', response.data)
       allBuildings.value = []
+      showError('載入失敗', errorMsg)
     }
   } catch (err) {
-    console.error('[Joint Common Areas Create] Fetch error:', err)
-    console.error('[Joint Common Areas Create] Error details:', err.data || err.message)
+    console.error('[Joint Common Areas Create] ========== 發生例外錯誤 ==========')
+    console.error('[Joint Common Areas Create] 錯誤訊息:', err.message)
+    console.error('[Joint Common Areas Create] 錯誤詳情:', err.data || err)
+    console.error('[Joint Common Areas Create] 完整錯誤物件:', err)
     allBuildings.value = []
+    showError('載入失敗', err.message || '無法連接到伺服器')
+  } finally {
+    isLoadingBuildings.value = false
   }
 }
 
@@ -297,6 +359,59 @@ const onDistrictChange = async () => {
   await locationOnDistrictChange(formData.county, formData.district)
   // Reset section when district changes
   formData.section = ''
+}
+
+const fillTestData = async () => {
+  // 隨機選擇縣市
+  if (counties.value.length === 0) {
+    return
+  }
+
+  const randomCounty = counties.value[Math.floor(Math.random() * counties.value.length)]
+  formData.county = randomCounty.code
+
+  // 獲取該縣市的行政區
+  await locationOnCountyChange(randomCounty.code)
+
+  // 隨機選擇行政區
+  if (districts.value.length === 0) {
+    return
+  }
+
+  const randomDistrict = districts.value[Math.floor(Math.random() * districts.value.length)]
+  formData.district = randomDistrict.code
+
+  // 獲取該行政區的段小段
+  await locationOnDistrictChange(randomCounty.code, randomDistrict.code)
+
+  // 隨機選擇段小段
+  if (sections.value.length === 0) {
+    return
+  }
+
+  const randomSection = sections.value[Math.floor(Math.random() * sections.value.length)]
+  formData.section = randomSection.code
+
+  // 填入隨機建號
+  formData.building_number_main = String(Math.floor(Math.random() * 10000)).padStart(5, '0')
+  formData.building_number_sub = String(Math.floor(Math.random() * 1000)).padStart(3, '0')
+
+  // 填入隨機建物總面積 (100-1000 平方公尺)
+  formData.building_total_area = (Math.random() * 900 + 100).toFixed(2)
+
+  // 隨機選擇共有部分對應建物建號
+  const availableBuildings = filterCorrespondingBuildings.value
+  if (availableBuildings.length > 0) {
+    const randomBuilding = availableBuildings[Math.floor(Math.random() * availableBuildings.length)]
+    formData.corresponding_building_id = randomBuilding.id.toString()
+  }
+
+  // 填入隨機持有比例 (分子 1-10, 分母 2-20)
+  const numerator = Math.floor(Math.random() * 10) + 1
+  const denominator = Math.floor(Math.random() * 19) + 2
+
+  formData.ownership_numerator = numerator
+  formData.ownership_denominator = denominator
 }
 
 const onSubmit = async () => {
