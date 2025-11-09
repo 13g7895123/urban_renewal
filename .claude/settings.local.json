@@ -66,7 +66,12 @@
       "Bash(docker port:*)",
       "Bash(md5sum:*)",
       "Bash(docker cp:*)",
-      "Bash(sudo cp:*)"
+      "Bash(sudo cp:*)",
+      "Bash(git fetch:*)",
+      "Bash(unzip:*)",
+      "Bash(zip:*)",
+      "Bash(/home/jarvis/project/bonus/urban_renewal/backend/writable/templates/meeting_notice_template.docx)",
+      "Bash(/home/jarvis/project/bonus/urban_renewal/worktree/meetings/backend/writable/templates/meeting_notice_template.docx)"
     ],
     "deny": [],
     "ask": []
