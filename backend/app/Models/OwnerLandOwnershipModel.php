@@ -62,10 +62,12 @@ class OwnerLandOwnershipModel extends Model
     // Temporarily disabled total areas update due to missing database columns
     // protected $afterInsert = ['updateOwnerTotals'];
     // protected $afterUpdate = ['updateOwnerTotals'];
+    protected $afterInsert = ['updateUrbanRenewalLandArea'];
+    protected $afterUpdate = ['updateUrbanRenewalLandArea'];
     protected $beforeFind = [];
     protected $afterFind = [];
     protected $beforeDelete = [];
-    protected $afterDelete = ['updateOwnerTotalsOnDelete'];
+    protected $afterDelete = ['updateOwnerTotalsOnDelete', 'updateUrbanRenewalLandArea'];
 
     /**
      * Update property owner totals after insert/update
@@ -170,5 +172,39 @@ class OwnerLandOwnershipModel extends Model
 
             return $result !== false;
         }
+    }
+
+    /**
+     * Update urban renewal land area when property owner's land changes
+     */
+    protected function updateUrbanRenewalLandArea(array $data)
+    {
+        try {
+            $propertyOwnerModel = new \App\Models\PropertyOwnerModel();
+            
+            $propertyOwnerId = null;
+            if (isset($data['data']['property_owner_id'])) {
+                $propertyOwnerId = $data['data']['property_owner_id'];
+            } elseif (isset($data['id'])) {
+                $ownership = $this->find($data['id']);
+                if ($ownership) {
+                    $propertyOwnerId = $ownership['property_owner_id'] ?? null;
+                }
+            }
+            
+            if ($propertyOwnerId) {
+                $propertyOwner = $propertyOwnerModel->find($propertyOwnerId);
+                if ($propertyOwner && isset($propertyOwner['urban_renewal_id'])) {
+                    $urbanRenewalId = $propertyOwner['urban_renewal_id'];
+                    
+                    // Log the change for audit trail
+                    log_message('info', 'Land area changed for urban_renewal_id: ' . $urbanRenewalId);
+                }
+            }
+        } catch (\Exception $e) {
+            log_message('error', 'Failed to process urban renewal land area change: ' . $e->getMessage());
+        }
+        
+        return $data;
     }
 }

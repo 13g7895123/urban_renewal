@@ -205,6 +205,7 @@ class UrbanRenewalModel extends Model
         }
         
         $urbanRenewal['member_count'] = $this->calculateMemberCount($id);
+        $urbanRenewal['area'] = $this->calculateTotalLandArea($id);
         return $urbanRenewal;
     }
 
@@ -219,10 +220,77 @@ class UrbanRenewalModel extends Model
     {
         $urbanRenewals = $this->getUrbanRenewals($page, $perPage, $urbanRenewalId);
         
-        // Add calculated member count to each record
+        // Add calculated member count and land area to each record
         foreach ($urbanRenewals as &$renewal) {
             $renewal['member_count'] = $this->calculateMemberCount($renewal['id']);
+            $renewal['area'] = $this->calculateTotalLandArea($renewal['id']);
         }
+        unset($renewal);
+        
+        return $urbanRenewals;
+    }
+
+    /**
+     * Calculate total land area for an urban renewal
+     * Sums up all property owners' land area for this urban renewal
+     * 
+     * @param int $urbanRenewalId
+     * @return float
+     */
+    public function calculateTotalLandArea(int $urbanRenewalId): float
+    {
+        $propertyOwnerModel = new \App\Models\PropertyOwnerModel();
+
+        // Get all property owners for this urban renewal
+        $propertyOwners = $propertyOwnerModel
+            ->where('urban_renewal_id', $urbanRenewalId)
+            ->findAll();
+
+        $totalLandArea = 0;
+
+        // For each property owner, sum their land areas
+        foreach ($propertyOwners as $owner) {
+            $ownerTotals = $propertyOwnerModel->calculateTotalAreas($owner['id']);
+            $totalLandArea += $ownerTotals['total_land_area'] ?? 0;
+        }
+
+        return round($totalLandArea, 2);
+    }
+
+    /**
+     * Get urban renewal with calculated total land area
+     * 
+     * @param int $id
+     * @return array|null
+     */
+    public function getWithCalculatedArea(int $id): ?array
+    {
+        $urbanRenewal = $this->find($id);
+        if (!$urbanRenewal) {
+            return null;
+        }
+        
+        $urbanRenewal['area'] = $this->calculateTotalLandArea($id);
+        return $urbanRenewal;
+    }
+
+    /**
+     * Get all urban renewals with calculated total land area
+     * 
+     * @param int $page
+     * @param int $perPage
+     * @param int|null $urbanRenewalId
+     * @return array
+     */
+    public function getUrbanRenewalsWithCalculatedArea($page = 1, $perPage = 10, $urbanRenewalId = null)
+    {
+        $urbanRenewals = $this->getUrbanRenewals($page, $perPage, $urbanRenewalId);
+        
+        // Add calculated land area to each record
+        foreach ($urbanRenewals as &$renewal) {
+            $renewal['area'] = $this->calculateTotalLandArea($renewal['id']);
+        }
+        unset($renewal);
         
         return $urbanRenewals;
     }

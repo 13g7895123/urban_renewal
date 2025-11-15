@@ -572,6 +572,11 @@ const updatePageTitle = () => {
   document.title = `${renewalData.name} - 更新會基本資料管理`
 }
 
+const formatArea = (area) => {
+  if (!area) return '0'
+  return Number(area).toLocaleString('zh-TW', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+}
+
 const onCountyChange = async () => {
   landForm.district = ''
   landForm.section = ''
