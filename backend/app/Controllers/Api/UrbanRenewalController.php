@@ -87,9 +87,10 @@ class UrbanRenewalController extends BaseController
                 $data = $this->urbanRenewalModel->getUrbanRenewals($page, $perPage, $urbanRenewalId);
             }
 
-            // Add calculated member count to all results
+            // Add calculated member count and land area to all results
             foreach ($data as &$renewal) {
                 $renewal['member_count'] = $this->urbanRenewalModel->calculateMemberCount($renewal['id']);
+                $renewal['area'] = $this->urbanRenewalModel->calculateTotalLandArea($renewal['id']);
             }
             unset($renewal);
 
