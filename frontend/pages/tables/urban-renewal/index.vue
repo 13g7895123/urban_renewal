@@ -332,7 +332,8 @@ const deleteUrbanRenewal = async (id) => {
   }
 }
 
-// Fetch company managers grouped by urban_renewal_id
+// Fetch company managers for current company
+// 新架構：同一企業的所有更新會使用相同的管理者列表
 const fetchCompanyManagers = async () => {
   try {
     const response = await get('/urban-renewals/company-managers')
@@ -340,14 +341,14 @@ const fetchCompanyManagers = async () => {
     console.log('Company managers response:', response)
 
     if (response.success && response.data.status === 'success') {
-      // 後端返回的是按 urban_renewal_id 分組的物件
-      companyManagers.value = response.data.data || {}
-      console.log('Company managers loaded (grouped by renewal):', companyManagers.value)
+      // 後端返回與 /api/users 相同的結構：{ managers: [...], pager: {...} }
+      companyManagers.value = response.data.data.managers || []
+      console.log('Company managers loaded (unified list):', companyManagers.value)
     } else {
       console.error('Failed to fetch company managers:', response)
       // 嘗試直接使用 response.data.data
-      if (response.data && response.data.data) {
-        companyManagers.value = response.data.data
+      if (response.data && response.data.data && response.data.data.managers) {
+        companyManagers.value = response.data.data.managers
         console.log('Company managers loaded (fallback):', companyManagers.value)
       }
     }

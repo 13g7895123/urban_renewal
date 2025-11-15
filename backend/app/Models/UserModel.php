@@ -21,6 +21,7 @@ class UserModel extends Model
         'user_type',
         'is_company_manager',
         'urban_renewal_id',
+        'company_id',
         'property_owner_id',
         'full_name',
         'nickname',

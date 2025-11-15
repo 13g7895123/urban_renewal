@@ -109,14 +109,14 @@ const props = defineProps({
     required: true
   },
   companyManagers: {
-    type: Object, // 按 urban_renewal_id 分組的管理者物件
+    type: Array, // 統一的管理者列表（所有更新會使用相同列表）
     required: true
   }
 })
 
 // Debug: 監控 props 變化
 watch(() => props.companyManagers, (newVal) => {
-  console.log('Company managers in modal (grouped):', newVal)
+  console.log('Company managers in modal (unified list):', newVal)
 }, { immediate: true })
 
 const emit = defineEmits(['close', 'submit'])
@@ -125,8 +125,9 @@ const assignments = ref({})
 const isSubmitting = ref(false)
 
 // 根據更新會 ID 取得該更新會的管理者列表
+// 新架構：所有更新會顯示相同的管理者列表
 const getManagersForRenewal = (renewalId) => {
-  return props.companyManagers[renewalId] || []
+  return props.companyManagers || []
 }
 
 // 當 Modal 打開時，初始化分配資料

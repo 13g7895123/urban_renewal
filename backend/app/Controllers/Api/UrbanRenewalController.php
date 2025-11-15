@@ -487,15 +487,38 @@ class UrbanRenewalController extends BaseController
                 ]);
             }
 
-            // 企業管理者只能分配自己所屬的更新會
+            // 企業管理者只能分配自己公司所屬的更新會
             if (!$isAdmin && $isCompanyManager) {
-                $userUrbanRenewalId = $user['urban_renewal_id'] ?? null;
+                // 新架構：取得用戶的 company_id (過渡期也支持 urban_renewal_id)
+                $userCompanyId = $user['company_id'] ?? null;
+                if (!$userCompanyId && isset($user['urban_renewal_id'])) {
+                    // 過渡期兼容：從 urban_renewal_id 推導 company_id
+                    $existingRenewal = $this->urbanRenewalModel->find($user['urban_renewal_id']);
+                    if ($existingRenewal && $existingRenewal['company_id']) {
+                        $userCompanyId = $existingRenewal['company_id'];
+                    }
+                }
+
+                if (!$userCompanyId) {
+                    return $this->response->setStatusCode(403)->setJSON([
+                        'status' => 'error',
+                        'message' => '權限不足：您的帳號未關聯任何企業'
+                    ]);
+                }
 
                 foreach ($data['assignments'] as $urbanRenewalId => $adminId) {
-                    if ((int)$urbanRenewalId !== (int)$userUrbanRenewalId) {
+                    $renewal = $this->urbanRenewalModel->find($urbanRenewalId);
+                    if (!$renewal) {
+                        return $this->response->setStatusCode(404)->setJSON([
+                            'status' => 'error',
+                            'message' => "更新會 ID {$urbanRenewalId} 不存在"
+                        ]);
+                    }
+
+                    if ((int)$renewal['company_id'] !== (int)$userCompanyId) {
                         return $this->response->setStatusCode(403)->setJSON([
                             'status' => 'error',
-                            'message' => '權限不足，您只能分配自己所屬的更新會'
+                            'message' => '權限不足，您只能分配自己公司所屬的更新會'
                         ]);
                     }
                 }
@@ -544,7 +567,8 @@ class UrbanRenewalController extends BaseController
     }
 
     /**
-     * Get company managers list grouped by urban_renewal_id
+     * Get company managers list for current company (新架構)
+     * 同一個企業的所有企業管理者列表，用於分配
      * GET /api/urban-renewals/company-managers
      */
     public function getCompanyManagers()
@@ -559,26 +583,52 @@ class UrbanRenewalController extends BaseController
                 ]);
             }
 
-            $userModel = new \App\Models\UserModel();
-            $managers = $userModel->where('is_company_manager', 1)
-                                  ->where('is_active', 1)
-                                  ->where('urban_renewal_id IS NOT NULL')
-                                  ->orderBy('full_name', 'ASC')
-                                  ->findAll();
-
-            // 按 urban_renewal_id 分組
-            $groupedManagers = [];
-            foreach ($managers as $manager) {
-                $renewalId = $manager['urban_renewal_id'];
-                if (!isset($groupedManagers[$renewalId])) {
-                    $groupedManagers[$renewalId] = [];
+            // 新架構：取得用戶的 company_id (過渡期也支持 urban_renewal_id)
+            $userCompanyId = $user['company_id'] ?? null;
+            if (!$userCompanyId && isset($user['urban_renewal_id'])) {
+                // 過渡期兼容：從 urban_renewal_id 推導 company_id
+                $existingRenewal = $this->urbanRenewalModel->find($user['urban_renewal_id']);
+                if ($existingRenewal && $existingRenewal['company_id']) {
+                    $userCompanyId = $existingRenewal['company_id'];
                 }
-                $groupedManagers[$renewalId][] = $manager;
             }
+
+            if (!$userCompanyId) {
+                return $this->response->setStatusCode(403)->setJSON([
+                    'status' => 'error',
+                    'message' => '權限不足：您的帳號未關聯任何企業'
+                ]);
+            }
+
+            $userModel = new \App\Models\UserModel();
+            
+            // 新架構：查詢同一企業下的所有企業管理者
+            // 使用與 /api/users 相同的過濾邏輯，篩選出企業類型的管理者
+            $page = $this->request->getGet('page') ?? 1;
+            $perPage = $this->request->getGet('per_page') ?? 100;
+            
+            $filters = [
+                'company_id' => $userCompanyId,
+                'is_company_manager' => 1,
+                'is_active' => 1,
+                'user_type' => 'enterprise'
+            ];
+
+            $managers = $userModel->getUsers($page, $perPage, $filters);
+
+            // 移除敏感資訊（與 /api/users 保持一致）
+            $managers = array_map(function($userData) {
+                unset($userData['password_hash'], $userData['password_reset_token']);
+                return $userData;
+            }, $managers);
 
             return $this->response->setJSON([
                 'status' => 'success',
-                'data' => $groupedManagers
+                'message' => '企業管理者列表',
+                'data' => [
+                    'managers' => $managers,
+                    'pager' => $userModel->pager->getDetails()
+                ]
             ]);
         } catch (\Exception $e) {
             return $this->response->setStatusCode(500)->setJSON([
