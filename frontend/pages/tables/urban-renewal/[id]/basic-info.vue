@@ -47,26 +47,6 @@
                 placeholder="請輸入更新會名稱"
               />
             </div>
-            <div>
-              <label for="area" class="block text-sm font-medium text-gray-700 mb-2">土地面積(平方公尺)</label>
-              <input
-                id="area"
-                v-model="renewalData.area"
-                type="number"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="請輸入土地面積"
-              />
-            </div>
-            <div>
-              <label for="memberCount" class="block text-sm font-medium text-gray-700 mb-2">所有權人數</label>
-              <input
-                id="memberCount"
-                v-model="renewalData.member_count"
-                type="number"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="請輸入所有權人數"
-              />
-            </div>
           </div>
         </div>
 
@@ -393,8 +373,6 @@ const showEditModal = ref(false)
 const renewalData = reactive({
   id: null,
   name: '',
-  area: '',
-  member_count: '',
   chairman_name: '',
   chairman_phone: '',
   address: '',
@@ -745,8 +723,6 @@ const saveChanges = async () => {
     // 1. 先儲存基本資料
     const response = await put(`/urban-renewals/${route.params.id}`, {
       name: renewalData.name,
-      area: parseFloat(renewalData.area),
-      member_count: parseInt(renewalData.member_count),
       chairman_name: renewalData.chairman_name,
       chairman_phone: renewalData.chairman_phone,
       address: renewalData.address,
@@ -863,8 +839,6 @@ const fillBasicInfoTestData = () => {
   ]
 
   renewalData.name = testNames[Math.floor(Math.random() * testNames.length)]
-  renewalData.area = Math.floor(Math.random() * 5000) + 1000
-  renewalData.member_count = Math.floor(Math.random() * 100) + 20
   renewalData.chairman_name = testChairmanNames[Math.floor(Math.random() * testChairmanNames.length)]
   renewalData.chairman_phone = `09${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`
   renewalData.address = testAddresses[Math.floor(Math.random() * testAddresses.length)]

@@ -69,12 +69,12 @@ class PropertyOwnerModel extends Model
     protected $allowCallbacks = true;
     protected $beforeInsert = ['generateOwnerCode'];
     protected $beforeUpdate = [];
-    protected $afterInsert = [];
-    protected $afterUpdate = [];
+    protected $afterInsert = ['logPropertyOwnerChange'];
+    protected $afterUpdate = ['logPropertyOwnerChange'];
     protected $beforeFind = [];
     protected $afterFind = ['loadRelatedData'];
     protected $beforeDelete = [];
-    protected $afterDelete = [];
+    protected $afterDelete = ['logPropertyOwnerChange'];
 
     /**
      * Generate unique owner code before insert
@@ -357,5 +357,35 @@ class PropertyOwnerModel extends Model
             log_message('error', 'Exception in updateTotalAreas for owner ' . $ownerId . ': ' . $e->getMessage());
             return false; // Don't let this break the main operation
         }
+    }
+
+    /**
+     * Log property owner changes for audit trail
+     */
+    protected function logPropertyOwnerChange(array $data)
+    {
+        try {
+            $urbanRenewalId = null;
+            
+            // Get urban_renewal_id from different scenarios
+            if (isset($data['data']['urban_renewal_id'])) {
+                $urbanRenewalId = $data['data']['urban_renewal_id'];
+            } elseif (isset($data['id'])) {
+                $owner = $this->find($data['id']);
+                $urbanRenewalId = $owner['urban_renewal_id'] ?? null;
+            }
+            
+            if ($urbanRenewalId) {
+                // Log the change for audit trail
+                log_message('info', 'Property owner record changed for urban_renewal_id: ' . $urbanRenewalId);
+                
+                // Optional: Trigger any additional business logic
+                // For example: notify administrators, update related records, etc.
+            }
+        } catch (\Exception $e) {
+            log_message('error', 'Failed to process property owner change: ' . $e->getMessage());
+        }
+        
+        return $data;
     }
 }

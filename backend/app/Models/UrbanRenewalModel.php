@@ -15,8 +15,6 @@ class UrbanRenewalModel extends Model
 
     protected $allowedFields = [
         'name',
-        'area',
-        'member_count',
         'chairman_name',
         'chairman_phone',
         'address',
@@ -32,8 +30,6 @@ class UrbanRenewalModel extends Model
     // Validation rules
     protected $validationRules = [
         'name' => 'required|min_length[2]|max_length[255]',
-        'area' => 'required|decimal|greater_than[0]',
-        'member_count' => 'required|integer|greater_than[0]',
         'chairman_name' => 'required|min_length[2]|max_length[100]',
         'chairman_phone' => 'required|min_length[8]|max_length[20]'
     ];
@@ -43,16 +39,6 @@ class UrbanRenewalModel extends Model
             'required' => '更新會名稱為必填項目',
             'min_length' => '更新會名稱至少需要2個字元',
             'max_length' => '更新會名稱不能超過255個字元'
-        ],
-        'area' => [
-            'required' => '土地面積為必填項目',
-            'decimal' => '土地面積必須為數字',
-            'greater_than' => '土地面積必須大於0'
-        ],
-        'member_count' => [
-            'required' => '所有權人數為必填項目',
-            'integer' => '所有權人數必須為整數',
-            'greater_than' => '所有權人數必須大於0'
         ],
         'chairman_name' => [
             'required' => '理事長姓名為必填項目',
@@ -193,5 +179,51 @@ class UrbanRenewalModel extends Model
         }
 
         return $builder->paginate($perPage, 'default', $page);
+    }
+
+    /**
+     * Calculate member count for an urban renewal
+     * @param int $urbanRenewalId
+     * @return int
+     */
+    public function calculateMemberCount(int $urbanRenewalId): int
+    {
+        $propertyOwnerModel = new \App\Models\PropertyOwnerModel();
+        return $propertyOwnerModel->where('urban_renewal_id', $urbanRenewalId)->countAllResults();
+    }
+
+    /**
+     * Get urban renewal with calculated member count
+     * @param int $id
+     * @return array|null
+     */
+    public function getWithMemberCount(int $id): ?array
+    {
+        $urbanRenewal = $this->find($id);
+        if (!$urbanRenewal) {
+            return null;
+        }
+        
+        $urbanRenewal['member_count'] = $this->calculateMemberCount($id);
+        return $urbanRenewal;
+    }
+
+    /**
+     * Get all urban renewals with calculated member counts
+     * @param int $page
+     * @param int $perPage
+     * @param int|null $urbanRenewalId
+     * @return array
+     */
+    public function getUrbanRenewalsWithMemberCount($page = 1, $perPage = 10, $urbanRenewalId = null)
+    {
+        $urbanRenewals = $this->getUrbanRenewals($page, $perPage, $urbanRenewalId);
+        
+        // Add calculated member count to each record
+        foreach ($urbanRenewals as &$renewal) {
+            $renewal['member_count'] = $this->calculateMemberCount($renewal['id']);
+        }
+        
+        return $urbanRenewals;
     }
 }

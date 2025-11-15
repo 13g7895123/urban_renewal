@@ -79,32 +79,6 @@
                   />
                 </div>
 
-                <!-- 土地面積 -->
-                <div>
-                  <label for="area" class="block text-sm font-medium text-gray-700 mb-2">土地面積(平方公尺) <span class="text-red-500">*</span></label>
-                  <input
-                    id="area"
-                    v-model="formData.area"
-                    type="number"
-                    placeholder="請輸入土地面積"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    required
-                  />
-                </div>
-
-                <!-- 所有權人數 -->
-                <div>
-                  <label for="memberCount" class="block text-sm font-medium text-gray-700 mb-2">所有權人數 <span class="text-red-500">*</span></label>
-                  <input
-                    id="memberCount"
-                    v-model="formData.memberCount"
-                    type="number"
-                    placeholder="請輸入所有權人數"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    required
-                  />
-                </div>
-
                 <!-- 理事長姓名 -->
                 <div>
                   <label for="chairmanName" class="block text-sm font-medium text-gray-700 mb-2">理事長姓名 <span class="text-red-500">*</span></label>
@@ -302,8 +276,6 @@ const error = ref('')
 // Form data
 const formData = reactive({
   name: '',
-  area: '',
-  memberCount: '',
   chairmanName: '',
   chairmanPhone: ''
 })
@@ -338,8 +310,6 @@ const createUrbanRenewal = async (data) => {
   try {
     const response = await post('/urban-renewals', {
       name: data.name,
-      area: parseFloat(data.area),
-      memberCount: parseInt(data.memberCount),
       chairmanName: data.chairmanName,
       chairmanPhone: data.chairmanPhone
     })
@@ -425,8 +395,6 @@ const closeModal = () => {
 
 const resetForm = () => {
   formData.name = ''
-  formData.area = ''
-  formData.memberCount = ''
   formData.chairmanName = ''
   formData.chairmanPhone = ''
 }
@@ -458,12 +426,6 @@ const fillRandomTestData = () => {
   // Random name selection
   const randomName = urbanRenewalNames[Math.floor(Math.random() * urbanRenewalNames.length)]
 
-  // Random area between 500-5000 square meters
-  const randomArea = Math.floor(Math.random() * 4500) + 500
-
-  // Random member count between 15-150
-  const randomMemberCount = Math.floor(Math.random() * 135) + 15
-
   // Random chairman name
   const randomChairmanName = chairmanNames[Math.floor(Math.random() * chairmanNames.length)]
 
@@ -477,15 +439,13 @@ const fillRandomTestData = () => {
 
   // Fill form data
   formData.name = randomName
-  formData.area = randomArea.toString()
-  formData.memberCount = randomMemberCount.toString()
   formData.chairmanName = randomChairmanName
   formData.chairmanPhone = generateTaiwanPhone()
 }
 
 const onSubmit = async () => {
   // Basic validation
-  if (!formData.name || !formData.area || !formData.memberCount || !formData.chairmanName || !formData.chairmanPhone) {
+  if (!formData.name || !formData.chairmanName || !formData.chairmanPhone) {
     error.value = '請填寫所有必填項目'
     return
   }

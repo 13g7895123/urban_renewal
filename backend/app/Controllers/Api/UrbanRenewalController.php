@@ -87,6 +87,12 @@ class UrbanRenewalController extends BaseController
                 $data = $this->urbanRenewalModel->getUrbanRenewals($page, $perPage, $urbanRenewalId);
             }
 
+            // Add calculated member count to all results
+            foreach ($data as &$renewal) {
+                $renewal['member_count'] = $this->urbanRenewalModel->calculateMemberCount($renewal['id']);
+            }
+            unset($renewal);
+
             $pager = $this->urbanRenewalModel->pager;
 
             return $this->response->setJSON([
@@ -153,7 +159,7 @@ class UrbanRenewalController extends BaseController
                 }
             }
 
-            $data = $this->urbanRenewalModel->getUrbanRenewal($id);
+            $data = $this->urbanRenewalModel->getWithMemberCount($id);
 
             if (!$data) {
                 return $this->response->setStatusCode(404)->setJSON([
@@ -184,8 +190,6 @@ class UrbanRenewalController extends BaseController
         try {
             $data = [
                 'name' => $this->request->getPost('name'),
-                'area' => $this->request->getPost('area'),
-                'member_count' => $this->request->getPost('memberCount') ?? $this->request->getPost('member_count'),
                 'chairman_name' => $this->request->getPost('chairmanName') ?? $this->request->getPost('chairman_name'),
                 'chairman_phone' => $this->request->getPost('chairmanPhone') ?? $this->request->getPost('chairman_phone'),
                 'address' => $this->request->getPost('address'),
@@ -197,8 +201,6 @@ class UrbanRenewalController extends BaseController
                 $json = $this->request->getJSON(true);
                 $data = [
                     'name' => $json['name'] ?? null,
-                    'area' => $json['area'] ?? null,
-                    'member_count' => $json['memberCount'] ?? $json['member_count'] ?? null,
                     'chairman_name' => $json['chairmanName'] ?? $json['chairman_name'] ?? null,
                     'chairman_phone' => $json['chairmanPhone'] ?? $json['chairman_phone'] ?? null,
                     'address' => $json['address'] ?? null,
@@ -216,7 +218,7 @@ class UrbanRenewalController extends BaseController
             }
 
             $insertId = $this->urbanRenewalModel->getInsertID();
-            $newData = $this->urbanRenewalModel->find($insertId);
+            $newData = $this->urbanRenewalModel->getWithMemberCount($insertId);
 
             return $this->response->setStatusCode(201)->setJSON([
                 'status' => 'success',
@@ -290,8 +292,6 @@ class UrbanRenewalController extends BaseController
                 $json = $this->request->getJSON(true);
                 $data = [
                     'name' => $json['name'] ?? null,
-                    'area' => $json['area'] ?? null,
-                    'member_count' => $json['memberCount'] ?? $json['member_count'] ?? null,
                     'chairman_name' => $json['chairmanName'] ?? $json['chairman_name'] ?? null,
                     'chairman_phone' => $json['chairmanPhone'] ?? $json['chairman_phone'] ?? null,
                     'address' => $json['address'] ?? null,
@@ -300,8 +300,6 @@ class UrbanRenewalController extends BaseController
             } else {
                 $data = [
                     'name' => $this->request->getPost('name'),
-                    'area' => $this->request->getPost('area'),
-                    'member_count' => $this->request->getPost('memberCount') ?? $this->request->getPost('member_count'),
                     'chairman_name' => $this->request->getPost('chairmanName') ?? $this->request->getPost('chairman_name'),
                     'chairman_phone' => $this->request->getPost('chairmanPhone') ?? $this->request->getPost('chairman_phone'),
                     'address' => $this->request->getPost('address'),
@@ -323,7 +321,7 @@ class UrbanRenewalController extends BaseController
                 ]);
             }
 
-            $updatedData = $this->urbanRenewalModel->find($id);
+            $updatedData = $this->urbanRenewalModel->getWithMemberCount($id);
 
             return $this->response->setJSON([
                 'status' => 'success',
