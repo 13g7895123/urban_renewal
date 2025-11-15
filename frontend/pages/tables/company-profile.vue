@@ -101,7 +101,6 @@
                   <tr>
                     <th class="p-4 text-left text-gray-700 font-medium">使用者名稱</th>
                     <th class="p-4 text-left text-gray-700 font-medium">姓名</th>
-                    <th class="p-4 text-left text-gray-700 font-medium">所屬企業</th>
                     <th class="p-4 text-right text-gray-700 font-medium">操作</th>
                   </tr>
                 </thead>
@@ -109,7 +108,6 @@
                   <tr v-for="(manager, index) in managers" :key="manager.id" class="border-b">
                     <td class="p-4 text-gray-700">{{ manager.username }}</td>
                     <td class="p-4 text-gray-700">{{ manager.name }}</td>
-                    <td class="p-4 text-gray-700">{{ manager.company }}</td>
                     <td class="p-4 text-right space-x-2">
                       <UButton
                         color="blue"
@@ -143,7 +141,6 @@
                   <tr>
                     <th class="p-4 text-left text-gray-700 font-medium">使用者名稱</th>
                     <th class="p-4 text-left text-gray-700 font-medium">姓名</th>
-                    <th class="p-4 text-left text-gray-700 font-medium">所屬企業</th>
                     <th class="p-4 text-right text-gray-700 font-medium">操作</th>
                   </tr>
                 </thead>
@@ -151,7 +148,6 @@
                   <tr v-for="(user, index) in users" :key="user.id" class="border-b">
                     <td class="p-4 text-gray-700">{{ user.username }}</td>
                     <td class="p-4 text-gray-700">{{ user.name }}</td>
-                    <td class="p-4 text-gray-700">{{ user.company }}</td>
                     <td class="p-4 text-right space-x-2">
                       <UButton
                         color="green"
@@ -204,7 +200,7 @@ const { showSuccess, showError, showConfirm, showDeleteConfirm, showCustom } = u
 const authStore = useAuthStore()
 
 // 從登入使用者取得企業 ID (用於成員管理)
-const companyId = computed(() => authStore.user?.urban_renewal_id)
+const companyId = computed(() => authStore.companyId)
 const hasCompanyAccess = computed(() => authStore.user?.is_company_manager)
 
 const form = ref({
@@ -676,9 +672,8 @@ const addNewManager = async () => {
       const userData = {
         ...formValues,
         role: 'member',
-        user_type: 'enterprise',
-        urban_renewal_id: companyId.value,
-        is_company_manager: 1  // 新註冊的企業帳號預設為企業管理者
+        company_id: companyId.value,    // 使用 Store 的 company_id
+        is_company_manager: 1           // 新註冊的企業帳號預設為企業管理者
       }
 
       const { createUser } = useCompany()

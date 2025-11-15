@@ -12,6 +12,8 @@ export const useAuthStore = defineStore('auth', () => {
     return value === 1 || value === '1' || value === true
   })
   const userType = computed(() => user.value?.user_type || 'general')
+  const userId = computed(() => user.value?.id)
+  const companyId = computed(() => user.value?.company_id)
   const isLoading = ref(false)
 
   /**
@@ -278,6 +280,8 @@ export const useAuthStore = defineStore('auth', () => {
     isAdmin,
     isCompanyManager,
     userType,
+    userId,
+    companyId,
     isLoading,
 
     // Token 輔助函數

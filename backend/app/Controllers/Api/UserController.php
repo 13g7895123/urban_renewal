@@ -48,32 +48,25 @@ class UserController extends ResourceController
             $filters = [
                 'role' => $this->request->getGet('role'),
                 'user_type' => $this->request->getGet('user_type'),
-                'company_id' => $this->request->getGet('company_id'),          // 新增：支持 company_id 查詢
-                'urban_renewal_id' => $this->request->getGet('urban_renewal_id'), // 保留：過渡期相容
+                'company_id' => $this->request->getGet('company_id'),          // 新架構：使用 company_id
                 'is_active' => $this->request->getGet('is_active'),
                 'search' => $this->request->getGet('search')
             ];
 
             // 新架構：企業管理者查詢自己企業的使用者
-            // - 如果有 company_id 參數，直接使用（新邏輯）
-            // - 否則從 urban_renewal_id 推導（過渡期相容）
             if ($isCompanyManager) {
-                // 優先使用請求中的 company_id
+                // 如果前端傳了 company_id，驗證是否為自己的企業
                 if (!empty($filters['company_id'])) {
-                    // 驗證企業管理者是否屬於該企業
                     if ($filters['company_id'] != $user['company_id']) {
                         return $this->failForbidden('您只能查看自己企業的使用者');
                     }
                 } else {
-                    // 過渡期兼容：使用用戶的 company_id
+                    // 如果前端未傳，自動使用當前用戶的 company_id
                     $filters['company_id'] = $user['company_id'];
                 }
-                // 移除 urban_renewal_id 篩選（使用 company_id 代替）
-                unset($filters['urban_renewal_id']);
             } elseif ($isChairman) {
-                // 主席仍基於 urban_renewal_id 查詢
+                // 主席基於 urban_renewal_id 查詢（舊架構保留相容）
                 $filters['urban_renewal_id'] = $user['urban_renewal_id'];
-                unset($filters['company_id']);
             }
 
             $users = $this->model->getUsers($page, $perPage, $filters);
@@ -164,6 +157,18 @@ class UserController extends ResourceController
 
             $data = $this->request->getJSON(true);
 
+            // DEBUG: 檢查收到的數據
+            log_message('debug', '[UserController::create] Received data: ' . json_encode($data));
+
+            // 提早設定 user_type 和 company_id（在驗證前）
+            // 如果是企業管理者，自動設定企業系統參數
+            if ($isCompanyManager && empty($data['user_type'])) {
+                $data['user_type'] = 'enterprise';
+            }
+            if ($isCompanyManager && empty($data['company_id'])) {
+                $data['company_id'] = $user['company_id'];
+            }
+
             // 驗證必填欄位
             $validation = \Config\Services::validation();
             $validation->setRules([
@@ -175,7 +180,10 @@ class UserController extends ResourceController
                 'phone' => 'permit_empty|max_length[20]',
                 'nickname' => 'permit_empty|max_length[100]',
                 'line_account' => 'permit_empty|max_length[100]',
-                'position' => 'permit_empty|max_length[100]'
+                'position' => 'permit_empty|max_length[100]',
+                'company_id' => 'permit_empty|integer',
+                'user_type' => 'permit_empty|in_list[general,enterprise]',
+                'is_company_manager' => 'permit_empty|in_list[0,1]'
             ]);
 
             if (!$validation->run($data)) {
@@ -201,38 +209,38 @@ class UserController extends ResourceController
                 }
             }
 
-            // 權限檢查：企業管理者只能建立同企業的使用者
-            if ($isCompanyManager && !$isAdmin) {
-                // 新架構：驗證 company_id
-                if (isset($data['company_id']) && $data['company_id'] != $user['company_id']) {
-                    return $this->failForbidden('只能建立同企業的使用者');
-                }
-                // 設定該使用者的企業
-                $data['company_id'] = $user['company_id'];
-                $data['user_type'] = 'enterprise'; // 企業管理者創建的使用者必須是企業類型
-                
-                // urban_renewal_id 改為可選（用戶的預設工作會）
-                // 如果提供了 urban_renewal_id，驗證它是否屬於該企業
-                if (!empty($data['urban_renewal_id'])) {
-                    $urbanRenewalModel = new \App\Models\UrbanRenewalModel();
-                    $renewal = $urbanRenewalModel->find($data['urban_renewal_id']);
-                    if (!$renewal || $renewal['company_id'] != $user['company_id']) {
-                        return $this->failForbidden('指定的更新會不屬於該企業');
+            // 新架構邏輯：處理企業相關使用者建立
+            // 如果是管理員以外的使用者（企業管理者或主席），需要帶入企業資料
+            if (!$isAdmin) {
+                // 企業管理者建立的使用者都屬於企業系統
+                if ($isCompanyManager) {
+                    // user_type 已在驗證前設定為 'enterprise'
+                    // company_id 已在驗證前設定或驗證
+                    
+                    // 驗證前端傳入的 company_id 是否為自己的企業
+                    if (isset($data['company_id']) && $data['company_id'] != $user['company_id']) {
+                        return $this->failForbidden('只能建立同企業的使用者');
                     }
-                } else {
-                    // 如果未提供，可設為 null（稍後在儀表板中選擇）
-                    $data['urban_renewal_id'] = null;
+                    
+                    // 如果標記為企業管理者，進行額外驗證
+                    if (isset($data['is_company_manager']) && $data['is_company_manager'] == 1) {
+                        // 企業管理者不能是管理員或主席
+                        if ($data['role'] === 'admin' || $data['role'] === 'chairman') {
+                            return $this->failForbidden('企業管理者的角色只能是 member 或 observer');
+                        }
+                    }
                 }
-
-                // 企業管理者不能建立管理員或主席
-                if ($data['role'] === 'admin' || $data['role'] === 'chairman') {
-                    return $this->failForbidden('無權限建立管理員或主席帳號');
-                }
+                
+                // 完全移除 urban_renewal_id（用不到）
+                unset($data['urban_renewal_id']);
             }
 
             // 設定預設值
             $data['is_active'] = $data['is_active'] ?? true;
             $data['login_attempts'] = 0;
+
+            // DEBUG: 檢查要寫入的數據
+            log_message('debug', '[UserController::create] Data before insert: ' . json_encode($data));
 
             $userId = $this->model->createUser($data);
             if (!$userId) {
