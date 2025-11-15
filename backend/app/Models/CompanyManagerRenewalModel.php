@@ -62,6 +62,7 @@ class CompanyManagerRenewalModel extends Model
     public function getManagerRenewals($companyId, $managerId)
     {
         return $this->select('cmr.*, ur.name as renewal_name, ur.chairman_name')
+                    ->from($this->table . ' cmr')
                     ->join('urban_renewals ur', 'ur.id = cmr.urban_renewal_id', 'left')
                     ->where('cmr.company_id', $companyId)
                     ->where('cmr.manager_id', $managerId)
@@ -80,6 +81,7 @@ class CompanyManagerRenewalModel extends Model
     public function getRenewalManagers($companyId, $urbanRenewalId)
     {
         return $this->select('cmr.*, u.username, u.full_name, u.email')
+                    ->from($this->table . ' cmr')
                     ->join('users u', 'u.id = cmr.manager_id', 'left')
                     ->where('cmr.company_id', $companyId)
                     ->where('cmr.urban_renewal_id', $urbanRenewalId)
@@ -182,6 +184,7 @@ class CompanyManagerRenewalModel extends Model
     public function getCompanyManagersWithRenewals($companyId)
     {
         return $this->select('cmr.*, u.username, u.full_name, u.email, ur.name as renewal_name')
+                    ->from($this->table . ' cmr')
                     ->join('users u', 'u.id = cmr.manager_id', 'left')
                     ->join('urban_renewals ur', 'ur.id = cmr.urban_renewal_id', 'left')
                     ->where('cmr.company_id', $companyId)

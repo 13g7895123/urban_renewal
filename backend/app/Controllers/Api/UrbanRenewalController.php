@@ -571,6 +571,13 @@ class UrbanRenewalController extends BaseController
      * 同一個企業的所有企業管理者列表，用於分配
      * GET /api/urban-renewals/company-managers
      */
+    /**
+     * Get company managers with their authorized renewals
+     * 新架構：查詢企業管理者及其授權的更新會
+     * GET /api/urban-renewals/company-managers
+     * 
+     * 返回結構：包含每個管理者的授權更新會、權限等級、主管理者標記等詳細信息
+     */
     public function getCompanyManagers()
     {
         try {
@@ -600,37 +607,58 @@ class UrbanRenewalController extends BaseController
                 ]);
             }
 
-            $userModel = new \App\Models\UserModel();
+            // 使用新 Model：CompanyManagerRenewalModel (一對多架構)
+            $cmrModel = new \App\Models\CompanyManagerRenewalModel();
             
-            // 新架構：查詢同一企業下的所有企業管理者
-            // 使用與 /api/users 相同的過濾邏輯，篩選出企業類型的管理者
-            $page = $this->request->getGet('page') ?? 1;
-            $perPage = $this->request->getGet('per_page') ?? 100;
-            
-            $filters = [
-                'company_id' => $userCompanyId,
-                'is_company_manager' => 1,
-                'is_active' => 1,
-                'user_type' => 'enterprise'
-            ];
+            // 查詢企業的所有管理者及其授權的更新會
+            $allRecords = $cmrModel->getCompanyManagersWithRenewals($userCompanyId);
 
-            $managers = $userModel->getUsers($page, $perPage, $filters);
+            // 重組數據：按管理者分組，包含其所有授權更新會
+            $managersMap = [];
+            $userIds = [];
 
-            // 移除敏感資訊（與 /api/users 保持一致）
-            $managers = array_map(function($userData) {
-                unset($userData['password_hash'], $userData['password_reset_token']);
-                return $userData;
-            }, $managers);
+            foreach ($allRecords as $record) {
+                $managerId = $record['manager_id'];
+                $userIds[$managerId] = true;
+                
+                if (!isset($managersMap[$managerId])) {
+                    $managersMap[$managerId] = [
+                        'id' => $record['manager_id'],
+                        'username' => $record['username'],
+                        'full_name' => $record['full_name'],
+                        'email' => $record['email'],
+                        'is_company_manager' => 1,
+                        'user_type' => 'enterprise',
+                        'company_id' => $userCompanyId,
+                        'authorized_renewals' => []
+                    ];
+                }
+                
+                // 添加授權的更新會信息
+                $managersMap[$managerId]['authorized_renewals'][] = [
+                    'id' => $record['id'],                    // company_managers_renewals.id
+                    'urban_renewal_id' => $record['urban_renewal_id'],
+                    'renewal_name' => $record['renewal_name'],
+                    'permission_level' => $record['permission_level'],  // 權限等級：full/readonly/finance
+                    'is_primary' => (int)$record['is_primary']          // 主管理者標記
+                ];
+            }
+
+            // 轉換為陣列
+            $managers = array_values($managersMap);
 
             return $this->response->setJSON([
                 'status' => 'success',
-                'message' => '企業管理者列表',
+                'message' => '企業管理者列表（包含授權更新會）',
                 'data' => [
-                    'managers' => $managers,
-                    'pager' => $userModel->pager->getDetails()
+                    'company_id' => $userCompanyId,
+                    'total_managers' => count($managers),
+                    'managers' => $managers
                 ]
             ]);
+
         } catch (\Exception $e) {
+            log_message('error', '[UrbanRenewalController::getCompanyManagers] 異常：' . $e->getMessage());
             return $this->response->setStatusCode(500)->setJSON([
                 'status' => 'error',
                 'message' => '取得企業管理者列表失敗：' . $e->getMessage()

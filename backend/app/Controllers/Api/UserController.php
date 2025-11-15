@@ -48,14 +48,32 @@ class UserController extends ResourceController
             $filters = [
                 'role' => $this->request->getGet('role'),
                 'user_type' => $this->request->getGet('user_type'),
-                'urban_renewal_id' => $this->request->getGet('urban_renewal_id'),
+                'company_id' => $this->request->getGet('company_id'),          // 新增：支持 company_id 查詢
+                'urban_renewal_id' => $this->request->getGet('urban_renewal_id'), // 保留：過渡期相容
                 'is_active' => $this->request->getGet('is_active'),
                 'search' => $this->request->getGet('search')
             ];
 
-            // 如果是主席或企業管理者，只能查看自己更新會/企業的使用者
-            if ($isChairman || $isCompanyManager) {
+            // 新架構：企業管理者查詢自己企業的使用者
+            // - 如果有 company_id 參數，直接使用（新邏輯）
+            // - 否則從 urban_renewal_id 推導（過渡期相容）
+            if ($isCompanyManager) {
+                // 優先使用請求中的 company_id
+                if (!empty($filters['company_id'])) {
+                    // 驗證企業管理者是否屬於該企業
+                    if ($filters['company_id'] != $user['company_id']) {
+                        return $this->failForbidden('您只能查看自己企業的使用者');
+                    }
+                } else {
+                    // 過渡期兼容：使用用戶的 company_id
+                    $filters['company_id'] = $user['company_id'];
+                }
+                // 移除 urban_renewal_id 篩選（使用 company_id 代替）
+                unset($filters['urban_renewal_id']);
+            } elseif ($isChairman) {
+                // 主席仍基於 urban_renewal_id 查詢
                 $filters['urban_renewal_id'] = $user['urban_renewal_id'];
+                unset($filters['company_id']);
             }
 
             $users = $this->model->getUsers($page, $perPage, $filters);
@@ -185,11 +203,26 @@ class UserController extends ResourceController
 
             // 權限檢查：企業管理者只能建立同企業的使用者
             if ($isCompanyManager && !$isAdmin) {
-                if (isset($data['urban_renewal_id']) && $data['urban_renewal_id'] !== $user['urban_renewal_id']) {
+                // 新架構：驗證 company_id
+                if (isset($data['company_id']) && $data['company_id'] != $user['company_id']) {
                     return $this->failForbidden('只能建立同企業的使用者');
                 }
-                $data['urban_renewal_id'] = $user['urban_renewal_id'];
+                // 設定該使用者的企業
+                $data['company_id'] = $user['company_id'];
                 $data['user_type'] = 'enterprise'; // 企業管理者創建的使用者必須是企業類型
+                
+                // urban_renewal_id 改為可選（用戶的預設工作會）
+                // 如果提供了 urban_renewal_id，驗證它是否屬於該企業
+                if (!empty($data['urban_renewal_id'])) {
+                    $urbanRenewalModel = new \App\Models\UrbanRenewalModel();
+                    $renewal = $urbanRenewalModel->find($data['urban_renewal_id']);
+                    if (!$renewal || $renewal['company_id'] != $user['company_id']) {
+                        return $this->failForbidden('指定的更新會不屬於該企業');
+                    }
+                } else {
+                    // 如果未提供，可設為 null（稍後在儀表板中選擇）
+                    $data['urban_renewal_id'] = null;
+                }
 
                 // 企業管理者不能建立管理員或主席
                 if ($data['role'] === 'admin' || $data['role'] === 'chairman') {

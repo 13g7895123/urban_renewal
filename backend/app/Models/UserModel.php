@@ -48,7 +48,10 @@ class UserModel extends Model
         'password_hash' => 'required|min_length[6]',
         'role' => 'required|in_list[admin,chairman,member,observer]',
         'full_name' => 'permit_empty|max_length[100]',
-        'phone' => 'permit_empty|max_length[20]'
+        'phone' => 'permit_empty|max_length[20]',
+        'company_id' => 'permit_empty|integer',                    // 新增：企業ID（可選）
+        'user_type' => 'permit_empty|in_list[general,enterprise]', // 新增：使用者類型（可選）
+        'urban_renewal_id' => 'permit_empty|integer'               // 更新：預設工作會（可選）
     ];
 
     protected $validationMessages = [
@@ -109,6 +112,12 @@ class UserModel extends Model
             $builder->where('users.user_type', $filters['user_type']);
         }
 
+        // 新架構：支持 company_id 篩選（企業管理者查詢用）
+        if (!empty($filters['company_id'])) {
+            $builder->where('users.company_id', $filters['company_id']);
+        }
+
+        // 舊邏輯保留：支持 urban_renewal_id 篩選（過渡期相容）
         if (!empty($filters['urban_renewal_id'])) {
             $builder->where('users.urban_renewal_id', $filters['urban_renewal_id']);
         }
