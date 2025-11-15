@@ -54,7 +54,7 @@
 </div>
 ```
 
-##### 1.2 移除表單資料中的 memberCount
+##### 1.2 移除表單資料中的 memberCount 和 area
 **位置**：第302-309行
 
 **原始代碼**：
@@ -72,13 +72,12 @@ const formData = reactive({
 ```javascript
 const formData = reactive({
   name: '',
-  area: '',
   chairmanName: '',
   chairmanPhone: ''
 })
 ```
 
-##### 1.3 移除 createUrbanRenewal 函數中的 memberCount
+##### 1.3 移除 createUrbanRenewal 函數中的 memberCount 和 area
 **位置**：第337-352行
 
 **原始代碼**：
@@ -103,7 +102,6 @@ const createUrbanRenewal = async (data) => {
   try {
     const response = await post('/urban-renewals', {
       name: data.name,
-      area: parseFloat(data.area),
       chairmanName: data.chairmanName,
       chairmanPhone: data.chairmanPhone
     })
@@ -112,7 +110,7 @@ const createUrbanRenewal = async (data) => {
 }
 ```
 
-##### 1.4 移除 resetForm 中的 memberCount
+##### 1.4 移除 resetForm 中的 memberCount 和 area
 **位置**：第426-432行
 
 **原始代碼**：
@@ -121,6 +119,15 @@ const resetForm = () => {
   formData.name = ''
   formData.area = ''
   formData.memberCount = ''  // <-- 移除這行
+  formData.chairmanName = ''
+  formData.chairmanPhone = ''
+}
+```
+
+**調整後**：
+```javascript
+const resetForm = () => {
+  formData.name = ''
   formData.chairmanName = ''
   formData.chairmanPhone = ''
 }
@@ -139,14 +146,14 @@ const randomMemberCount = Math.floor(Math.random() * 135) + 15
 formData.memberCount = randomMemberCount.toString()  // <-- 移除這行
 ```
 
-##### 1.6 移除 onSubmit 驗證中的 memberCount
+##### 1.6 移除 onSubmit 驗證中的 memberCount 和 area
 **位置**：第486-514行
 
 **原始代碼**：
 ```javascript
 const onSubmit = async () => {
   // Basic validation
-  if (!formData.name || !formData.area || !formData.memberCount || ...) {  // <-- 移除 !formData.memberCount
+  if (!formData.name || !formData.area || !formData.memberCount || ...) {  // <-- 移除 !formData.memberCount 和 !formData.area
     error.value = '請填寫所有必填項目'
     return
   }
@@ -158,7 +165,7 @@ const onSubmit = async () => {
 ```javascript
 const onSubmit = async () => {
   // Basic validation
-  if (!formData.name || !formData.area || !formData.chairmanName || !formData.chairmanPhone) {
+  if (!formData.name || !formData.chairmanName || !formData.chairmanPhone) {
     error.value = '請填寫所有必填項目'
     return
   }
@@ -175,16 +182,12 @@ const onSubmit = async () => {
 
 #### 2. `/frontend/pages/tables/urban-renewal/[id]/basic-info.vue`
 
-##### 2.1 移除或改為唯讀的所有權人數欄位
+##### 2.1 移除所有權人數欄位
 **位置**：第60-69行
 
-**選項A：完全移除**
+**需要刪除的代碼**：
 ```vue
-<!-- 直接刪除整個 div 區塊 -->
-```
-
-**選項B：改為唯讀顯示**（推薦）
-```vue
+<!-- 所有權人數 -->
 <div>
   <label for="memberCount" class="block text-sm font-medium text-gray-700 mb-2">所有權人數</label>
   <input
@@ -199,7 +202,9 @@ const onSubmit = async () => {
 </div>
 ```
 
-##### 2.2 移除 saveChanges 中的 member_count
+**調整說明**：直接刪除整個區塊，所有權人數將只在列表中作為統計資訊顯示
+
+##### 2.2 移除 saveChanges 中的 member_count 和 area
 **位置**：第742-843行
 
 **原始代碼**：
@@ -217,7 +222,6 @@ const response = await put(`/urban-renewals/${route.params.id}`, {
 ```javascript
 const response = await put(`/urban-renewals/${route.params.id}`, {
   name: renewalData.name,
-  area: parseFloat(renewalData.area),
   chairman_name: renewalData.chairman_name,
   // ...
 })
@@ -237,7 +241,7 @@ renewalData.member_count = Math.floor(Math.random() * 100) + 20  // <-- 移除�
 
 #### 1. `/backend/app/Models/UrbanRenewalModel.php`
 
-##### 1.1 調整 allowedFields（移除 member_count）
+##### 1.1 調整 allowedFields（移除 member_count 和 area）
 **位置**：第16-25行
 
 **原始代碼**：
@@ -258,7 +262,6 @@ protected $allowedFields = [
 ```php
 protected $allowedFields = [
     'name',
-    'area',
     'chairman_name',
     'chairman_phone',
     'address',
@@ -267,15 +270,20 @@ protected $allowedFields = [
 ];
 ```
 
-##### 1.2 調整驗證規則（移除 member_count）
+##### 1.2 調整驗證規則（移除 member_count 和 area）
 **位置**：第33-39行、第52-56行
 
 **需要移除的代碼**：
 ```php
 // 驗證規則
+'area' => 'required|numeric',
 'member_count' => 'required|integer|greater_than[0]',
 
 // 驗證訊息
+'area' => [
+    'required' => '土地面積為必填項目',
+    'numeric' => '土地面積必須為數字'
+],
 'member_count' => [
     'required' => '所有權人數為必填項目',
     'integer' => '所有權人數必須為整數',
@@ -400,7 +408,7 @@ if ($data) {
 }
 ```
 
-##### 2.3 調整 create() 方法 - 移除 member_count 處理
+##### 2.3 調整 create() 方法 - 移除 member_count 和 area 處理
 **位置**：第182-232行
 
 **原始代碼**（第185-193、196-206行）：
@@ -424,9 +432,9 @@ if ($this->request->getHeaderLine('Content-Type') === 'application/json') {
 }
 ```
 
-**調整後**：移除所有 member_count 相關的程式碼
+**調整後**：移除所有 member_count 和 area 相關的程式碼
 
-##### 2.4 調整 update() 方法 - 移除 member_count 處理
+##### 2.4 調整 update() 方法 - 移除 member_count 和 area 處理
 **位置**：第238-339行
 
 **原始代碼**（第291-299、302-309行）：
@@ -447,7 +455,7 @@ $data = [
 ];
 ```
 
-**調整後**：移除所有 member_count 相關的程式碼
+**調整後**：移除所有 member_count 和 area 相關的程式碼
 
 ---
 
@@ -455,16 +463,21 @@ $data = [
 
 #### 1. member_count 欄位保留策略
 
-**選項A：保留欄位，改為可空值（推薦）**
+**選項B：移除欄位**
 
 理由：
-- 保持向後相容
-- 可以用於快取計算結果（效能優化）
-- 不需要資料遷移
+- 資料為錯誤資料，不需要留存
+- 所有權人數由系統實時計算
+- 簡化資料模型
+
+需要執行以下步驟：
+1. 新增 migration 移除 member_count 欄位
+2. 確保所有相關程式碼都已調整完畢
+3. 資料庫清理後不可恢復，請確認無誤
 
 **新增 Migration**：
 ```php
-// backend/app/Database/Migrations/YYYY-MM-DD-HHMMSS_MakeMemberCountNullable.php
+// backend/app/Database/Migrations/YYYY-MM-DD-HHMMSS_DropMemberCountColumn.php
 
 <?php
 
@@ -472,26 +485,16 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-class MakeMemberCountNullable extends Migration
+class DropMemberCountColumn extends Migration
 {
     public function up()
     {
-        $fields = [
-            'member_count' => [
-                'type'       => 'INT',
-                'constraint' => 11,
-                'unsigned'   => true,
-                'null'       => true, // 改為可空
-                'comment'    => '所有權人數（系統自動計算）',
-            ],
-        ];
-        
-        $this->forge->modifyColumn('urban_renewals', $fields);
+        $this->forge->dropColumn('urban_renewals', 'member_count');
     }
 
     public function down()
     {
-        $fields = [
+        $this->forge->addColumn('urban_renewals', [
             'member_count' => [
                 'type'       => 'INT',
                 'constraint' => 11,
@@ -499,74 +502,27 @@ class MakeMemberCountNullable extends Migration
                 'null'       => false,
                 'comment'    => '所有權人數',
             ],
-        ];
-        
-        $this->forge->modifyColumn('urban_renewals', $fields);
+        ]);
     }
 }
 ```
 
-**選項B：移除欄位（不推薦）**
-
-理由：
-- 需要資料遷移
-- 影響現有資料
-- 無法快取計算結果
-
-如果選擇此方案，需要：
-1. 新增 migration 移除 member_count 欄位
-2. 確保所有相關程式碼都已調整完畢
-
 ---
 
-### 四、觸發器/自動更新機制（選配）
+### 四、觸發器/自動更新機制
 
-如果希望在資料庫層面自動維護 member_count 欄位（快取策略），可以考慮：
+由於 member_count 欄位已移除，所有權人數將由系統實時計算。採用以下方式處理：
 
-#### 選項1：資料庫觸發器（MySQL/MariaDB）
+#### Model 事件處理（PropertyOwnerModel）
 
-```sql
--- 當新增所有權人時更新計數
-DELIMITER $$
-CREATE TRIGGER update_member_count_after_insert
-AFTER INSERT ON property_owners
-FOR EACH ROW
-BEGIN
-    UPDATE urban_renewals 
-    SET member_count = (
-        SELECT COUNT(*) 
-        FROM property_owners 
-        WHERE urban_renewal_id = NEW.urban_renewal_id
-    )
-    WHERE id = NEW.urban_renewal_id;
-END$$
-
--- 當刪除所有權人時更新計數
-CREATE TRIGGER update_member_count_after_delete
-AFTER DELETE ON property_owners
-FOR EACH ROW
-BEGIN
-    UPDATE urban_renewals 
-    SET member_count = (
-        SELECT COUNT(*) 
-        FROM property_owners 
-        WHERE urban_renewal_id = OLD.urban_renewal_id
-    )
-    WHERE id = OLD.urban_renewal_id;
-END$$
-
-DELIMITER ;
-```
-
-#### 選項2：Model 事件處理（推薦）
-
-在 `PropertyOwnerModel.php` 中新增：
+在 `PropertyOwnerModel.php` 中的 afterInsert 和 afterDelete 事件中，記錄日誌或執行其他相關業務邏輯：
 
 ```php
-protected $afterInsert = ['updateUrbanRenewalMemberCount'];
-protected $afterDelete = ['updateUrbanRenewalMemberCount'];
+protected $afterInsert = ['logPropertyOwnerChange'];
+protected $afterDelete = ['logPropertyOwnerChange'];
+protected $afterUpdate = ['logPropertyOwnerChange'];
 
-protected function updateUrbanRenewalMemberCount(array $data)
+protected function logPropertyOwnerChange(array $data)
 {
     try {
         $urbanRenewalId = null;
@@ -580,17 +536,24 @@ protected function updateUrbanRenewalMemberCount(array $data)
         }
         
         if ($urbanRenewalId) {
-            $urbanRenewalModel = new \App\Models\UrbanRenewalModel();
-            $count = $this->where('urban_renewal_id', $urbanRenewalId)->countAllResults();
-            $urbanRenewalModel->update($urbanRenewalId, ['member_count' => $count]);
+            // Log the change for audit trail
+            log_message('info', 'Property owner record changed for urban_renewal_id: ' . $urbanRenewalId);
+            
+            // Optional: Trigger any additional business logic
+            // For example: notify administrators, update related records, etc.
         }
     } catch (\Exception $e) {
-        log_message('error', 'Failed to update member count: ' . $e->getMessage());
+        log_message('error', 'Failed to process property owner change: ' . $e->getMessage());
     }
     
     return $data;
 }
 ```
+
+**說明**：
+- 所有權人數由 API 層實時計算並返回，不需要在資料庫層維護
+- Model 事件用於記錄變更歷史和執行相關業務邏輯
+- 避免了資料庫觸發器的複雜性和維護成本
 
 ---
 
@@ -601,28 +564,28 @@ protected function updateUrbanRenewalMemberCount(array $data)
 2. 創建 feature branch：`git checkout -b remove-member-count-manual-input`
 
 ### Phase 2：後端調整
-1. 執行資料庫 migration（使 member_count 可空）
+1. 執行資料庫 migration（移除 member_count 欄位）
 2. 調整 `UrbanRenewalModel.php`
-   - 移除 allowedFields 和驗證規則中的 member_count
+   - 移除 allowedFields 和驗證規則中的 member_count 和 area
    - 新增計算方法
 3. 調整 `UrbanRenewalController.php`
-   - 移除 create/update 中的 member_count 處理
+   - 移除 create/update 中的 member_count 和 area 處理
    - 在 index/show 中返回計算後的值
-4. （選配）在 `PropertyOwnerModel.php` 新增自動更新機制
+4. 調整 `PropertyOwnerModel.php`
+   - 新增 Model 事件處理用於記錄變更日誌
 
 ### Phase 3：前端調整
 1. 調整 `/frontend/pages/tables/urban-renewal/index.vue`
-   - 移除新建表單中的所有權人數欄位
+   - 移除新建表單中的所有權人數和土地面積欄位
    - 移除相關的表單資料和驗證
 2. 調整 `/frontend/pages/tables/urban-renewal/[id]/basic-info.vue`
-   - 將所有權人數欄位改為唯讀或移除
-   - 移除儲存時的 member_count
+   - 移除所有權人數欄位
+   - 移除儲存時的 member_count 和 area
 
 ### Phase 4：測試
-1. 測試新建更新會（不輸入所有權人數）
-2. 測試編輯更新會（所有權人數為唯讀）
-3. 測試列表顯示（確認顯示正確的統計數字）
-4. 測試新增/刪除所有權人後，更新會的所有權人數是否自動更新
+1. 測試新建更新會（不輸入所有權人數和土地面積）
+2. 測試編輯更新會（列表中確認正確的統計數字）
+3. 測試新增/刪除所有權人後，更新會的所有權人數是否正確顯示
 
 ### Phase 5：部署
 1. Code review
@@ -641,8 +604,8 @@ protected function updateUrbanRenewalMemberCount(array $data)
 ### Backend
 - `/backend/app/Models/UrbanRenewalModel.php` ⚠️ 必須調整
 - `/backend/app/Controllers/Api/UrbanRenewalController.php` ⚠️ 必須調整
-- `/backend/app/Models/PropertyOwnerModel.php` ⚙️ 選配調整（自動更新機制）
-- `/backend/app/Database/Migrations/新增_MakeMemberCountNullable.php` ⚙️ 需要新增
+- `/backend/app/Models/PropertyOwnerModel.php` ⚠️ 必須調整（新增 Model 事件處理）
+- `/backend/app/Database/Migrations/新增_DropMemberCountColumn.php` ⚠️ 需要新增
 
 ### Database
 - `urban_renewals` 資料表 ⚠️ 需要 migration
@@ -652,20 +615,22 @@ protected function updateUrbanRenewalMemberCount(array $data)
 
 ## 注意事項
 
-1. **資料完整性**：確保所有現有的更新會資料在調整後仍能正確顯示所有權人數
-2. **效能考量**：如果更新會數量很大，考慮使用快取或資料庫觸發器來維護 member_count 欄位
-3. **向後相容**：如果有其他系統使用 API，需要通知他們不要再傳送 member_count
-4. **測試覆蓋**：確保 TDD 測試案例也一併調整
+1. **資料完整性**：member_count 欄位移除後，所有數據丟失。請確保已在生產環境備份
+2. **效能考量**：所有權人數由 API 實時計算，確保 PropertyOwner 資料表有適當的索引
+3. **向後相容**：API 客戶端不應再接收 member_count 作為輸入欄位，但仍會在 response 中收到計算後的值
+4. **測試覆蓋**：確保 TDD 測試案例也一併調整，移除 member_count 和 area 相關的驗證
 
 ---
 
 ## 預期效果
 
 調整完成後：
-- ✅ 使用者無法手動輸入或修改所有權人數
-- ✅ 所有權人數由系統自動統計
-- ✅ 新增/刪除所有權人後，數字會自動更新
-- ✅ 資料準確性提升，不會有人為輸入錯誤
+- ✅ member_count 欄位已從資料庫移除
+- ✅ area 欄位已從前後端移除
+- ✅ 使用者無法手動輸入所有權人數和土地面積
+- ✅ 所有權人數由系統實時統計並在列表和詳情中顯示
+- ✅ 新增/刪除所有權人後，相關事件會被記錄
+- ✅ 資料準確性提升，消除了人為輸入錯誤
 
 ---
 
