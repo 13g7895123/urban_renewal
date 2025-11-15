@@ -14,6 +14,7 @@ class UrbanRenewalModel extends Model
     protected $useSoftDeletes = true;
 
     protected $allowedFields = [
+        'company_id',
         'name',
         'chairman_name',
         'chairman_phone',
@@ -58,15 +59,17 @@ class UrbanRenewalModel extends Model
      * Get all urban renewals with pagination
      * @param int $page Page number
      * @param int $perPage Items per page
-     * @param int|null $urbanRenewalId Filter by urban_renewal_id (for company managers)
+     * @param int|null $companyId Filter by company_id (for company managers)
+     * @deprecated Use getUrbanRenewals() with companyId parameter
      */
     public function getUrbanRenewals($page = 1, $perPage = 10, $urbanRenewalId = null)
     {
         $builder = $this->orderBy('created_at', 'DESC');
         
-        // 如果指定了 urban_renewal_id，只查詢該企業的資料
+        // Support both old parameter name (for backward compatibility) and new usage
         if ($urbanRenewalId !== null) {
-            $builder->where('id', $urbanRenewalId);
+            // If this looks like it's being used as company_id, use it that way
+            $builder->where('company_id', $urbanRenewalId);
         }
         
         return $builder->paginate($perPage, 'default', $page);
@@ -109,16 +112,16 @@ class UrbanRenewalModel extends Model
      * @param string $name Search keyword
      * @param int $page Page number
      * @param int $perPage Items per page
-     * @param int|null $urbanRenewalId Filter by urban_renewal_id (for company managers)
+     * @param int|null $companyId Filter by company_id (for company managers)
      */
     public function searchByName($name, $page = 1, $perPage = 10, $urbanRenewalId = null)
     {
         $builder = $this->like('name', $name)
                         ->orderBy('created_at', 'DESC');
         
-        // 如果指定了 urban_renewal_id，只查詢該企業的資料
+        // Support both old parameter name (for backward compatibility)
         if ($urbanRenewalId !== null) {
-            $builder->where('id', $urbanRenewalId);
+            $builder->where('company_id', $urbanRenewalId);
         }
         
         return $builder->paginate($perPage, 'default', $page);
@@ -131,8 +134,13 @@ class UrbanRenewalModel extends Model
      */
     public function getCompany($urbanRenewalId)
     {
+        $urbanRenewal = $this->find($urbanRenewalId);
+        if (!$urbanRenewal || !$urbanRenewal['company_id']) {
+            return null;
+        }
+
         $companyModel = new \App\Models\CompanyModel();
-        return $companyModel->where('urban_renewal_id', $urbanRenewalId)->first();
+        return $companyModel->find($urbanRenewal['company_id']);
     }
 
     /**
@@ -165,7 +173,7 @@ class UrbanRenewalModel extends Model
      * Get urban renewals with assigned admin info
      * @param int $page Page number
      * @param int $perPage Items per page
-     * @param int|null $urbanRenewalId Filter by urban_renewal_id
+     * @param int|null $companyId Filter by company_id
      * @return array
      */
     public function getUrbanRenewalsWithAdmin($page = 1, $perPage = 10, $urbanRenewalId = null)
@@ -174,8 +182,9 @@ class UrbanRenewalModel extends Model
                         ->join('users', 'users.id = urban_renewals.assigned_admin_id', 'left')
                         ->orderBy('urban_renewals.created_at', 'DESC');
 
+        // Support both old parameter name (for backward compatibility)
         if ($urbanRenewalId !== null) {
-            $builder->where('urban_renewals.id', $urbanRenewalId);
+            $builder->where('urban_renewals.company_id', $urbanRenewalId);
         }
 
         return $builder->paginate($perPage, 'default', $page);
@@ -213,7 +222,7 @@ class UrbanRenewalModel extends Model
      * Get all urban renewals with calculated member counts
      * @param int $page
      * @param int $perPage
-     * @param int|null $urbanRenewalId
+     * @param int|null $companyId
      * @return array
      */
     public function getUrbanRenewalsWithMemberCount($page = 1, $perPage = 10, $urbanRenewalId = null)
@@ -279,7 +288,7 @@ class UrbanRenewalModel extends Model
      * 
      * @param int $page
      * @param int $perPage
-     * @param int|null $urbanRenewalId
+     * @param int|null $companyId
      * @return array
      */
     public function getUrbanRenewalsWithCalculatedArea($page = 1, $perPage = 10, $urbanRenewalId = null)

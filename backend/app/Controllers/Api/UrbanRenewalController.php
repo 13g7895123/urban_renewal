@@ -43,7 +43,6 @@ class UrbanRenewalController extends BaseController
             $perPage = $this->request->getGet('per_page') ?? 10;
             $search = $this->request->getGet('search');
 
-            // 權限驗證：檢查用戶身份
             $user = $_SERVER['AUTH_USER'] ?? null;
             if (!$user) {
                 return $this->response->setStatusCode(401)->setJSON([
@@ -52,13 +51,11 @@ class UrbanRenewalController extends BaseController
                 ]);
             }
 
-            // 系統管理員可以查看所有資料
             $isAdmin = isset($user['role']) && $user['role'] === 'admin';
             
-            // 企業管理者只能查看自己管理的企業資料
-            $urbanRenewalId = null;
+            // 新架構：企業管理者通過 company_id 查看旗下更新會
+            $companyId = null;
             if (!$isAdmin) {
-                // 檢查是否為企業管理者
                 $isCompanyManager = isset($user['is_company_manager']) && 
                                    ($user['is_company_manager'] === 1 || 
                                     $user['is_company_manager'] === '1' || 
@@ -71,20 +68,29 @@ class UrbanRenewalController extends BaseController
                     ]);
                 }
 
-                $urbanRenewalId = $user['urban_renewal_id'] ?? null;
-                if (!$urbanRenewalId) {
+                // 新架構：取得 company_id (過渡期也支持 urban_renewal_id)
+                $companyId = $user['company_id'] ?? null;
+                if (!$companyId && isset($user['urban_renewal_id'])) {
+                    // 過渡期兼容：從 urban_renewal_id 推導 company_id
+                    $urbanRenewal = $this->urbanRenewalModel->find($user['urban_renewal_id']);
+                    if ($urbanRenewal && $urbanRenewal['company_id']) {
+                        $companyId = $urbanRenewal['company_id'];
+                    }
+                }
+
+                if (!$companyId) {
                     return $this->response->setStatusCode(403)->setJSON([
                         'status' => 'error',
-                        'message' => '權限不足：您的帳號未關聯任何更新會'
+                        'message' => '權限不足：您的帳號未關聯任何企業'
                     ]);
                 }
             }
 
             // 根據權限查詢資料
             if ($search) {
-                $data = $this->urbanRenewalModel->searchByName($search, $page, $perPage, $urbanRenewalId);
+                $data = $this->urbanRenewalModel->searchByName($search, $page, $perPage, $companyId);
             } else {
-                $data = $this->urbanRenewalModel->getUrbanRenewals($page, $perPage, $urbanRenewalId);
+                $data = $this->urbanRenewalModel->getUrbanRenewals($page, $perPage, $companyId);
             }
 
             // Add calculated member count and land area to all results
@@ -129,7 +135,6 @@ class UrbanRenewalController extends BaseController
                 ]);
             }
 
-            // 權限驗證：檢查用戶是否有權存取此企業資料
             $user = $_SERVER['AUTH_USER'] ?? null;
             if (!$user) {
                 return $this->response->setStatusCode(401)->setJSON([
@@ -138,24 +143,46 @@ class UrbanRenewalController extends BaseController
                 ]);
             }
 
-            // 系統管理員可以存取所有資料
             $isAdmin = isset($user['role']) && $user['role'] === 'admin';
 
-            // 非管理員只能存取自己所屬企業的資料
+            // 非管理員需要檢查權限
             if (!$isAdmin) {
-                $userUrbanRenewalId = $user['urban_renewal_id'] ?? null;
-
-                if (!$userUrbanRenewalId) {
+                $isCompanyManager = isset($user['is_company_manager']) && 
+                                   ($user['is_company_manager'] === 1 || 
+                                    $user['is_company_manager'] === '1' || 
+                                    $user['is_company_manager'] === true);
+                
+                if (!$isCompanyManager) {
                     return $this->response->setStatusCode(403)->setJSON([
                         'status' => 'error',
-                        'message' => '權限不足：您的帳號未關聯任何企業'
+                        'message' => '權限不足：您沒有查看此資料的權限'
                     ]);
                 }
 
-                if ((int)$userUrbanRenewalId !== (int)$id) {
+                // 新架構：檢查該更新會是否屬於用戶的公司
+                $requestedRenewal = $this->urbanRenewalModel->find($id);
+                if (!$requestedRenewal) {
+                    return $this->response->setStatusCode(404)->setJSON([
+                        'status' => 'error',
+                        'message' => '找不到指定的更新會'
+                    ]);
+                }
+
+                // 獲取用戶的 company_id
+                $userCompanyId = $user['company_id'] ?? null;
+                if (!$userCompanyId && isset($user['urban_renewal_id'])) {
+                    // 過渡期兼容
+                    $userRenewal = $this->urbanRenewalModel->find($user['urban_renewal_id']);
+                    if ($userRenewal && $userRenewal['company_id']) {
+                        $userCompanyId = $userRenewal['company_id'];
+                    }
+                }
+
+                // 檢查該更新會是否屬於用戶的公司
+                if (!$userCompanyId || (int)$requestedRenewal['company_id'] !== (int)$userCompanyId) {
                     return $this->response->setStatusCode(403)->setJSON([
                         'status' => 'error',
-                        'message' => '權限不足：您無權存取其他企業的資料'
+                        'message' => '權限不足：您無權存取此更新會的資料'
                     ]);
                 }
             }
@@ -189,6 +216,32 @@ class UrbanRenewalController extends BaseController
     public function create()
     {
         try {
+            // 權限驗證
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            if (!$user) {
+                return $this->response->setStatusCode(401)->setJSON([
+                    'status' => 'error',
+                    'message' => '未授權：無法識別用戶身份'
+                ]);
+            }
+
+            $isAdmin = isset($user['role']) && $user['role'] === 'admin';
+            
+            // 非管理員需要檢查企業管理者權限
+            if (!$isAdmin) {
+                $isCompanyManager = isset($user['is_company_manager']) && 
+                                   ($user['is_company_manager'] === 1 || 
+                                    $user['is_company_manager'] === '1' || 
+                                    $user['is_company_manager'] === true);
+                
+                if (!$isCompanyManager) {
+                    return $this->response->setStatusCode(403)->setJSON([
+                        'status' => 'error',
+                        'message' => '權限不足：您沒有建立更新會的權限'
+                    ]);
+                }
+            }
+
             $data = [
                 'name' => $this->request->getPost('name'),
                 'chairman_name' => $this->request->getPost('chairmanName') ?? $this->request->getPost('chairman_name'),
@@ -206,7 +259,24 @@ class UrbanRenewalController extends BaseController
                     'chairman_phone' => $json['chairmanPhone'] ?? $json['chairman_phone'] ?? null,
                     'address' => $json['address'] ?? null,
                     'representative' => $json['representative'] ?? null,
+                    'company_id' => $json['company_id'] ?? $json['companyId'] ?? null,
                 ];
+                
+                // 企業管理者建立新更新會時，自動關聯到自己的企業
+                if (!$isAdmin && empty($data['company_id'])) {
+                    $companyId = $user['company_id'] ?? null;
+                    if (!$companyId && isset($user['urban_renewal_id'])) {
+                        // 過渡期兼容：從 urban_renewal_id 推導 company_id
+                        $existingRenewal = $this->urbanRenewalModel->find($user['urban_renewal_id']);
+                        if ($existingRenewal && $existingRenewal['company_id']) {
+                            $companyId = $existingRenewal['company_id'];
+                        }
+                    }
+                    
+                    if ($companyId) {
+                        $data['company_id'] = $companyId;
+                    }
+                }
             }
 
             if (!$this->urbanRenewalModel->insert($data)) {

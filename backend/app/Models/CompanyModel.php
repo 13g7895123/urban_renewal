@@ -14,7 +14,6 @@ class CompanyModel extends Model
     protected $useSoftDeletes = true;
 
     protected $allowedFields = [
-        'urban_renewal_id',
         'name',
         'tax_id',
         'company_phone',
@@ -63,31 +62,55 @@ class CompanyModel extends Model
     protected $skipValidation = false;
 
     /**
-     * Get company by urban_renewal_id
+     * Get company by urban_renewal_id (for backward compatibility during transition)
      * @param int $urbanRenewalId
      * @return array|null
+     * @deprecated Use getRenewalsByCompanyId() with company_id instead
      */
     public function getByUrbanRenewalId($urbanRenewalId)
     {
-        return $this->where('urban_renewal_id', $urbanRenewalId)->first();
+        // During transition: find the company that manages this urban_renewal
+        $urbanRenewalModel = new \App\Models\UrbanRenewalModel();
+        $urbanRenewal = $urbanRenewalModel->find($urbanRenewalId);
+        
+        if (!$urbanRenewal || !$urbanRenewal['company_id']) {
+            return null;
+        }
+        
+        return $this->find($urbanRenewal['company_id']);
     }
 
     /**
      * Get company with its associated urban renewal data
      * @param int $id Company ID
      * @return array|null
+     * @deprecated Use getRenewals() to get multiple renewals instead
      */
     public function getWithUrbanRenewal($id)
     {
-        return $this->select('companies.*, urban_renewals.name as urban_renewal_name, urban_renewals.area, urban_renewals.member_count, urban_renewals.chairman_name, urban_renewals.chairman_phone')
-                    ->join('urban_renewals', 'companies.urban_renewal_id = urban_renewals.id', 'left')
-                    ->find($id);
+        $company = $this->find($id);
+        if (!$company) {
+            return null;
+        }
+        
+        // Get first urban renewal managed by this company
+        $urbanRenewalModel = new \App\Models\UrbanRenewalModel();
+        $urbanRenewal = $urbanRenewalModel->where('company_id', $id)->first();
+        
+        if ($urbanRenewal) {
+            $company['urban_renewal_name'] = $urbanRenewal['name'];
+            $company['chairman_name'] = $urbanRenewal['chairman_name'];
+            $company['chairman_phone'] = $urbanRenewal['chairman_phone'];
+        }
+        
+        return $company;
     }
 
     /**
      * Get the associated urban renewal for this company
      * @param int $companyId
      * @return array|null
+     * @deprecated Companies can have multiple renewals now. Use getRenewals() instead
      */
     public function getUrbanRenewal($companyId)
     {
@@ -96,8 +119,53 @@ class CompanyModel extends Model
             return null;
         }
 
+        // Return the first urban renewal managed by this company
         $urbanRenewalModel = new \App\Models\UrbanRenewalModel();
-        return $urbanRenewalModel->find($company['urban_renewal_id']);
+        return $urbanRenewalModel->where('company_id', $companyId)->first();
+    }
+
+    /**
+     * Get all urban renewals managed by this company
+     * @param int $companyId Company ID
+     * @param int $page Page number
+     * @param int $perPage Items per page
+     * @return array
+     */
+    public function getRenewals($companyId, $page = 1, $perPage = 10)
+    {
+        $urbanRenewalModel = new \App\Models\UrbanRenewalModel();
+        return $urbanRenewalModel->where('company_id', $companyId)
+                                  ->orderBy('created_at', 'DESC')
+                                  ->paginate($perPage, 'default', $page);
+    }
+
+    /**
+     * Get count of urban renewals managed by this company
+     * @param int $companyId Company ID
+     * @return int
+     */
+    public function getRenewalsCount($companyId): int
+    {
+        $urbanRenewalModel = new \App\Models\UrbanRenewalModel();
+        return $urbanRenewalModel->where('company_id', $companyId)->countAllResults();
+    }
+
+    /**
+     * Check if company has reached its renewal quota
+     * @param int $companyId Company ID
+     * @return bool True if quota is reached or exceeded
+     */
+    public function checkRenewalQuota($companyId): bool
+    {
+        $company = $this->find($companyId);
+        if (!$company) {
+            return false;
+        }
+
+        $currentCount = $this->getRenewalsCount($companyId);
+        $maxCount = $company['max_renewal_count'] ?? 1;
+
+        return $currentCount >= $maxCount;
     }
 
     /**
@@ -108,9 +176,6 @@ class CompanyModel extends Model
      */
     public function updateCompany($id, $data)
     {
-        // Remove urban_renewal_id from update data as it shouldn't be changed
-        unset($data['urban_renewal_id']);
-        
         return $this->update($id, $data);
     }
 }
