@@ -95,9 +95,54 @@ class WordExportService
                     $name = $this->maskName($name);
                 }
                 
+                // 處理建物住址/地號
+                $addresses = [];
+                
+                // 1. 建物住址
+                if (isset($owner['buildings']) && is_array($owner['buildings'])) {
+                    foreach ($owner['buildings'] as $building) {
+                        if (!empty($building['building_address'])) {
+                            $addresses[] = $building['building_address'];
+                        } elseif (!empty($building['location'])) {
+                            // 如果沒有完整地址，使用地段+建號
+                            $buildingNum = $building['building_number_main'];
+                            if (!empty($building['building_number_sub'])) {
+                                $buildingNum .= '-' . $building['building_number_sub'];
+                            }
+                            $addresses[] = $building['location'] . ' ' . $buildingNum . '建號';
+                        }
+                    }
+                }
+                
+                // 2. 土地地號
+                if (isset($owner['lands']) && is_array($owner['lands'])) {
+                    foreach ($owner['lands'] as $land) {
+                        $landNum = $land['land_number_main'];
+                        if (!empty($land['land_number_sub'])) {
+                            $landNum .= '-' . $land['land_number_sub'];
+                        }
+                        
+                        // 組合完整地號資訊
+                        $location = '';
+                        if (isset($land['county']) && isset($land['district']) && isset($land['section'])) {
+                            // 這裡簡化處理，理想情況應該查表取得中文名稱
+                            // 但因為 PropertyOwnerModel 已經處理了 buildings 的中文名稱，
+                            // lands 的部分可能需要類似處理。
+                            // 檢查 PropertyOwnerModel::attachRelatedData 發現 lands 沒有轉中文名稱
+                            // 暫時直接使用地號，或者嘗試從 buildings 取得地段資訊（如果有的話）
+                            // 或者直接顯示地號
+                        }
+                        
+                        $addresses[] = $landNum . '地號';
+                    }
+                }
+                
+                $addressStr = implode('/', array_unique($addresses));
+
                 $values[] = [
                     'index' => sprintf('%03d', $index + 1),
                     'owner_name' => $name,
+                    'address' => $addressStr,
                     'signature' => '' // 留白供簽名
                 ];
             }
@@ -119,11 +164,10 @@ class WordExportService
                 $date = str_replace('-', '', $meetingData['meeting_date']);
             }
 
-            $type = $isAnonymous ? '匿名' : '全名';
             $filename = $this->sanitizeFilename(
                 $meetingData['urban_renewal_name'] . '_' .
                 $meetingData['meeting_name'] .
-                '簽到冊(' . $type . ')_' . $date . '.docx'
+                '簽到冊_' . $date . '.docx'
             );
 
             // 儲存檔案
@@ -155,8 +199,9 @@ class WordExportService
     {
         $len = mb_strlen($name, 'UTF-8');
         if ($len <= 1) return $name;
-        if ($len == 2) return mb_substr($name, 0, 1, 'UTF-8') . 'O';
-        return mb_substr($name, 0, 1, 'UTF-8') . 'O' . mb_substr($name, -1, 1, 'UTF-8');
+        
+        // 留下姓氏，名字用OO代替
+        return mb_substr($name, 0, 1, 'UTF-8') . 'OO';
     }
 
     /**
