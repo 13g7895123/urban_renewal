@@ -25,6 +25,7 @@ class MeetingController extends ResourceController
         header('Access-Control-Allow-Origin: *');
         header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
         header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+        header('Access-Control-Expose-Headers: Content-Disposition');
     }
 
     /**
@@ -784,7 +785,7 @@ class MeetingController extends ResourceController
 
             // 設定檔案下載 header
             header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-            header('Content-Disposition: attachment; filename="' . urlencode($filename) . '"');
+            header('Content-Disposition: attachment; filename="' . urlencode($filename) . '"; filename*=UTF-8\'\'' . rawurlencode($filename));
             header('Content-Length: ' . $filesize);
             header('Cache-Control: max-age=0');
 
@@ -885,7 +886,7 @@ class MeetingController extends ResourceController
 
             // 設定檔案下載 header
             header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-            header('Content-Disposition: attachment; filename="' . urlencode($filename) . '"');
+            header('Content-Disposition: attachment; filename="' . urlencode($filename) . '"; filename*=UTF-8\'\'' . rawurlencode($filename));
             header('Content-Length: ' . $filesize);
             header('Cache-Control: max-age=0');
 

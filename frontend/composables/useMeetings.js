@@ -121,9 +121,16 @@ export const useMeetings = () => {
       const contentDisposition = response.headers.get('Content-Disposition')
       let filename = '會議通知.docx'
       if (contentDisposition) {
-        const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition)
+        // Try to match filename*=UTF-8''... first
+        let matches = /filename\*=UTF-8''([^;=\n]*)/.exec(contentDisposition)
         if (matches != null && matches[1]) {
-          filename = decodeURIComponent(matches[1].replace(/['"]/g, ''))
+          filename = decodeURIComponent(matches[1])
+        } else {
+          // Fallback to filename="..."
+          matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition)
+          if (matches != null && matches[1]) {
+            filename = decodeURIComponent(matches[1].replace(/['"]/g, ''))
+          }
         }
       }
 
@@ -196,9 +203,16 @@ export const useMeetings = () => {
       const contentDisposition = response.headers.get('Content-Disposition')
       let filename = '簽到冊.docx'
       if (contentDisposition) {
-        const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition)
+        // Try to match filename*=UTF-8''... first
+        let matches = /filename\*=UTF-8''([^;=\n]*)/.exec(contentDisposition)
         if (matches != null && matches[1]) {
-          filename = decodeURIComponent(matches[1].replace(/['"]/g, ''))
+          filename = decodeURIComponent(matches[1])
+        } else {
+          // Fallback to filename="..."
+          matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition)
+          if (matches != null && matches[1]) {
+            filename = decodeURIComponent(matches[1].replace(/['"]/g, ''))
+          }
         }
       }
 
