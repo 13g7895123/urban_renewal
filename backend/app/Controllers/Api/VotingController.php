@@ -53,7 +53,8 @@ class VotingController extends ResourceController
 
             $meetingModel = model('MeetingModel');
             $meeting = $meetingModel->find($topic['meeting_id']);
-            if ($user['role'] !== 'admin' && $user['urban_renewal_id'] !== $meeting['urban_renewal_id']) {
+            helper('auth');
+            if ($user['role'] !== 'admin' && !auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
                 return $this->failForbidden('無權限查看此投票記錄');
             }
 
@@ -120,10 +121,11 @@ class VotingController extends ResourceController
                     return $this->failForbidden('只能為自己投票');
                 }
             } elseif ($user['role'] !== 'admin' && $user['role'] !== 'chairman') {
-                // 檢查是否為同一個更新會
+                // 檢查是否為同一個企業
                 $meetingModel = model('MeetingModel');
                 $meeting = $meetingModel->find($topic['meeting_id']);
-                if ($user['urban_renewal_id'] !== $meeting['urban_renewal_id']) {
+                helper('auth');
+                if (!auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
                     return $this->failForbidden('無權限在此議題投票');
                 }
             }
@@ -304,7 +306,8 @@ class VotingController extends ResourceController
 
             $meetingModel = model('MeetingModel');
             $meeting = $meetingModel->find($topic['meeting_id']);
-            if ($user['role'] !== 'admin' && $user['urban_renewal_id'] !== $meeting['urban_renewal_id']) {
+            helper('auth');
+            if ($user['role'] !== 'admin' && !auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
                 return $this->failForbidden('無權限查看此投票統計');
             }
 
@@ -347,7 +350,8 @@ class VotingController extends ResourceController
 
             $meetingModel = model('MeetingModel');
             $meeting = $meetingModel->find($topic['meeting_id']);
-            if ($user['role'] !== 'admin' && $user['urban_renewal_id'] !== $meeting['urban_renewal_id']) {
+            helper('auth');
+            if ($user['role'] !== 'admin' && !auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
                 return $this->failForbidden('無權限匯出此投票記錄');
             }
 
@@ -417,7 +421,8 @@ class VotingController extends ResourceController
 
             $meetingModel = model('MeetingModel');
             $meeting = $meetingModel->find($topic['meeting_id']);
-            if ($user['role'] !== 'admin' && $user['urban_renewal_id'] !== $meeting['urban_renewal_id']) {
+            helper('auth');
+            if ($user['role'] !== 'admin' && !auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
                 return $this->failForbidden('無權限查看此投票記錄');
             }
 

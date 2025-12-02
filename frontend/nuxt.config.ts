@@ -13,7 +13,7 @@ export default defineNuxtConfig({
     '@pinia-plugin-persistedstate/nuxt'
   ],
   piniaPersistedstate: {
-    storage: 'sessionStorage'
+    storage: 'localStorage'
   },
   ui: {
     global: true,

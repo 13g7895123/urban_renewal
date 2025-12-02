@@ -251,49 +251,6 @@ const peopleRatioNumerator = ref(0)
 const peopleRatioDenominator = ref(0)
 const remarks = ref('')
 
-// Mock data for testing
-const mockTopics = [
-  {
-    id: '1',
-    name: '理事長選舉',
-    meetingName: '114年度第一屆第1次會員大會',
-    maxSelections: 1,
-    acceptedCount: 1,
-    alternateCount: 0,
-    isAnonymous: false,
-    landAreaRatioNumerator: 3,
-    landAreaRatioDenominator: 4,
-    buildingAreaRatioNumerator: 2,
-    buildingAreaRatioDenominator: 3,
-    peopleRatioNumerator: 50,
-    peopleRatioDenominator: 100,
-    remarks: '理事長選舉相關說明'
-  },
-  {
-    id: '2',
-    name: '更新計畫同意案',
-    meetingName: '114年度第一屆第1次會員大會',
-    maxSelections: 1,
-    acceptedCount: 1,
-    alternateCount: 0,
-    isAnonymous: false,
-    landAreaRatioNumerator: 2,
-    landAreaRatioDenominator: 3,
-    buildingAreaRatioNumerator: 3,
-    buildingAreaRatioDenominator: 4,
-    peopleRatioNumerator: 60,
-    peopleRatioDenominator: 100,
-    remarks: '更新計畫同意案相關說明'
-  }
-]
-
-const mockMeeting = {
-  id: '1',
-  name: '114年度第一屆第1次會員大會',
-  dateTime: '2025年3月15日 下午2:00:00',
-  renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會'
-}
-
 onMounted(async () => {
   loading.value = true
 
@@ -346,11 +303,9 @@ onMounted(async () => {
     }
   } catch (error) {
     console.error('Error loading data:', error)
-    // Fallback to mock data if API fails
-    meetingInfo.value = mockMeeting
-    if (topicId !== 'new') {
-      selectedTopic.value = mockTopics.find(t => t.id === topicId)
-    }
+    showError('載入失敗', error.message || '無法載入資料')
+    meetingInfo.value = null
+    selectedTopic.value = null
   } finally {
     loading.value = false
   }
@@ -385,15 +340,9 @@ const removePropertyOwner = (index) => {
 }
 
 const importPropertyOwners = () => {
-  // TODO: Implement import functionality
+  // TODO: Implement import functionality - 需要連接實際的 API
   console.log('Import property owners')
-
-  // For demo, add some sample owners
-  propertyOwners.value = [
-    { name: '王五', isPinned: false },
-    { name: '趙六', isPinned: false },
-    { name: '錢七', isPinned: true }
-  ]
+  showError('功能開發中', '匯入功能尚未實作，請手動新增選項')
 }
 
 // Export function

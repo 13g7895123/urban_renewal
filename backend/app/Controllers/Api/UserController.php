@@ -390,7 +390,11 @@ class UserController extends ResourceController
                 if ($targetUser['role'] === 'admin' || $targetUser['role'] === 'chairman') {
                     return $this->failForbidden('無權限刪除管理員或主席帳號');
                 }
-                if ($user['urban_renewal_id'] !== $targetUser['urban_renewal_id']) {
+                // 使用 company_id 驗證
+                helper('auth');
+                $userCompanyId = auth_get_user_company_id($user);
+                $targetCompanyId = auth_get_user_company_id($targetUser);
+                if (!$userCompanyId || $userCompanyId !== $targetCompanyId) {
                     return $this->failForbidden('只能刪除同企業的使用者');
                 }
             }
@@ -670,13 +674,14 @@ class UserController extends ResourceController
 
             // 非管理員只能查看自己所屬企業的管理者
             if (!$isAdmin) {
-                $userUrbanRenewalId = $user['urban_renewal_id'] ?? null;
+                helper('auth');
+                $userCompanyId = auth_get_user_company_id($user);
 
-                if (!$userUrbanRenewalId) {
+                if (!$userCompanyId) {
                     return $this->failForbidden('您的帳號未關聯任何企業');
                 }
 
-                if ((int)$userUrbanRenewalId !== (int)$companyId) {
+                if ((int)$userCompanyId !== (int)$companyId) {
                     return $this->failForbidden('無權限查看其他企業的管理者資料');
                 }
             }
@@ -724,13 +729,14 @@ class UserController extends ResourceController
 
             // 非管理員只能查看自己所屬企業的使用者
             if (!$isAdmin) {
-                $userUrbanRenewalId = $user['urban_renewal_id'] ?? null;
+                helper('auth');
+                $userCompanyId = auth_get_user_company_id($user);
 
-                if (!$userUrbanRenewalId) {
+                if (!$userCompanyId) {
                     return $this->failForbidden('您的帳號未關聯任何企業');
                 }
 
-                if ((int)$userUrbanRenewalId !== (int)$companyId) {
+                if ((int)$userCompanyId !== (int)$companyId) {
                     return $this->failForbidden('無權限查看其他企業的使用者資料');
                 }
             }
@@ -778,13 +784,14 @@ class UserController extends ResourceController
 
             // 非管理員只能查看自己所屬企業的成員
             if (!$isAdmin) {
-                $userUrbanRenewalId = $user['urban_renewal_id'] ?? null;
+                helper('auth');
+                $userCompanyId = auth_get_user_company_id($user);
 
-                if (!$userUrbanRenewalId) {
+                if (!$userCompanyId) {
                     return $this->failForbidden('您的帳號未關聯任何企業');
                 }
 
-                if ((int)$userUrbanRenewalId !== (int)$companyId) {
+                if ((int)$userCompanyId !== (int)$companyId) {
                     return $this->failForbidden('無權限查看其他企業的成員資料');
                 }
             }
@@ -850,7 +857,11 @@ class UserController extends ResourceController
                 if ($targetUser['role'] === 'admin' || $targetUser['role'] === 'chairman') {
                     return $this->failForbidden('無權限操作管理員或主席帳號');
                 }
-                if (($user['urban_renewal_id'] ?? null) !== ($targetUser['urban_renewal_id'] ?? null)) {
+                // 使用 company_id 驗證
+                helper('auth');
+                $userCompanyId = auth_get_user_company_id($user);
+                $targetCompanyId = auth_get_user_company_id($targetUser);
+                if (!$userCompanyId || $userCompanyId !== $targetCompanyId) {
                     return $this->failForbidden('只能管理同企業的使用者');
                 }
                 if (($targetUser['user_type'] ?? '') !== 'enterprise') {
@@ -908,7 +919,11 @@ class UserController extends ResourceController
                 if ($targetUser['role'] === 'admin' || $targetUser['role'] === 'chairman') {
                     return $this->failForbidden('無權限操作管理員或主席帳號');
                 }
-                if (($user['urban_renewal_id'] ?? null) !== ($targetUser['urban_renewal_id'] ?? null)) {
+                // 使用 company_id 驗證
+                helper('auth');
+                $userCompanyId = auth_get_user_company_id($user);
+                $targetCompanyId = auth_get_user_company_id($targetUser);
+                if (!$userCompanyId || $userCompanyId !== $targetCompanyId) {
                     return $this->failForbidden('只能管理同企業的使用者');
                 }
                 if (($targetUser['user_type'] ?? '') !== 'enterprise') {

@@ -332,29 +332,45 @@ class UrbanRenewalController extends BaseController
 
             // 非管理員只能修改自己所屬企業的資料
             if (!$isAdmin) {
-                $userUrbanRenewalId = $user['urban_renewal_id'] ?? null;
+                // 新架構：取得 company_id (過渡期也支持 urban_renewal_id)
+                $userCompanyId = $user['company_id'] ?? null;
+                if (!$userCompanyId && isset($user['urban_renewal_id'])) {
+                    // 過渡期兼容：從 urban_renewal_id 推導 company_id
+                    $userRenewal = $this->urbanRenewalModel->find($user['urban_renewal_id']);
+                    if ($userRenewal && $userRenewal['company_id']) {
+                        $userCompanyId = $userRenewal['company_id'];
+                    }
+                }
 
-                if (!$userUrbanRenewalId) {
+                if (!$userCompanyId) {
                     return $this->response->setStatusCode(403)->setJSON([
                         'status' => 'error',
                         'message' => '權限不足：您的帳號未關聯任何企業'
                     ]);
                 }
 
-                if ((int)$userUrbanRenewalId !== (int)$id) {
+                $existing = $this->urbanRenewalModel->find($id);
+                if (!$existing) {
+                    return $this->response->setStatusCode(404)->setJSON([
+                        'status' => 'error',
+                        'message' => '找不到指定的更新會'
+                    ]);
+                }
+
+                if ((int)$existing['company_id'] !== (int)$userCompanyId) {
                     return $this->response->setStatusCode(403)->setJSON([
                         'status' => 'error',
                         'message' => '權限不足：您無權修改其他企業的資料'
                     ]);
                 }
-            }
-
-            $existing = $this->urbanRenewalModel->find($id);
-            if (!$existing) {
-                return $this->response->setStatusCode(404)->setJSON([
-                    'status' => 'error',
-                    'message' => '找不到指定的更新會'
-                ]);
+            } else {
+                $existing = $this->urbanRenewalModel->find($id);
+                if (!$existing) {
+                    return $this->response->setStatusCode(404)->setJSON([
+                        'status' => 'error',
+                        'message' => '找不到指定的更新會'
+                    ]);
+                }
             }
 
             // Handle JSON requests

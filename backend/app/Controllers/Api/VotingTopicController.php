@@ -43,39 +43,60 @@ class VotingTopicController extends ResourceController
             $status = $this->request->getGet('status');
             $keyword = $this->request->getGet('search');
 
-            // For company managers, need to filter by their urban_renewal_id
-            // This requires checking the meeting's urban_renewal_id
-            if (!$isAdmin && $isCompanyManager && isset($user['urban_renewal_id'])) {
-                // Get all meetings for this urban_renewal
-                $meetingModel = model('MeetingModel');
-                $allowedMeetings = $meetingModel->where('urban_renewal_id', $user['urban_renewal_id'])->findAll();
-                $allowedMeetingIds = array_column($allowedMeetings, 'id');
+            // For company managers, need to filter by their company
+            if (!$isAdmin && $isCompanyManager) {
+                // Get user's company_id
+                helper('auth');
+                $userCompanyId = auth_get_user_company_id($user);
+                
+                if ($userCompanyId) {
+                    // Get all urban renewals for user's company
+                    $urbanRenewalModel = model('UrbanRenewalModel');
+                    $companyRenewals = $urbanRenewalModel->where('company_id', $userCompanyId)->findAll();
+                    $renewalIds = array_column($companyRenewals, 'id');
+                    
+                    // Get all meetings for these renewals
+                    $meetingModel = model('MeetingModel');
+                    if (!empty($renewalIds)) {
+                        $allowedMeetings = $meetingModel->whereIn('urban_renewal_id', $renewalIds)->findAll();
+                    } else {
+                        $allowedMeetings = [];
+                    }
+                    $allowedMeetingIds = array_column($allowedMeetings, 'id');
 
-                // If specific meetingId requested, verify permission
-                if ($meetingId && !in_array($meetingId, $allowedMeetingIds)) {
-                    return $this->fail([
-                        'success' => false,
-                        'error' => [
-                            'code' => 'FORBIDDEN',
-                            'message' => '您沒有權限存取此會議的投票議題'
-                        ]
-                    ], 403);
-                }
+                    // If specific meetingId requested, verify permission
+                    if ($meetingId && !in_array($meetingId, $allowedMeetingIds)) {
+                        return $this->fail([
+                            'success' => false,
+                            'error' => [
+                                'code' => 'FORBIDDEN',
+                                'message' => '您沒有權限存取此會議的投票議題'
+                            ]
+                        ], 403);
+                    }
 
-                // Filter topics by allowed meetings
-                if ($keyword) {
-                    $filters = [
-                        'meeting_id' => $meetingId,
-                        'voting_status' => $status,
-                        'allowed_meeting_ids' => $allowedMeetingIds
-                    ];
-                    $topics = $this->model->searchTopics($keyword, $page, $perPage, $filters);
-                } elseif ($meetingId) {
-                    $topics = $this->model->getTopicsByMeeting($meetingId, $page, $perPage, $status);
+                    // Filter topics by allowed meetings
+                    if ($keyword) {
+                        $filters = [
+                            'meeting_id' => $meetingId,
+                            'voting_status' => $status,
+                            'allowed_meeting_ids' => $allowedMeetingIds
+                        ];
+                        $topics = $this->model->searchTopics($keyword, $page, $perPage, $filters);
+                    } elseif ($meetingId) {
+                        $topics = $this->model->getTopicsByMeeting($meetingId, $page, $perPage, $status);
+                    } else {
+                        // Get all topics for allowed meetings
+                        if (!empty($allowedMeetingIds)) {
+                            $this->model->whereIn('meeting_id', $allowedMeetingIds);
+                        } else {
+                            $this->model->where('1', '0'); // No results
+                        }
+                        $topics = $this->model->paginate($perPage, 'default', $page);
+                    }
                 } else {
-                    // Get all topics for allowed meetings
-                    $this->model->whereIn('meeting_id', $allowedMeetingIds);
-                    $topics = $this->model->paginate($perPage, 'default', $page);
+                    // No company association, return empty
+                    $topics = [];
                 }
             } else {
                 // Admin can see all
@@ -132,7 +153,8 @@ class VotingTopicController extends ResourceController
                 $meetingModel = model('MeetingModel');
                 $meeting = $meetingModel->find($topic['meeting_id']);
                 
-                if (!$meeting || $user['urban_renewal_id'] != $meeting['urban_renewal_id']) {
+                helper('auth');
+                if (!$meeting || !auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
                     return $this->fail([
                         'success' => false,
                         'error' => [
@@ -190,7 +212,8 @@ class VotingTopicController extends ResourceController
 
             // Check permission for company managers
             if (!$isAdmin && $isCompanyManager) {
-                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $meeting['urban_renewal_id']) {
+                helper('auth');
+                if (!auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
                     return $this->fail([
                         'success' => false,
                         'error' => [
@@ -268,7 +291,8 @@ class VotingTopicController extends ResourceController
             $meeting = $meetingModel->find($topic['meeting_id']);
             
             if (!$isAdmin && $isCompanyManager) {
-                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $meeting['urban_renewal_id']) {
+                helper('auth');
+                if (!auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
                     return $this->fail([
                         'success' => false,
                         'error' => [
@@ -342,7 +366,8 @@ class VotingTopicController extends ResourceController
             $meeting = $meetingModel->find($topic['meeting_id']);
             
             if (!$isAdmin && $isCompanyManager) {
-                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $meeting['urban_renewal_id']) {
+                helper('auth');
+                if (!auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
                     return $this->fail([
                         'success' => false,
                         'error' => [
@@ -395,7 +420,8 @@ class VotingTopicController extends ResourceController
             // 檢查用戶權限
             $meetingModel = model('MeetingModel');
             $meeting = $meetingModel->find($topic['meeting_id']);
-            if ($user['role'] !== 'admin' && $user['urban_renewal_id'] !== $meeting['urban_renewal_id']) {
+            helper('auth');
+            if ($user['role'] !== 'admin' && !auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
                 return $this->failForbidden('無權限啟動此議題投票');
             }
 
@@ -437,7 +463,8 @@ class VotingTopicController extends ResourceController
             // 檢查用戶權限
             $meetingModel = model('MeetingModel');
             $meeting = $meetingModel->find($topic['meeting_id']);
-            if ($user['role'] !== 'admin' && $user['urban_renewal_id'] !== $meeting['urban_renewal_id']) {
+            helper('auth');
+            if ($user['role'] !== 'admin' && !auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
                 return $this->failForbidden('無權限結束此議題投票');
             }
 
@@ -469,11 +496,12 @@ class VotingTopicController extends ResourceController
 
             $meetingId = $this->request->getGet('meeting_id');
 
-            // 如果不是admin，則限制只能查看自己更新會的統計
+            // 如果不是admin，則限制只能查看自己企業的統計
             if ($user['role'] !== 'admin' && $meetingId) {
                 $meetingModel = model('MeetingModel');
                 $meeting = $meetingModel->find($meetingId);
-                if (!$meeting || $user['urban_renewal_id'] !== $meeting['urban_renewal_id']) {
+                helper('auth');
+                if (!$meeting || !auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
                     return $this->failForbidden('無權限查看此統計');
                 }
             }
@@ -505,12 +533,13 @@ class VotingTopicController extends ResourceController
             $days = $this->request->getGet('days') ?? 7;
             $topics = $this->model->getUpcomingTopics($days);
 
-            // 如果不是admin，過濾只顯示自己更新會的議題
+            // 如果不是admin，過濾只顯示自己企業的議題
             if ($user['role'] !== 'admin') {
+                helper('auth');
                 $topics = array_filter($topics, function($topic) use ($user) {
                     $meetingModel = model('MeetingModel');
                     $meeting = $meetingModel->find($topic['meeting_id']);
-                    return $meeting && $user['urban_renewal_id'] === $meeting['urban_renewal_id'];
+                    return $meeting && auth_check_company_access((int)$meeting['urban_renewal_id'], $user);
                 });
             }
 

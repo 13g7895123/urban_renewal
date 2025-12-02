@@ -55,9 +55,32 @@ class MeetingController extends ResourceController
 
             $filters = [];
             
-            // For company managers, filter by their urban_renewal_id
-            if (!$isAdmin && $isCompanyManager && isset($user['urban_renewal_id'])) {
-                $filters['urban_renewal_id'] = $user['urban_renewal_id'];
+            // For company managers, filter by their company
+            if (!$isAdmin && $isCompanyManager) {
+                helper('auth');
+                $userCompanyId = auth_get_user_company_id($user);
+                if ($userCompanyId) {
+                    // Get all urban renewals for user's company
+                    $urbanRenewalModel = model('UrbanRenewalModel');
+                    $companyRenewals = $urbanRenewalModel->where('company_id', $userCompanyId)->findAll();
+                    $renewalIds = array_column($companyRenewals, 'id');
+                    if (!empty($renewalIds)) {
+                        $filters['urban_renewal_ids'] = $renewalIds;
+                    } else {
+                        // 若該企業沒有任何更新會，直接回傳空列表
+                        return $this->respond([
+                            'success' => true,
+                            'data' => [],
+                            'pagination' => [
+                                'current_page' => (int)$page,
+                                'per_page' => (int)$perPage,
+                                'total' => 0,
+                                'total_pages' => 0
+                            ],
+                            'message' => '取得會議列表成功'
+                        ]);
+                    }
+                }
             } elseif ($urbanRenewalId) {
                 $filters['urban_renewal_id'] = $urbanRenewalId;
             }
@@ -106,7 +129,8 @@ class MeetingController extends ResourceController
 
             // Check permission for company managers
             if (!$isAdmin && $isCompanyManager) {
-                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $urbanRenewalId) {
+                helper('auth');
+                if (!auth_check_company_access((int)$urbanRenewalId, $user)) {
                     return $this->fail([
                         'success' => false,
                         'error' => [
@@ -185,7 +209,8 @@ class MeetingController extends ResourceController
 
             // Check permission for company managers
             if (!$isAdmin && $isCompanyManager) {
-                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $meeting['urban_renewal_id']) {
+                helper('auth');
+                if (!auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
                     return $this->fail([
                         'success' => false,
                         'error' => [
@@ -250,7 +275,8 @@ class MeetingController extends ResourceController
 
             // Check permission for company managers
             if (!$isAdmin && $isCompanyManager) {
-                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $data['urban_renewal_id']) {
+                helper('auth');
+                if (!auth_check_company_access((int)$data['urban_renewal_id'], $user)) {
                     return $this->fail([
                         'success' => false,
                         'error' => [
@@ -352,7 +378,8 @@ class MeetingController extends ResourceController
 
             // Check permission for company managers
             if (!$isAdmin && $isCompanyManager) {
-                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $meeting['urban_renewal_id']) {
+                helper('auth');
+                if (!auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
                     return $this->fail([
                         'success' => false,
                         'error' => [
@@ -465,7 +492,8 @@ class MeetingController extends ResourceController
 
             // Check permission for company managers
             if (!$isAdmin && $isCompanyManager) {
-                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $meeting['urban_renewal_id']) {
+                helper('auth');
+                if (!auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
                     return $this->fail([
                         'success' => false,
                         'error' => [
@@ -697,9 +725,9 @@ class MeetingController extends ResourceController
 
             // Check permission for company managers
             if (!$isAdmin && $isCompanyManager) {
-                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $meeting['urban_renewal_id']) {
-                    log_message('warning', '[ExportNotice] Permission denied - user urban_renewal_id: ' .
-                        ($user['urban_renewal_id'] ?? 'null') . ', meeting urban_renewal_id: ' . $meeting['urban_renewal_id']);
+                helper('auth');
+                if (!auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
+                    log_message('warning', '[ExportNotice] Permission denied - user cannot access this renewal');
                     return $this->fail([
                         'success' => false,
                         'error' => [
@@ -779,6 +807,99 @@ class MeetingController extends ResourceController
                 'error' => [
                     'code' => 'INTERNAL_ERROR',
                     'message' => '匯出會議通知失敗'
+                ]
+            ], 500);
+        }
+    }
+
+    /**
+     * 匯出簽到冊
+     * GET /api/meetings/{id}/export-signature-book
+     */
+    public function exportSignatureBook($id = null)
+    {
+        try {
+            log_message('info', '[ExportSignatureBook] Start exporting signature book for ID: ' . $id);
+
+            $meeting = $this->meetingModel->getMeetingWithDetails($id);
+            if (!$meeting) {
+                return $this->fail([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'NOT_FOUND',
+                        'message' => '會議不存在'
+                    ]
+                ], 404);
+            }
+
+            // Get authenticated user and check permission
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
+            $isCompanyManager = $user && isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
+
+            // Check permission for company managers
+            if (!$isAdmin && $isCompanyManager) {
+                helper('auth');
+                if (!auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
+                    return $this->fail([
+                        'success' => false,
+                        'error' => [
+                            'code' => 'FORBIDDEN',
+                            'message' => '您沒有權限匯出此會議簽到冊'
+                        ]
+                    ], 403);
+                }
+            }
+
+            $isAnonymous = $this->request->getGet('anonymous') === 'true';
+            log_message('info', '[ExportSignatureBook] Anonymous mode: ' . ($isAnonymous ? 'Yes' : 'No'));
+
+            $wordExportService = new \App\Services\WordExportService();
+            $result = $wordExportService->exportSignatureBook($meeting, $isAnonymous);
+
+            if (!$result['success']) {
+                return $this->fail([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'EXPORT_ERROR',
+                        'message' => $result['error']
+                    ]
+                ], 500);
+            }
+
+            // 回傳檔案下載
+            $filepath = $result['filepath'];
+            $filename = $result['filename'];
+
+            if (!file_exists($filepath)) {
+                return $this->fail([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'FILE_NOT_FOUND',
+                        'message' => '匯出檔案不存在'
+                    ]
+                ], 404);
+            }
+
+            $filesize = filesize($filepath);
+
+            // 設定檔案下載 header
+            header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+            header('Content-Disposition: attachment; filename="' . urlencode($filename) . '"');
+            header('Content-Length: ' . $filesize);
+            header('Cache-Control: max-age=0');
+
+            // 讀取並輸出檔案
+            readfile($filepath);
+            exit;
+
+        } catch (\Exception $e) {
+            log_message('error', '[ExportSignatureBook] Exception: ' . $e->getMessage());
+            return $this->fail([
+                'success' => false,
+                'error' => [
+                    'code' => 'INTERNAL_ERROR',
+                    'message' => '匯出簽到冊失敗'
                 ]
             ], 500);
         }

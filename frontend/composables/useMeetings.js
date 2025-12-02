@@ -151,6 +151,81 @@ export const useMeetings = () => {
     }
   }
 
+  /**
+   * Export signature book
+   */
+  const exportSignatureBook = async (id, isAnonymous = false) => {
+    try {
+      const config = useRuntimeConfig()
+      const { getAuthToken } = useApi()
+
+      // 使用 runtimeConfig 取得正確的後端 URL
+      const backendUrl = config.public.backendUrl ||
+                        config.public.apiBaseUrl?.replace('/api', '') ||
+                        `http://localhost:${config.public.backendPort || 9228}`
+
+      console.log('[Export] Using backend URL:', backendUrl)
+
+      // 使用 useApi 的 getAuthToken 方法取得 token
+      const token = getAuthToken()
+      
+      if (!token) {
+        return {
+          success: false,
+          error: { message: '請先登入' }
+        }
+      }
+
+      // 使用完整的後端 URL 發送請求
+      const response = await fetch(`${backendUrl}/api/meetings/${id}/export-signature-book?anonymous=${isAnonymous}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        return {
+          success: false,
+          error: errorData.error || { message: '匯出失敗' }
+        }
+      }
+
+      // Get filename from response header
+      const contentDisposition = response.headers.get('Content-Disposition')
+      let filename = '簽到冊.docx'
+      if (contentDisposition) {
+        const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition)
+        if (matches != null && matches[1]) {
+          filename = decodeURIComponent(matches[1].replace(/['"]/g, ''))
+        }
+      }
+
+      // Download file
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+
+      return {
+        success: true,
+        message: '匯出成功'
+      }
+    } catch (error) {
+      console.error('Export signature book error:', error)
+      return {
+        success: false,
+        error: { message: error.message || '匯出失敗' }
+      }
+    }
+  }
+
   return {
     getMeetings,
     getMeeting,
@@ -162,6 +237,7 @@ export const useMeetings = () => {
     searchMeetings,
     getUpcomingMeetings,
     getStatusStatistics,
-    exportMeetingNotice
+    exportMeetingNotice,
+    exportSignatureBook
   }
 }

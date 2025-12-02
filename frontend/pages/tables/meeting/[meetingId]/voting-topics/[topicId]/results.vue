@@ -295,23 +295,10 @@ const loadResults = async () => {
   } else {
     console.error('[Results] Failed to load results:', resultsResponse.error)
     showError('載入失敗', resultsResponse.error?.message || '無法載入投票結果')
-    // Use fallback mock data
-    renewalGroupName.value = '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會'
-    meetingName.value = '114年度第一屆第1次會員大會'
-    topicName.value = '理事長選舉'
-    votingTime.value = '2025年3月15日 下午2:30:00'
-
-    agreeResults.value = {
-      people: { count: 45, numerator: 45, denominator: 72, percentage: 62.5 },
-      land: { area: 1250.5, numerator: 1250.5, denominator: 2000.0, percentage: 62.5 },
-      building: { area: 890.3, numerator: 890.3, denominator: 1500.0, percentage: 59.4 }
-    }
-
-    disagreeResults.value = {
-      people: { count: 27, numerator: 27, denominator: 72, percentage: 37.5 },
-      land: { area: 749.5, numerator: 749.5, denominator: 2000.0, percentage: 37.5 },
-      building: { area: 609.7, numerator: 609.7, denominator: 1500.0, percentage: 40.6 }
-    }
+    renewalGroupName.value = ''
+    meetingName.value = ''
+    topicName.value = ''
+    votingTime.value = ''
   }
 
   isLoading.value = false

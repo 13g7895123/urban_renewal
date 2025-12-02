@@ -361,7 +361,7 @@ const route = useRoute()
 const router = useRouter()
 const runtimeConfig = useRuntimeConfig()
 const { $swal } = useNuxtApp()
-const { get, post, put } = useApi()
+const { get, post, put, delete: del } = useApi()
 const { showSuccess, showError, showDeleteConfirm, showCustom } = useSweetAlert()
 
 // State
@@ -396,7 +396,6 @@ const landNumberErrors = reactive({
 const landPlots = ref([])
 const editingLandPlot = ref({})
 const originalLandPlots = ref([]) // 保存原始地號資料
-const deletedLandPlots = ref([]) // 保存已刪除的地號ID
 
 // Location Data from API
 const counties = ref([])
@@ -435,11 +434,25 @@ const getChineseLandNumber = async (plot) => {
     // 獲取縣市名稱
     if (locationMappings.value.counties.has(plot.county)) {
       countyName = locationMappings.value.counties.get(plot.county)
-    } else if (counties.value.length > 0) {
+    } else if (counties.value && counties.value.length > 0) {
       const county = counties.value.find(c => c.code === plot.county)
       if (county) {
         countyName = county.name
         locationMappings.value.counties.set(plot.county, county.name)
+      }
+    } else {
+      // 如果 counties 還沒載入，透過 API 獲取
+      try {
+        const response = await get('/locations/counties')
+        if (response.success && response.data.status === 'success') {
+          const county = response.data.data.find(c => c.code === plot.county)
+          if (county) {
+            countyName = county.name
+            locationMappings.value.counties.set(plot.county, county.name)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching counties:', error)
       }
     }
 
@@ -647,6 +660,7 @@ const addLandPlot = () => {
     landNumberSub: landForm.landNumberSub,
     landNumber: landNumber,
     fullLandNumber: fullLandNumber,
+    chineseFullLandNumber: fullLandNumber, // 中文格式地號
     landArea: landForm.landArea,
     isRepresentative: landPlots.value.length === 0, // First plot is representative by default
     isNew: true // 標記為新增的地號
@@ -695,7 +709,7 @@ const updateLandPlot = () => {
 const deleteLandPlot = async (plot) => {
   const result = await showDeleteConfirm(
     '確認刪除',
-    `確定要刪除地號「${plot.fullLandNumber}」嗎？`,
+    `確定要刪除地號「${plot.chineseFullLandNumber || plot.fullLandNumber}」嗎？`,
     '刪除',
     '取消'
   )
@@ -708,9 +722,20 @@ const deleteLandPlot = async (plot) => {
   if (index !== -1) {
     const wasRepresentative = plot.isRepresentative
 
-    // 如果是已存在的地號，加入刪除列表
+    // 如果是已存在的地號（不是新增的），立即調用 API 刪除
     if (!plot.isNew && !plot.id.toString().startsWith('temp_')) {
-      deletedLandPlots.value.push(plot.id)
+      try {
+        const response = await del(`/land-plots/${plot.id}`)
+        if (!response.success && response.data?.status !== 'success') {
+          showError('刪除失敗', response.error?.message || response.data?.message || '無法刪除地號')
+          return
+        }
+        showSuccess('刪除成功', '地號已成功刪除')
+      } catch (err) {
+        console.error('Delete land plot error:', err)
+        showError('刪除失敗', err.message || '刪除地號時發生錯誤')
+        return
+      }
     }
 
     landPlots.value.splice(index, 1)
@@ -738,18 +763,7 @@ const saveChanges = async () => {
       throw new Error(response.error?.message || response.data?.message || '基本資料儲存失敗')
     }
 
-    // 2. 處理地號刪除
-    for (const deletedId of deletedLandPlots.value) {
-      try {
-        await del(`/land-plots/${deletedId}`, {
-          method: 'DELETE'
-        })
-      } catch (err) {
-        console.error('Delete land plot error:', err)
-      }
-    }
-
-    // 3. 處理地號新增
+    // 2. 處理地號新增
     const newPlots = landPlots.value.filter(plot => plot.isNew || plot.id.toString().startsWith('temp_'))
     let landPlotErrors = []
 
@@ -788,7 +802,7 @@ const saveChanges = async () => {
       })
     }
 
-    // 4. 處理地號更新（編輯過的現有地號）
+    // 3. 處理地號更新（編輯過的現有地號）
     const existingPlots = landPlots.value.filter(plot => !plot.isNew && !plot.id.toString().startsWith('temp_'))
     for (const plot of existingPlots) {
       const original = originalLandPlots.value.find(orig => orig.id === plot.id)
@@ -807,13 +821,10 @@ const saveChanges = async () => {
       }
     }
 
-    // 5. 重新載入地號資料
+    // 4. 重新載入地號資料
     await fetchLandPlots()
 
-    // 6. 清除變更追蹤
-    deletedLandPlots.value = []
-
-    // 7. 顯示成功訊息（1.5秒自動關閉）
+    // 5. 顯示成功訊息（1.5秒自動關閉）
     await showSuccess('儲存成功！', '資料已成功更新')
 
   } catch (err) {
@@ -854,19 +865,24 @@ const fillBasicInfoTestData = () => {
 
 // Fill land plot test data
 const fillLandPlotTestData = async () => {
-  // Set to Taipei City and 大安區
-  landForm.county = '臺北市'
-  await onCountyChange() // Wait for districts to load
+  // Randomly select a county
+  if (counties.value.length > 0) {
+    const randomCounty = counties.value[Math.floor(Math.random() * counties.value.length)]
+    landForm.county = randomCounty.name
+    await onCountyChange() // Wait for districts to load
+  }
 
-  // Set district after county data is loaded
+  // Randomly select a district
   if (districts.value.length > 0) {
-    landForm.district = '大安區'
+    const randomDistrict = districts.value[Math.floor(Math.random() * districts.value.length)]
+    landForm.district = randomDistrict.name
     await onDistrictChange() // Wait for sections to load
+  }
 
-    // Set section after district data is loaded
-    if (sections.value.length > 0) {
-      landForm.section = sections.value[0]?.name || '大安段'
-    }
+  // Randomly select a section
+  if (sections.value.length > 0) {
+    const randomSection = sections.value[Math.floor(Math.random() * sections.value.length)]
+    landForm.section = randomSection.name
   }
 
   // Generate random land plot numbers
@@ -886,8 +902,10 @@ watch(() => renewalData.name, updatePageTitle)
 
 // Load data when component mounts
 onMounted(async () => {
+  // 先載入縣市資料（getChineseLandNumber 需要用到）
+  await fetchCounties()
+  // 再並行載入其他資料
   await Promise.all([
-    fetchCounties(),
     fetchRenewalData(),
     fetchLandPlots()
   ])

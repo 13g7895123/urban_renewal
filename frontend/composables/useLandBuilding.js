@@ -101,6 +101,16 @@ export const useLandBuilding = () => {
       return land.plot_number_display
     }
 
+    // 如果有 chineseFullLandNumber,優先使用
+    if (land.chineseFullLandNumber) {
+      return land.chineseFullLandNumber
+    }
+
+    // 如果有 fullLandNumber,使用它
+    if (land.fullLandNumber) {
+      return land.fullLandNumber
+    }
+
     // 如果 plot_number 已經格式化,直接使用
     if (land.plot_number && land.plot_number.includes('-')) {
       return land.plot_number

@@ -74,6 +74,10 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         $routes->get('(:num)/land-plots', 'LandPlotController::index/$1');        // GET /api/urban-renewals/{id}/land-plots
         $routes->post('(:num)/land-plots', 'LandPlotController::create/$1');      // POST /api/urban-renewals/{id}/land-plots
 
+        // Joint Common Areas nested routes
+        $routes->get('(:num)/joint-common-areas', 'JointCommonAreaController::index/$1');   // GET /api/urban-renewals/{id}/joint-common-areas
+        $routes->post('(:num)/joint-common-areas', 'JointCommonAreaController::create/$1'); // POST /api/urban-renewals/{id}/joint-common-areas
+
         // Property Owners nested routes (specific routes must come before general routes)
         $routes->get('(:num)/property-owners/all-buildings', 'PropertyOwnerController::getAllBuildingsByUrbanRenewal/$1'); // GET /api/urban-renewals/{id}/property-owners/all-buildings
         $routes->get('(:num)/property-owners/export', 'PropertyOwnerController::export/$1'); // GET /api/urban-renewals/{id}/property-owners/export
@@ -86,6 +90,7 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         $routes->options('/', 'UrbanRenewalController::options');
         $routes->options('(:num)', 'UrbanRenewalController::options');
         $routes->options('(:num)/land-plots', 'LandPlotController::options');
+        $routes->options('(:num)/joint-common-areas', 'JointCommonAreaController::options');
         $routes->options('(:num)/property-owners', 'PropertyOwnerController::options');
         $routes->options('(:num)/property-owners/all-buildings', 'PropertyOwnerController::options');
         $routes->options('(:num)/property-owners/export', 'PropertyOwnerController::options');
@@ -103,6 +108,7 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         $routes->get('status-statistics', 'MeetingController::statusStatistics'); // GET /api/meetings/status-statistics
         $routes->get('(:num)/statistics', 'MeetingController::statistics/$1');  // GET /api/meetings/{id}/statistics
         $routes->get('(:num)/export-notice', 'MeetingController::exportNotice/$1'); // GET /api/meetings/{id}/export-notice
+        $routes->get('(:num)/export-signature-book', 'MeetingController::exportSignatureBook/$1'); // GET /api/meetings/{id}/export-signature-book
         $routes->patch('(:num)/status', 'MeetingController::updateStatus/$1');  // PATCH /api/meetings/{id}/status
 
         // Generic routes with (:num) at the end
@@ -236,6 +242,16 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         // Handle OPTIONS for specific routes
         $routes->options('(:num)', 'LandPlotController::options');
         $routes->options('(:num)/representative', 'LandPlotController::options');
+    });
+
+    // Joint Common Areas API (individual operations)
+    $routes->group('joint-common-areas', function ($routes) {
+        $routes->get('(:num)', 'JointCommonAreaController::show/$1');              // GET /api/joint-common-areas/{id}
+        $routes->put('(:num)', 'JointCommonAreaController::update/$1');            // PUT /api/joint-common-areas/{id}
+        $routes->delete('(:num)', 'JointCommonAreaController::delete/$1');         // DELETE /api/joint-common-areas/{id}
+
+        // Handle OPTIONS for specific routes
+        $routes->options('(:num)', 'JointCommonAreaController::options');
     });
 
     // Property Owners API (individual operations)

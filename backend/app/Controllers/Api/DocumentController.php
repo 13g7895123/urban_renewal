@@ -46,9 +46,14 @@ class DocumentController extends ResourceController
                     'document_type' => $type
                 ];
 
-                // 如果不是管理員，限制只能查看自己更新會的文件
+                // 如果不是管理員，限制只能查看自己企業的文件
                 if ($user['role'] !== 'admin') {
-                    $filters['urban_renewal_id'] = $user['urban_renewal_id'];
+                    $userCompanyId = auth_get_user_company_id($user);
+                    if ($userCompanyId) {
+                        $urbanRenewalModel = model('UrbanRenewalModel');
+                        $companyRenewals = $urbanRenewalModel->where('company_id', $userCompanyId)->findAll();
+                        $filters['urban_renewal_ids'] = array_column($companyRenewals, 'id');
+                    }
                 }
 
                 $documents = $this->model->searchDocuments($keyword, $page, $perPage, $filters);
@@ -60,7 +65,7 @@ class DocumentController extends ResourceController
                     return response_error('找不到該會議', 404);
                 }
 
-                if ($user['role'] !== 'admin' && $user['urban_renewal_id'] !== $meeting['urban_renewal_id']) {
+                if ($user['role'] !== 'admin' && !auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
                     return $this->failForbidden('無權限查看此會議文件');
                 }
 
@@ -69,8 +74,16 @@ class DocumentController extends ResourceController
                 // 取得所有文件（根據權限過濾）
                 $builder = $this->model;
                 if ($user['role'] !== 'admin') {
-                    $builder = $builder->join('meetings', 'meetings.id = meeting_documents.meeting_id', 'inner')
-                                     ->where('meetings.urban_renewal_id', $user['urban_renewal_id']);
+                    $userCompanyId = auth_get_user_company_id($user);
+                    if ($userCompanyId) {
+                        $urbanRenewalModel = model('UrbanRenewalModel');
+                        $companyRenewals = $urbanRenewalModel->where('company_id', $userCompanyId)->findAll();
+                        $renewalIds = array_column($companyRenewals, 'id');
+                        if (!empty($renewalIds)) {
+                            $builder = $builder->join('meetings', 'meetings.id = meeting_documents.meeting_id', 'inner')
+                                             ->whereIn('meetings.urban_renewal_id', $renewalIds);
+                        }
+                    }
                 }
                 $documents = $builder->paginate($perPage, 'default', $page);
             }
@@ -158,7 +171,7 @@ class DocumentController extends ResourceController
                 return response_error('找不到該會議', 404);
             }
 
-            if ($user['role'] !== 'admin' && $user['urban_renewal_id'] !== $meeting['urban_renewal_id']) {
+            if ($user['role'] !== 'admin' && !auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
                 return $this->failForbidden('無權限上傳此會議文件');
             }
 
@@ -338,7 +351,7 @@ class DocumentController extends ResourceController
             if ($meetingId) {
                 $meetingModel = model('MeetingModel');
                 $meeting = $meetingModel->find($meetingId);
-                if ($user['role'] !== 'admin' && $user['urban_renewal_id'] !== $meeting['urban_renewal_id']) {
+                if ($user['role'] !== 'admin' && !auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
                     return $this->failForbidden('無權限查看此會議統計');
                 }
             }
@@ -372,9 +385,17 @@ class DocumentController extends ResourceController
             }
 
             $limit = $this->request->getGet('limit') ?? 10;
-            $urbanRenewalId = $user['role'] === 'admin' ? null : $user['urban_renewal_id'];
+            $urbanRenewalIds = null;
+            if ($user['role'] !== 'admin') {
+                $userCompanyId = auth_get_user_company_id($user);
+                if ($userCompanyId) {
+                    $urbanRenewalModel = model('UrbanRenewalModel');
+                    $companyRenewals = $urbanRenewalModel->where('company_id', $userCompanyId)->findAll();
+                    $urbanRenewalIds = array_column($companyRenewals, 'id');
+                }
+            }
 
-            $documents = $this->model->getRecentDocuments($limit, $urbanRenewalId);
+            $documents = $this->model->getRecentDocuments($limit, $urbanRenewalIds);
 
             // 格式化資料
             foreach ($documents as &$document) {
@@ -424,8 +445,16 @@ class DocumentController extends ResourceController
                 return $this->failUnauthorized('請重新登入');
             }
 
-            $urbanRenewalId = $user['role'] === 'admin' ? null : $user['urban_renewal_id'];
-            $usage = $this->model->getStorageUsage($urbanRenewalId);
+            $urbanRenewalIds = null;
+            if ($user['role'] !== 'admin') {
+                $userCompanyId = auth_get_user_company_id($user);
+                if ($userCompanyId) {
+                    $urbanRenewalModel = model('UrbanRenewalModel');
+                    $companyRenewals = $urbanRenewalModel->where('company_id', $userCompanyId)->findAll();
+                    $urbanRenewalIds = array_column($companyRenewals, 'id');
+                }
+            }
+            $usage = $this->model->getStorageUsage($urbanRenewalIds);
 
             return response_success('儲存空間使用情況', $usage);
 
@@ -485,7 +514,7 @@ class DocumentController extends ResourceController
                 return response_error('找不到該會議', 404);
             }
 
-            if ($user['role'] !== 'admin' && $user['urban_renewal_id'] !== $meeting['urban_renewal_id']) {
+            if ($user['role'] !== 'admin' && !auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
                 return $this->failForbidden('無權限上傳此會議文件');
             }
 

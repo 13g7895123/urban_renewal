@@ -227,11 +227,11 @@ const loadTopicInfo = async () => {
     votingTime.value = topic.voting_time || topic.votingTime || new Date().toLocaleString('zh-TW')
   } else {
     console.error('[Voting] Failed to load topic info:', topicResponse.error)
-    // Use fallback
-    renewalGroupName.value = '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會'
-    meetingName.value = '114年度第一屆第1次會員大會'
-    topicName.value = '理事長選舉'
-    votingTime.value = '2025年3月15日 下午2:30:00'
+    showError('載入失敗', topicResponse.error?.message || '無法載入投票主題資料')
+    renewalGroupName.value = ''
+    meetingName.value = ''
+    topicName.value = ''
+    votingTime.value = ''
   }
 }
 
@@ -256,29 +256,8 @@ const loadVoters = async () => {
     console.log('[Voting] Voters loaded:', voters.value.length)
   } else {
     console.error('[Voting] Failed to load voters:', response.error)
-    // Use fallback mock data
-    voters.value = [
-      { id: 1, name: '王小明', hasVoted: false, vote: null },
-      { id: 2, name: '李小華', hasVoted: true, vote: 'agree' },
-      { id: 3, name: '張小美', hasVoted: false, vote: null },
-      { id: 4, name: '陳小強', hasVoted: false, vote: null },
-      { id: 5, name: '林小芳', hasVoted: true, vote: 'disagree' },
-      { id: 6, name: '黃小龍', hasVoted: false, vote: null },
-      { id: 7, name: '吳小玲', hasVoted: false, vote: null },
-      { id: 8, name: '劉小軍', hasVoted: false, vote: null },
-      { id: 9, name: '蔡小慧', hasVoted: false, vote: null },
-      { id: 10, name: '鄭小勇', hasVoted: false, vote: null },
-      { id: 11, name: '謝小文', hasVoted: false, vote: null },
-      { id: 12, name: '胡小雯', hasVoted: false, vote: null },
-      { id: 13, name: '馬小峰', hasVoted: false, vote: null },
-      { id: 14, name: '楊小琪', hasVoted: false, vote: null },
-      { id: 15, name: '孫小宇', hasVoted: false, vote: null },
-      { id: 16, name: '許小蓮', hasVoted: false, vote: null },
-      { id: 17, name: '蘇小偉', hasVoted: false, vote: null },
-      { id: 18, name: '袁小雅', hasVoted: false, vote: null },
-      { id: 19, name: '鍾小浩', hasVoted: false, vote: null },
-      { id: 20, name: '江小薇', hasVoted: false, vote: null }
-    ]
+    showError('載入失敗', response.error?.message || '無法載入投票人資料')
+    voters.value = []
   }
 }
 

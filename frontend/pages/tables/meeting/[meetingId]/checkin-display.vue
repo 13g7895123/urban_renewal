@@ -202,44 +202,79 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 
+// API composables
+const { getMeeting } = useMeetings()
+const { getAttendance } = useMeetingAttendance()
+const { showError } = useSweetAlert()
+
 // Get meeting ID from route params
 const meetingId = route.params.meetingId
+
+// Loading state
+const isLoading = ref(false)
 
 // Real-time clock
 const currentDateTime = ref('')
 let clockInterval = null
 
-// Sample meeting data
+// Meeting data
 const meeting = ref({
   id: meetingId,
-  name: '114年度第一屆第1次會員大會',
-  renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會',
-  topics: '理事會選舉、監事會選舉'
+  name: '',
+  renewalGroup: '',
+  topics: ''
 })
 
-// Sample property owners data with land/building areas and attendance status
-const propertyOwners = ref([
-  { id: 1, owner_name: '王小明', land_area: 120.5, building_area: 85.2, attendance_status: null },
-  { id: 2, owner_name: '李美華', land_area: 95.8, building_area: 76.3, attendance_status: 'personal' },
-  { id: 3, owner_name: '張大同', land_area: 200.3, building_area: 150.7, attendance_status: 'delegated' },
-  { id: 4, owner_name: '陳雅婷', land_area: 88.9, building_area: 62.4, attendance_status: null },
-  { id: 5, owner_name: '林志強', land_area: 156.7, building_area: 98.1, attendance_status: null },
-  { id: 6, owner_name: '黃淑芬', land_area: 75.4, building_area: 45.6, attendance_status: 'personal' },
-  { id: 7, owner_name: '吳家豪', land_area: 110.2, building_area: 88.9, attendance_status: null },
-  { id: 8, owner_name: '蔡雨辰', land_area: 67.8, building_area: 42.3, attendance_status: 'cancelled' },
-  { id: 9, owner_name: '劉建國', land_area: 189.6, building_area: 125.4, attendance_status: null },
-  { id: 10, owner_name: '楊麗娟', land_area: 145.2, building_area: 102.7, attendance_status: 'delegated' },
-  { id: 11, owner_name: '許志明', land_area: 78.3, building_area: 56.8, attendance_status: null },
-  { id: 12, owner_name: '鄭雅芳', land_area: 134.7, building_area: 95.2, attendance_status: null },
-  { id: 13, owner_name: '徐建華', land_area: 98.5, building_area: 73.1, attendance_status: 'personal' },
-  { id: 14, owner_name: '謝淑貞', land_area: 87.2, building_area: 64.5, attendance_status: null },
-  { id: 15, owner_name: '蘇志偉', land_area: 176.9, building_area: 118.6, attendance_status: null },
-  { id: 16, owner_name: '江美玲', land_area: 92.1, building_area: 68.9, attendance_status: null },
-  { id: 17, owner_name: '廖家宏', land_area: 158.4, building_area: 112.3, attendance_status: null },
-  { id: 18, owner_name: '賴淑華', land_area: 103.6, building_area: 78.7, attendance_status: null },
-  { id: 19, owner_name: '范志強', land_area: 126.8, building_area: 89.4, attendance_status: null },
-  { id: 20, owner_name: '葉雅婷', land_area: 84.7, building_area: 61.2, attendance_status: null }
-])
+// Property owners data with land/building areas and attendance status
+const propertyOwners = ref([])
+
+// Load meeting data
+const loadMeeting = async () => {
+  console.log('[Checkin Display] Loading meeting:', meetingId)
+
+  const response = await getMeeting(meetingId)
+
+  if (response.success && response.data) {
+    const meetingData = response.data.data || response.data
+    meeting.value = {
+      id: meetingData.id,
+      name: meetingData.meeting_name || meetingData.name || '',
+      renewalGroup: meetingData.renewal_group || meetingData.renewalGroup || '',
+      topics: meetingData.topics || ''
+    }
+    console.log('[Checkin Display] Meeting loaded:', meeting.value)
+  } else {
+    console.error('[Checkin Display] Failed to load meeting:', response.error)
+    showError('載入失敗', response.error?.message || '無法載入會議資料')
+  }
+}
+
+// Load attendance data with statistics
+const loadAttendanceData = async () => {
+  isLoading.value = true
+  console.log('[Checkin Display] Loading attendance data for meeting:', meetingId)
+
+  const response = await getAttendance({ meeting_id: meetingId })
+  isLoading.value = false
+
+  if (response.success && response.data) {
+    const attendanceData = response.data.data || response.data
+
+    propertyOwners.value = Array.isArray(attendanceData) ? attendanceData.map(a => ({
+      id: a.id,
+      owner_name: a.owner_name || a.ownerName || '',
+      land_area: parseFloat(a.land_area || a.landArea) || 0,
+      building_area: parseFloat(a.building_area || a.buildingArea) || 0,
+      attendance_status: a.attendance_status || a.attendanceStatus || null
+    })) : []
+
+    console.log('[Checkin Display] Attendance data loaded:', propertyOwners.value.length)
+  } else {
+    console.error('[Checkin Display] Failed to load attendance data:', response.error)
+    showError('載入失敗', response.error?.message || '無法載入出席資料')
+    propertyOwners.value = []
+  }
+}
 
 // Calculate statistics
 const totalStats = computed(() => {
@@ -360,9 +395,15 @@ const goBack = () => {
 }
 
 // Lifecycle
-onMounted(() => {
+onMounted(async () => {
   updateClock()
   clockInterval = setInterval(updateClock, 1000)
+  
+  // Load data from API
+  await Promise.all([
+    loadMeeting(),
+    loadAttendanceData()
+  ])
 })
 
 onUnmounted(() => {

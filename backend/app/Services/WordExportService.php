@@ -40,6 +40,145 @@ class WordExportService
     }
 
     /**
+     * 匯出簽到冊
+     *
+     * @param array $meetingData 會議資料
+     * @param bool $isAnonymous 是否匿名
+     * @return array ['success' => bool, 'filename' => string, 'filepath' => string, 'error' => string]
+     */
+    public function exportSignatureBook(array $meetingData, bool $isAnonymous = false): array
+    {
+        try {
+            // 驗證必要欄位
+            $requiredFields = ['urban_renewal_name', 'meeting_name', 'meeting_date'];
+            foreach ($requiredFields as $field) {
+                if (!isset($meetingData[$field]) || empty($meetingData[$field])) {
+                    return [
+                        'success' => false,
+                        'error' => "缺少必要欄位: {$field}"
+                    ];
+                }
+            }
+
+            // 範本檔案路徑
+            $templateFile = $this->templatePath . 'signature_book_template.docx';
+
+            if (!file_exists($templateFile)) {
+                return [
+                    'success' => false,
+                    'error' => '範本檔案不存在'
+                ];
+            }
+
+            // 建立範本處理器
+            $templateProcessor = new TemplateProcessor($templateFile);
+
+            // 替換基本變數
+            $templateProcessor->setValue('urban_renewal_name', $meetingData['urban_renewal_name'] ?? '');
+            $templateProcessor->setValue('meeting_name', $meetingData['meeting_name'] ?? '');
+            
+            if (isset($meetingData['meeting_date'])) {
+                $templateProcessor->setValue('meeting_date', $this->formatDate($meetingData['meeting_date']));
+            }
+            
+            $templateProcessor->setValue('meeting_time', $meetingData['meeting_time'] ?? '');
+            $templateProcessor->setValue('meeting_location', $meetingData['meeting_location'] ?? '');
+
+            // 處理簽到列表
+            $owners = $this->getOwnersList($meetingData);
+            
+            // 準備表格資料
+            $values = [];
+            foreach ($owners as $index => $owner) {
+                $name = $owner['name'];
+                if ($isAnonymous) {
+                    $name = $this->maskName($name);
+                }
+                
+                $values[] = [
+                    'index' => sprintf('%03d', $index + 1),
+                    'owner_name' => $name,
+                    'signature' => '' // 留白供簽名
+                ];
+            }
+
+            // 如果有資料，進行複製列操作
+            // 假設範本中有 ${owner_name} 變數在表格列中
+            if (!empty($values)) {
+                try {
+                    $templateProcessor->cloneRowAndSetValues('owner_name', $values);
+                } catch (\Exception $e) {
+                    // 如果範本中沒有 owner_name 變數，可能只是簡單的簽到冊
+                    log_message('warning', 'Clone row failed (maybe variable not found): ' . $e->getMessage());
+                }
+            }
+
+            // 生成檔名
+            $date = date('Ymd');
+            if (isset($meetingData['meeting_date'])) {
+                $date = str_replace('-', '', $meetingData['meeting_date']);
+            }
+
+            $type = $isAnonymous ? '匿名' : '全名';
+            $filename = $this->sanitizeFilename(
+                $meetingData['urban_renewal_name'] . '_' .
+                $meetingData['meeting_name'] .
+                '簽到冊(' . $type . ')_' . $date . '.docx'
+            );
+
+            // 儲存檔案
+            $filepath = $this->exportPath . $filename;
+            $templateProcessor->saveAs($filepath);
+
+            return [
+                'success' => true,
+                'filename' => $filename,
+                'filepath' => $filepath
+            ];
+
+        } catch (\Exception $e) {
+            log_message('error', 'Signature book export error: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'error' => '匯出失敗: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * 遮罩姓名
+     *
+     * @param string $name
+     * @return string
+     */
+    private function maskName(string $name): string
+    {
+        $len = mb_strlen($name, 'UTF-8');
+        if ($len <= 1) return $name;
+        if ($len == 2) return mb_substr($name, 0, 1, 'UTF-8') . 'O';
+        return mb_substr($name, 0, 1, 'UTF-8') . 'O' . mb_substr($name, -1, 1, 'UTF-8');
+    }
+
+    /**
+     * 取得所有權人列表
+     *
+     * @param array $data
+     * @return array
+     */
+    private function getOwnersList(array $data): array
+    {
+        if (!isset($data['urban_renewal_id'])) {
+            return [];
+        }
+
+        $propertyOwnerModel = new \App\Models\PropertyOwnerModel();
+        return $propertyOwnerModel
+            ->where('urban_renewal_id', $data['urban_renewal_id'])
+            ->orderBy('owner_code', 'ASC')
+            ->findAll();
+    }
+
+    /**
      * 匯出會議通知
      *
      * @param array $meetingData 會議資料

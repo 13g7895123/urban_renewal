@@ -302,7 +302,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 }, {
   persist: {
-    storage: typeof window !== 'undefined' ? sessionStorage : null,
+    // 使用 nuxt.config.ts 中 piniaPersistedstate 的全局 storage 配置 (sessionStorage)
     paths: ['user', 'token', 'refreshToken', 'tokenExpiresAt']
   }
 })

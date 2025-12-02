@@ -65,7 +65,8 @@ class MeetingAttendanceController extends ResourceController
 
             // Check permission for company managers
             if (!$isAdmin && $isCompanyManager) {
-                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $meeting['urban_renewal_id']) {
+                helper('auth');
+                if (!auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
                     return $this->fail([
                         'success' => false,
                         'error' => [
@@ -138,7 +139,8 @@ class MeetingAttendanceController extends ResourceController
 
             // Check permission for company managers
             if (!$isAdmin && $isCompanyManager) {
-                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $meeting['urban_renewal_id']) {
+                helper('auth');
+                if (!auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
                     return $this->fail([
                         'success' => false,
                         'error' => [
@@ -283,7 +285,8 @@ class MeetingAttendanceController extends ResourceController
 
             // Check permission for company managers
             if (!$isAdmin && $isCompanyManager) {
-                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $meeting['urban_renewal_id']) {
+                helper('auth');
+                if (!auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
                     return $this->fail([
                         'success' => false,
                         'error' => [

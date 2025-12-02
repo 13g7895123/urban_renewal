@@ -65,7 +65,14 @@ class LandPlotController extends BaseController
 
             // Check permission for company managers
             if (!$isAdmin && $isCompanyManager) {
-                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $urbanRenewalId) {
+                $userCompanyId = $user['company_id'] ?? null;
+                // Fallback for legacy
+                if (!$userCompanyId && isset($user['urban_renewal_id'])) {
+                    $userRenewal = $this->urbanRenewalModel->find($user['urban_renewal_id']);
+                    if ($userRenewal) $userCompanyId = $userRenewal['company_id'];
+                }
+
+                if (!$userCompanyId || $urbanRenewal['company_id'] != $userCompanyId) {
                     return $this->response->setStatusCode(403)->setJSON([
                         'status' => 'error',
                         'message' => '您沒有權限查看此更新會的地號資料'
@@ -134,7 +141,16 @@ class LandPlotController extends BaseController
 
             // Check permission for company managers
             if (!$isAdmin && $isCompanyManager) {
-                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $landPlot['urban_renewal_id']) {
+                $urbanRenewal = $this->urbanRenewalModel->find($landPlot['urban_renewal_id']);
+                $userCompanyId = $user['company_id'] ?? null;
+                
+                // Fallback for legacy
+                if (!$userCompanyId && isset($user['urban_renewal_id'])) {
+                    $userRenewal = $this->urbanRenewalModel->find($user['urban_renewal_id']);
+                    if ($userRenewal) $userCompanyId = $userRenewal['company_id'];
+                }
+
+                if (!$urbanRenewal || !$userCompanyId || $urbanRenewal['company_id'] != $userCompanyId) {
                     return $this->response->setStatusCode(403)->setJSON([
                         'status' => 'error',
                         'message' => '您沒有權限查看此地號'
@@ -185,7 +201,14 @@ class LandPlotController extends BaseController
 
             // Check permission for company managers
             if (!$isAdmin && $isCompanyManager) {
-                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $urbanRenewalId) {
+                $userCompanyId = $user['company_id'] ?? null;
+                // Fallback for legacy
+                if (!$userCompanyId && isset($user['urban_renewal_id'])) {
+                    $userRenewal = $this->urbanRenewalModel->find($user['urban_renewal_id']);
+                    if ($userRenewal) $userCompanyId = $userRenewal['company_id'];
+                }
+
+                if (!$userCompanyId || $urbanRenewal['company_id'] != $userCompanyId) {
                     return $this->response->setStatusCode(403)->setJSON([
                         'status' => 'error',
                         'message' => '您沒有權限為此更新會新增地號'
@@ -289,7 +312,16 @@ class LandPlotController extends BaseController
 
             // Check permission for company managers
             if (!$isAdmin && $isCompanyManager) {
-                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $existing['urban_renewal_id']) {
+                $urbanRenewal = $this->urbanRenewalModel->find($existing['urban_renewal_id']);
+                $userCompanyId = $user['company_id'] ?? null;
+                
+                // Fallback for legacy
+                if (!$userCompanyId && isset($user['urban_renewal_id'])) {
+                    $userRenewal = $this->urbanRenewalModel->find($user['urban_renewal_id']);
+                    if ($userRenewal) $userCompanyId = $userRenewal['company_id'];
+                }
+
+                if (!$urbanRenewal || !$userCompanyId || $urbanRenewal['company_id'] != $userCompanyId) {
                     return $this->response->setStatusCode(403)->setJSON([
                         'status' => 'error',
                         'message' => '您沒有權限修改此地號'
@@ -370,7 +402,16 @@ class LandPlotController extends BaseController
 
             // Check permission for company managers
             if (!$isAdmin && $isCompanyManager) {
-                if (!isset($user['urban_renewal_id']) || $user['urban_renewal_id'] != $existing['urban_renewal_id']) {
+                $urbanRenewal = $this->urbanRenewalModel->find($existing['urban_renewal_id']);
+                $userCompanyId = $user['company_id'] ?? null;
+                
+                // Fallback for legacy
+                if (!$userCompanyId && isset($user['urban_renewal_id'])) {
+                    $userRenewal = $this->urbanRenewalModel->find($user['urban_renewal_id']);
+                    if ($userRenewal) $userCompanyId = $userRenewal['company_id'];
+                }
+
+                if (!$urbanRenewal || !$userCompanyId || $urbanRenewal['company_id'] != $userCompanyId) {
                     return $this->response->setStatusCode(403)->setJSON([
                         'status' => 'error',
                         'message' => '您沒有權限刪除此地號'

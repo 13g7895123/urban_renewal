@@ -8,8 +8,29 @@
  * })
  */
 export default defineNuxtRouteMiddleware(async (to) => {
+  // 只在客戶端執行
+  if (process.server) {
+    return
+  }
+
   const { useAuthStore } = await import('~/stores/auth')
   const authStore = useAuthStore()
+
+  // 在 SPA 模式下，頁面重整時可能需要等待 Pinia 持久化插件恢復狀態
+  if (!authStore.token && process.client) {
+    const persistedAuth = sessionStorage.getItem('auth')
+    if (persistedAuth) {
+      try {
+        const authData = JSON.parse(persistedAuth)
+        if (authData.token) authStore.token = authData.token
+        if (authData.user) authStore.user = authData.user
+        if (authData.refreshToken) authStore.refreshToken = authData.refreshToken
+        if (authData.tokenExpiresAt) authStore.tokenExpiresAt = authData.tokenExpiresAt
+      } catch (e) {
+        console.error('[Role Middleware] Failed to parse auth from sessionStorage:', e)
+      }
+    }
+  }
 
   // Get required role from page meta
   const requiredRole = to.meta.role

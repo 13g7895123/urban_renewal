@@ -20,24 +20,29 @@ export default defineNuxtPlugin(() => {
       }
     })
 
-    // 2. 驗證 sessionStorage 中的 Pinia 持久化數據
-    const persistedAuth = sessionStorage.getItem('auth')
-    if (persistedAuth) {
-      try {
-        const authData = JSON.parse(persistedAuth)
+    // 2. 驗證 storage 中的 Pinia 持久化數據
+    const checkAndCleanStorage = (storage, name) => {
+      const persistedAuth = storage.getItem('auth')
+      if (persistedAuth) {
+        try {
+          const authData = JSON.parse(persistedAuth)
 
-        // 檢查是否有無效的值
-        if (authData.token === 'undefined' ||
-            authData.token === 'null' ||
-            authData.user === 'undefined' ||
-            authData.user === 'null') {
-          console.log('[Auth Cleanup] Removing invalid auth data from sessionStorage')
-          sessionStorage.removeItem('auth')
+          // 檢查是否有無效的值
+          if (authData.token === 'undefined' ||
+              authData.token === 'null' ||
+              authData.user === 'undefined' ||
+              authData.user === 'null') {
+            console.log(`[Auth Cleanup] Removing invalid auth data from ${name}`)
+            storage.removeItem('auth')
+          }
+        } catch (e) {
+          console.log(`[Auth Cleanup] Removing corrupted auth data from ${name}`)
+          storage.removeItem('auth')
         }
-      } catch (e) {
-        console.log('[Auth Cleanup] Removing corrupted auth data from sessionStorage')
-        sessionStorage.removeItem('auth')
       }
     }
+
+    checkAndCleanStorage(localStorage, 'localStorage')
+    checkAndCleanStorage(sessionStorage, 'sessionStorage')
   }
 })

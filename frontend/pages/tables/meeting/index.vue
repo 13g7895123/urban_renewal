@@ -40,7 +40,7 @@
             <thead>
               <tr class="border-b">
                 <th class="p-3 text-left">
-                  <UCheckbox v-model="selectAll" @change="toggleSelectAll" />
+                  <UCheckbox :model-value="selectAll" @update:model-value="toggleSelectAll" />
                 </th>
                 <th class="p-3 text-left text-sm font-medium text-gray-700">會議名稱</th>
                 <th class="p-3 text-left text-sm font-medium text-gray-700">所屬更新會</th>
@@ -55,7 +55,10 @@
             <tbody>
               <tr v-for="(meeting, index) in meetings" :key="index" class="border-b hover:bg-gray-50">
                 <td class="p-3">
-                  <UCheckbox v-model="selectedMeetings" :value="meeting.id" />
+                  <UCheckbox 
+                    :model-value="selectedMeetings.includes(meeting.id)" 
+                    @update:model-value="toggleMeetingSelection(meeting.id)" 
+                  />
                 </td>
                 <td class="p-3 text-sm">{{ meeting.name }}</td>
                 <td class="p-3 text-sm">{{ meeting.renewalGroup }}</td>
@@ -320,43 +323,35 @@ const loadMeetings = async () => {
     })) : []
 
     console.log('[Meeting Index] Meetings loaded:', meetings.value.length)
+    
+    // Reset selection when data is reloaded
+    selectedMeetings.value = []
+    selectAll.value = false
   } else {
     console.error('[Meeting Index] Failed to load meetings:', response.error)
     showError('載入失敗', response.error?.message || '無法載入會議資料')
-    // Use fallback mock data if API fails
-    meetings.value = [
-      {
-        id: 1,
-        name: '114年度第一屆第1次會員大會',
-        renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會',
-        date: '2025年3月15日',
-        time: '下午2:00:00',
-        attendees: 73,
-        totalCountedAttendees: 72,
-        totalObservers: 0,
-        votingTopicCount: 5
-      },
-      {
-        id: 2,
-        name: '114年度第一屆第2次會員大會',
-        renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會',
-        date: '2025年8月9日',
-        time: '下午2:00:00',
-        attendees: 74,
-        totalCountedAttendees: 74,
-        totalObservers: 0,
-        votingTopicCount: 3
-      }
-    ]
+    meetings.value = []
   }
 }
 
-const toggleSelectAll = () => {
+const toggleSelectAll = (value) => {
+  selectAll.value = value
   if (selectAll.value) {
     selectedMeetings.value = meetings.value.map(m => m.id)
   } else {
     selectedMeetings.value = []
   }
+}
+
+const toggleMeetingSelection = (meetingId) => {
+  const index = selectedMeetings.value.indexOf(meetingId)
+  if (index === -1) {
+    selectedMeetings.value.push(meetingId)
+  } else {
+    selectedMeetings.value.splice(index, 1)
+  }
+  // Update selectAll state
+  selectAll.value = selectedMeetings.value.length === meetings.value.length
 }
 
 const addMeeting = () => {

@@ -133,22 +133,20 @@ export const usePropertyOwnerForm = (options) => {
       const response = await get(`/urban-renewals/${urbanRenewalId}/land-plots`)
 
       if (response.data?.status === 'success') {
+        // 兩種模式都轉換為中文格式
+        const plotsWithChineseNames = await Promise.all(
+          (response.data.data || []).map(async (plot) => {
+            const chineseFullLandNumber = await getChineseLandNumber(plot)
+            return {
+              ...plot,
+              chineseFullLandNumber
+            }
+          })
+        )
+        availablePlots.value = plotsWithChineseNames
+
         if (mode === 'create') {
-          // Create 模式: 轉換為中文格式
-          const plotsWithChineseNames = await Promise.all(
-            (response.data.data || []).map(async (plot) => {
-              const chineseFullLandNumber = await getChineseLandNumber(plot)
-              return {
-                ...plot,
-                chineseFullLandNumber
-              }
-            })
-          )
-          availablePlots.value = plotsWithChineseNames
           loadingProgress.value = 100
-        } else {
-          // Edit 模式: 直接使用
-          availablePlots.value = response.data.data || []
         }
       }
     } catch (err) {
@@ -166,6 +164,25 @@ export const usePropertyOwnerForm = (options) => {
 
       if (response.data?.status === 'success') {
         const data = response.data.data
+        
+        // 將地號資料轉換為中文格式
+        const landsWithChineseNames = await Promise.all(
+          (data.lands || []).map(async (land) => {
+            // 如果已經有 plot_number_display，優先使用
+            if (land.plot_number_display) {
+              return land
+            }
+            // 從 availablePlots 中找到對應的中文地號
+            const matchedPlot = availablePlots.value.find(plot => 
+              (plot.landNumber || plot.plot_number) === (land.plot_number || land.landNumber)
+            )
+            return {
+              ...land,
+              plot_number_display: matchedPlot?.chineseFullLandNumber || matchedPlot?.fullLandNumber || land.plot_number || '-'
+            }
+          })
+        )
+
         Object.assign(formData, {
           id: data.id,
           urban_renewal_id: data.urban_renewal_id,
@@ -178,7 +195,7 @@ export const usePropertyOwnerForm = (options) => {
           registered_address: data.household_address || '',
           exclusion_type: data.exclusion_type || '',
           buildings: data.buildings || [],
-          lands: data.lands || [],
+          lands: landsWithChineseNames,
           notes: data.notes || ''
         })
       }
@@ -191,7 +208,7 @@ export const usePropertyOwnerForm = (options) => {
   }
 
   /**
-   * 將地號代號轉換為中文顯示 (create 模式)
+   * 將地號代號轉換為中文顯示
    */
   const getChineseLandNumber = async (plot) => {
     // 如果 fullLandNumber 已經是中文格式,直接使用
@@ -207,11 +224,25 @@ export const usePropertyOwnerForm = (options) => {
       // 獲取縣市名稱
       if (locationMappings.value.counties.has(plot.county)) {
         countyName = locationMappings.value.counties.get(plot.county)
-      } else if (counties.value.length > 0) {
+      } else if (counties.value && counties.value.length > 0) {
         const county = counties.value.find(c => c.code === plot.county)
         if (county) {
           countyName = county.name
           locationMappings.value.counties.set(plot.county, county.name)
+        }
+      } else {
+        // 如果 counties 還沒載入，透過 API 獲取
+        try {
+          const response = await get('/locations/counties')
+          if (response.data?.status === 'success') {
+            const county = response.data.data.find(c => c.code === plot.county)
+            if (county) {
+              countyName = county.name
+              locationMappings.value.counties.set(plot.county, county.name)
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching counties:', error)
         }
       }
 
@@ -358,7 +389,24 @@ export const usePropertyOwnerForm = (options) => {
 
       if (response.data?.status === 'success') {
         const data = response.data.data
-        formData.lands = data.lands || []
+        
+        // 將地號資料轉換為中文格式
+        const landsWithChineseNames = await Promise.all(
+          (data.lands || []).map(async (land) => {
+            if (land.plot_number_display) {
+              return land
+            }
+            const matchedPlot = availablePlots.value.find(plot => 
+              (plot.landNumber || plot.plot_number) === (land.plot_number || land.landNumber)
+            )
+            return {
+              ...land,
+              plot_number_display: matchedPlot?.chineseFullLandNumber || matchedPlot?.fullLandNumber || land.plot_number || '-'
+            }
+          })
+        )
+        
+        formData.lands = landsWithChineseNames
         showSuccess('重新整理成功', `已載入 ${formData.lands.length} 筆地號資料`)
       }
     } catch (err) {
@@ -518,12 +566,15 @@ export const usePropertyOwnerForm = (options) => {
    * 初始化資料 (edit 模式)
    */
   const initializeEdit = async () => {
+    // 先載入縣市資料（getChineseLandNumber 需要用到）
+    await fetchCounties()
+    // 再並行載入其他資料
     await Promise.all([
-      fetchPropertyOwner(),
       fetchUrbanRenewalInfo(),
-      fetchAvailablePlots(),
-      fetchCounties()
+      fetchAvailablePlots()
     ])
+    // 最後載入所有權人資料（需要 availablePlots 來轉換中文地號）
+    await fetchPropertyOwner()
   }
 
   /**

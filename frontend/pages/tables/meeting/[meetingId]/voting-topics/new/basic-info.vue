@@ -246,49 +246,6 @@ const peopleRatioNumerator = ref(0)
 const peopleRatioDenominator = ref(0)
 const remarks = ref('')
 
-// Mock data for testing
-const mockTopics = [
-  {
-    id: '1',
-    name: '理事長選舉',
-    meetingName: '114年度第一屆第1次會員大會',
-    maxSelections: 1,
-    acceptedCount: 1,
-    alternateCount: 0,
-    isAnonymous: false,
-    landAreaRatioNumerator: 3,
-    landAreaRatioDenominator: 4,
-    buildingAreaRatioNumerator: 2,
-    buildingAreaRatioDenominator: 3,
-    peopleRatioNumerator: 50,
-    peopleRatioDenominator: 100,
-    remarks: '理事長選舉相關說明'
-  },
-  {
-    id: '2',
-    name: '更新計畫同意案',
-    meetingName: '114年度第一屆第1次會員大會',
-    maxSelections: 1,
-    acceptedCount: 1,
-    alternateCount: 0,
-    isAnonymous: false,
-    landAreaRatioNumerator: 2,
-    landAreaRatioDenominator: 3,
-    buildingAreaRatioNumerator: 3,
-    buildingAreaRatioDenominator: 4,
-    peopleRatioNumerator: 60,
-    peopleRatioDenominator: 100,
-    remarks: '更新計畫同意案相關說明'
-  }
-]
-
-const mockMeeting = {
-  id: '1',
-  name: '114年度第一屆第1次會員大會',
-  dateTime: '2025年3月15日 下午2:00:00',
-  renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會'
-}
-
 onMounted(async () => {
   await loadMeetingInfo()
   // Creating new topic - reset form fields
@@ -315,13 +272,8 @@ const loadMeetingInfo = async () => {
     console.log('[New Voting Topic] Meeting info loaded:', meetingInfo.value)
   } else {
     console.error('[New Voting Topic] Failed to load meeting info:', response.error)
-    // Use fallback mock data
-    meetingInfo.value = {
-      id: meetingId,
-      name: '114年度第一屆第1次會員大會',
-      dateTime: '2025年3月15日 下午2:00:00',
-      renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會'
-    }
+    showError('載入失敗', response.error?.message || '無法載入會議資料')
+    meetingInfo.value = null
   }
 }
 

@@ -89,6 +89,10 @@ class MeetingModel extends Model
             $builder->where('meetings.urban_renewal_id', $filters['urban_renewal_id']);
         }
 
+        if (!empty($filters['urban_renewal_ids'])) {
+            $builder->whereIn('meetings.urban_renewal_id', $filters['urban_renewal_ids']);
+        }
+
         if (!empty($filters['meeting_status'])) {
             $builder->where('meetings.meeting_status', $filters['meeting_status']);
         }

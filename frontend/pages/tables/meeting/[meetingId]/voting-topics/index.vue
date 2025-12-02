@@ -210,25 +210,7 @@ const loadVotingTopics = async () => {
   } else {
     console.error('[Voting Topics] Failed to load voting topics:', response.error)
     showError('載入失敗', response.error?.message || '無法載入投票議題')
-    // Use fallback mock data
-    votingTopics.value = [
-      {
-        id: 1,
-        name: '理事長選舉',
-        meetingName: '114年度第一屆第1次會員大會',
-        maxSelections: 1,
-        acceptedCount: 1,
-        alternateCount: 0
-      },
-      {
-        id: 2,
-        name: '更新計畫同意案',
-        meetingName: '114年度第一屆第1次會員大會',
-        maxSelections: 1,
-        acceptedCount: 1,
-        alternateCount: 0
-      }
-    ]
+    votingTopics.value = []
   }
 }
 

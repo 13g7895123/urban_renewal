@@ -257,15 +257,8 @@ const loadMeetingData = async () => {
     console.log('[Member Checkin] Meeting loaded:', meeting.value)
   } else {
     console.error('[Member Checkin] Failed to load meeting:', response.error)
-    // Use fallback mock data
-    meeting.value = {
-      id: meetingId,
-      name: '114年度第一屆第1次會員大會',
-      renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會',
-      date: '2025年3月15日',
-      time: '下午2:00:00',
-      topics: '理事會選舉、監事會選舉'
-    }
+    showError('載入失敗', response.error?.message || '無法載入會議資料')
+    meeting.value = null
   }
 }
 
@@ -291,29 +284,8 @@ const loadAttendanceData = async () => {
     console.log('[Member Checkin] Attendance data loaded:', propertyOwners.value.length)
   } else {
     console.error('[Member Checkin] Failed to load attendance data:', response.error)
-    // Use fallback mock data
-    propertyOwners.value = [
-      { id: 1, owner_code: '001', owner_name: '王小明', attendance_status: null },
-      { id: 2, owner_code: '002', owner_name: '李美華', attendance_status: 'personal' },
-      { id: 3, owner_code: '003', owner_name: '張大同', attendance_status: 'delegated' },
-      { id: 4, owner_code: '004', owner_name: '陳雅婷', attendance_status: null },
-      { id: 5, owner_code: '005', owner_name: '林志強', attendance_status: null },
-      { id: 6, owner_code: '006', owner_name: '黃淑芬', attendance_status: 'personal' },
-      { id: 7, owner_code: '007', owner_name: '吳家豪', attendance_status: null },
-      { id: 8, owner_code: '008', owner_name: '蔡雨辰', attendance_status: 'cancelled' },
-      { id: 9, owner_code: '009', owner_name: '劉建國', attendance_status: null },
-      { id: 10, owner_code: '010', owner_name: '楊麗娟', attendance_status: 'delegated' },
-      { id: 11, owner_code: '011', owner_name: '許志明', attendance_status: null },
-      { id: 12, owner_code: '012', owner_name: '鄭雅芳', attendance_status: null },
-      { id: 13, owner_code: '013', owner_name: '徐建華', attendance_status: 'personal' },
-      { id: 14, owner_code: '014', owner_name: '謝淑貞', attendance_status: null },
-      { id: 15, owner_code: '015', owner_name: '蘇志偉', attendance_status: null },
-      { id: 16, owner_code: '016', owner_name: '江美玲', attendance_status: null },
-      { id: 17, owner_code: '017', owner_name: '廖家宏', attendance_status: null },
-      { id: 18, owner_code: '018', owner_name: '賴淑華', attendance_status: null },
-      { id: 19, owner_code: '019', owner_name: '范志強', attendance_status: null },
-      { id: 20, owner_code: '020', owner_name: '葉雅婷', attendance_status: null }
-    ]
+    showError('載入失敗', response.error?.message || '無法載入出席資料')
+    propertyOwners.value = []
   }
 }
 

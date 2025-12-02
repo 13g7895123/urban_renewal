@@ -570,3 +570,78 @@ if (!function_exists('auth_can_manage_user')) {
         return false;
     }
 }
+
+if (!function_exists('auth_get_user_company_id')) {
+    /**
+     * 取得用戶的企業 ID（新架構 company_id 優先，過渡期相容 urban_renewal_id）
+     *
+     * @param array|null $user 使用者資料（若未提供則取得當前使用者）
+     * @return int|null
+     */
+    function auth_get_user_company_id(?array $user = null): ?int
+    {
+        if (!$user) {
+            $user = auth_get_current_user();
+        }
+
+        if (!$user) {
+            return null;
+        }
+
+        // 新架構：優先使用 company_id
+        if (!empty($user['company_id'])) {
+            return (int) $user['company_id'];
+        }
+
+        // 過渡期兼容：從 urban_renewal_id 推導 company_id
+        if (!empty($user['urban_renewal_id'])) {
+            $urbanRenewalModel = model('UrbanRenewalModel');
+            $renewal = $urbanRenewalModel->find($user['urban_renewal_id']);
+            if ($renewal && !empty($renewal['company_id'])) {
+                return (int) $renewal['company_id'];
+            }
+        }
+
+        return null;
+    }
+}
+
+if (!function_exists('auth_check_company_access')) {
+    /**
+     * 檢查用戶是否可以存取指定更新會的資料（基於企業關係）
+     *
+     * @param int $urbanRenewalId 目標更新會 ID
+     * @param array|null $user 使用者資料（若未提供則取得當前使用者）
+     * @return bool
+     */
+    function auth_check_company_access(int $urbanRenewalId, ?array $user = null): bool
+    {
+        if (!$user) {
+            $user = auth_get_current_user();
+        }
+
+        if (!$user) {
+            return false;
+        }
+
+        // 管理員可以存取所有資源
+        if (($user['role'] ?? '') === 'admin') {
+            return true;
+        }
+
+        // 取得用戶的企業 ID
+        $userCompanyId = auth_get_user_company_id($user);
+        if (!$userCompanyId) {
+            return false;
+        }
+
+        // 取得目標更新會的企業 ID
+        $urbanRenewalModel = model('UrbanRenewalModel');
+        $targetRenewal = $urbanRenewalModel->find($urbanRenewalId);
+        if (!$targetRenewal || empty($targetRenewal['company_id'])) {
+            return false;
+        }
+
+        return (int) $targetRenewal['company_id'] === $userCompanyId;
+    }
+}

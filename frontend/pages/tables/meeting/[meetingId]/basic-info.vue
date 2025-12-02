@@ -280,10 +280,13 @@
           <!-- Action Buttons -->
           <div class="flex justify-between pt-6 border-t border-gray-200">
             <div class="flex gap-3">
-              <UButton v-if="selectedMeeting" color="green" @click="exportSignatureBook">
-                <Icon name="heroicons:document-arrow-down" class="w-4 h-4 mr-2" />
-                匯出簽到冊
-              </UButton>
+              <UDropdown v-if="selectedMeeting" :items="exportItems" :popper="{ placement: 'bottom-start' }">
+                <UButton color="green">
+                  <Icon name="heroicons:document-arrow-down" class="w-4 h-4 mr-2" />
+                  匯出簽到冊
+                  <Icon name="heroicons:chevron-down" class="w-4 h-4 ml-2" />
+                </UButton>
+              </UDropdown>
               <UButton v-if="selectedMeeting" color="blue" @click="exportMeetingNotice">
                 <Icon name="heroicons:document-arrow-down" class="w-4 h-4 mr-2" />
                 匯出會議通知
@@ -318,12 +321,26 @@ const route = useRoute()
 const meetingId = route.params.meetingId
 
 // API composables (Nuxt 3 auto-imports these, but explicit import for TypeScript)
-const { getMeeting, createMeeting, updateMeeting, exportMeetingNotice: exportMeetingNoticeApi } = useMeetings()
+const { getMeeting, createMeeting, updateMeeting, exportMeetingNotice: exportMeetingNoticeApi, exportSignatureBook: exportSignatureBookApi } = useMeetings()
 const { getUrbanRenewals } = useUrbanRenewal()
 const { showSuccess, showError } = useSweetAlert()
 
 // Loading state
 const isLoading = ref(false)
+
+// Export dropdown items
+const exportItems = [
+  [{
+    label: '簽到冊(全名)',
+    icon: 'i-heroicons-document-text',
+    click: () => handleExportSignatureBook(false)
+  }],
+  [{
+    label: '簽到冊(匿名)',
+    icon: 'i-heroicons-document-text',
+    click: () => handleExportSignatureBook(true)
+  }]
+]
 
 // Get meeting data (this would typically come from an API)
 const selectedMeeting = ref(null)
@@ -382,36 +399,6 @@ const contactName = ref('')
 const contactPhone = ref('')
 const attachments = ref('')
 const descriptions = ref([])
-
-// Mock meetings data (this would typically come from an API)
-const meetings = [
-  {
-    id: '1',
-    name: '114年度第一屆第1次會員大會',
-    renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會',
-    meetingType: '會員大會',
-    date: '2025年3月15日',
-    time: '下午2:00:00',
-    attendees: 73,
-    totalCountedAttendees: 72,
-    totalObservers: 0,
-    votingTopicCount: 5,
-    location: '台北市南港區玉成街1號'
-  },
-  {
-    id: '2',
-    name: '114年度第一屆第2次會員大會',
-    renewalGroup: '臺北市南港區玉成段二小段435地號等17筆土地更新事宜臺北市政府會',
-    meetingType: '會員大會',
-    date: '2025年8月9日',
-    time: '下午2:00:00',
-    attendees: 74,
-    totalCountedAttendees: 74,
-    totalObservers: 0,
-    votingTopicCount: 3,
-    location: '台北市南港區玉成街2號'
-  }
-]
 
 onMounted(async () => {
   // Load urban renewal options (request all items without pagination)
@@ -545,14 +532,7 @@ onMounted(async () => {
     } else {
       console.error('[Basic Info] Failed to load meeting:', response.error)
       showError('載入會議資料失敗', response.error?.message || '無法載入會議資料')
-      // Use fallback mock data if API fails
-      selectedMeeting.value = meetings.find(m => m.id === meetingId)
-      if (selectedMeeting.value) {
-        // 組合日期和時間為 datetime-local 格式
-        meetingDateTime.value = `${selectedMeeting.value.date}T${selectedMeeting.value.time}`
-        meetingLocation.value = selectedMeeting.value.location || ''
-        // totalObservers 會由 computed property 自動計算
-      }
+      selectedMeeting.value = null
     }
   }
 })
@@ -649,9 +629,23 @@ const getChineseNumber = (num) => {
 }
 
 // Export functions
-const exportSignatureBook = () => {
-  console.log('Exporting signature book for meeting:', selectedMeeting.value)
-  // TODO: Implement export signature book functionality
+const handleExportSignatureBook = async (isAnonymous) => {
+  if (!selectedMeeting.value || !meetingId) {
+    showError('匯出失敗', '找不到會議資料')
+    return
+  }
+
+  isLoading.value = true
+  console.log(`[Basic Info] Exporting signature book (Anonymous: ${isAnonymous}) for meeting:`, meetingId)
+
+  const response = await exportSignatureBookApi(meetingId, isAnonymous)
+  isLoading.value = false
+
+  if (response.success) {
+    showSuccess('匯出成功', '簽到冊已成功匯出')
+  } else {
+    showError('匯出失敗', response.error?.message || '無法匯出簽到冊')
+  }
 }
 
 const exportMeetingNotice = async () => {

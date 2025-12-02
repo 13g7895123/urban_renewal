@@ -132,6 +132,8 @@ class Filters extends BaseFilters
                 'api/system-settings/*',
                 'api/land-plots',
                 'api/land-plots/*',
+                'api/joint-common-areas',
+                'api/joint-common-areas/*',
                 'api/property-owners',
                 'api/property-owners/*',
                 'api/attendances',
