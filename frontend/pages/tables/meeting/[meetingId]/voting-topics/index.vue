@@ -23,6 +23,15 @@
           回上一頁
         </UButton>
         <UButton
+          color="gray"
+          variant="outline"
+          :loading="isLoading"
+          @click="loadVotingTopics"
+        >
+          <Icon name="heroicons:arrow-path" class="w-5 h-5 mr-2" />
+          重新整理
+        </UButton>
+        <UButton
           color="green"
           @click="addVotingTopic"
         >
@@ -195,11 +204,13 @@ const loadVotingTopics = async () => {
   isLoading.value = false
 
   if (response.success && response.data) {
-    const topicsData = response.data.data || response.data
+    const responseData = response.data.data || response.data
+    // The API returns { topics: [], pager: {} } so we need to extract topics
+    const topicsData = Array.isArray(responseData) ? responseData : (responseData.topics || [])
 
     votingTopics.value = Array.isArray(topicsData) ? topicsData.map(t => ({
       id: t.id,
-      name: t.topic_name || t.name || '',
+      name: t.topic_title || t.topic_name || t.name || '',
       meetingName: t.meeting_name || t.meetingName || '',
       maxSelections: t.max_selections || t.maxSelections || 0,
       acceptedCount: t.accepted_count || t.acceptedCount || 0,

@@ -16,7 +16,15 @@
       <UCard>
         <div class="space-y-6 p-6">
           <!-- Test Data Button -->
-          <div v-if="!selectedTopic" class="flex justify-end">
+          <div v-if="!selectedTopic" class="flex justify-end gap-2">
+            <UButton
+              color="gray"
+              size="sm"
+              @click="debugMeetingData"
+            >
+              <Icon name="heroicons:bug-ant" class="w-4 h-4 mr-1" />
+              檢視 API 資料
+            </UButton>
             <UButton
               color="blue"
               size="sm"
@@ -32,19 +40,19 @@
             <!-- 所屬會議 (readonly) -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">所屬會議</label>
-              <UInput :value="meetingInfo?.name" readonly class="bg-gray-50" />
+              <UInput :model-value="meetingInfo?.name" readonly class="bg-gray-50" />
             </div>
 
             <!-- 會議日期時間 (readonly) -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">會議日期時間</label>
-              <UInput :value="meetingInfo?.dateTime" readonly class="bg-gray-50" />
+              <UInput :model-value="meetingInfo?.dateTime" readonly class="bg-gray-50" />
             </div>
 
             <!-- 所屬更新會 (readonly) -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">所屬更新會</label>
-              <UInput :value="meetingInfo?.renewalGroup" readonly class="bg-gray-50" />
+              <UInput :model-value="meetingInfo?.renewalGroup" readonly class="bg-gray-50" />
             </div>
           </div>
 
@@ -267,7 +275,7 @@ const loadMeetingInfo = async () => {
       id: meeting.id,
       name: meeting.meeting_name || meeting.name || '',
       dateTime: `${meeting.meeting_date || meeting.date || ''} ${meeting.meeting_time || meeting.time || ''}`,
-      renewalGroup: meeting.renewal_group || meeting.renewalGroup || ''
+      renewalGroup: meeting.urban_renewal_name || meeting.renewal_group || meeting.renewalGroup || ''
     }
     console.log('[New Voting Topic] Meeting info loaded:', meetingInfo.value)
   } else {
@@ -321,6 +329,22 @@ const importPropertyOwners = () => {
 const exportVotingBallot = () => {
   console.log('Exporting voting ballot for topic:', selectedTopic.value)
   // TODO: Implement export voting ballot functionality
+}
+
+// Debug function
+const debugMeetingData = async () => {
+  console.log('[Debug] Fetching meeting data for ID:', meetingId)
+  const response = await getMeeting(meetingId)
+  console.log('[Debug] Raw API Response:', response)
+  
+  if (response.success) {
+    const data = response.data.data || response.data
+    console.log('[Debug] Meeting Data:', data)
+    alert(`API 資料已輸出至 Console\n\n會議名稱: ${data.meeting_name || data.name}\n更新會: ${data.urban_renewal_name || data.renewal_group}`)
+  } else {
+    console.error('[Debug] API Error:', response.error)
+    alert('API 呼叫失敗: ' + (response.error?.message || '未知錯誤'))
+  }
 }
 
 // Fill test data function

@@ -40,19 +40,19 @@
             <!-- 所屬會議 (readonly) -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">所屬會議</label>
-              <UInput :value="meetingInfo?.name" readonly class="bg-gray-50" />
+              <UInput :model-value="meetingInfo?.name" readonly class="bg-gray-50" />
             </div>
 
             <!-- 會議日期時間 (readonly) -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">會議日期時間</label>
-              <UInput :value="meetingInfo?.dateTime" readonly class="bg-gray-50" />
+              <UInput :model-value="meetingInfo?.dateTime" readonly class="bg-gray-50" />
             </div>
 
             <!-- 所屬更新會 (readonly) -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">所屬更新會</label>
-              <UInput :value="meetingInfo?.renewalGroup" readonly class="bg-gray-50" />
+              <UInput :model-value="meetingInfo?.renewalGroup" readonly class="bg-gray-50" />
             </div>
           </div>
 
@@ -199,10 +199,10 @@
               </UButton>
             </div>
             <div class="flex gap-3">
-              <UButton variant="outline" @click="goBack">
+              <UButton variant="outline" @click="goBack" :disabled="isSaving">
                 回上一頁
               </UButton>
-              <UButton color="green" @click="saveBasicInfo">
+              <UButton color="green" @click="saveBasicInfo" :disabled="isSaving" :loading="isSaving">
                 <Icon name="heroicons:check" class="w-4 h-4 mr-2" />
                 儲存
               </UButton>
@@ -229,12 +229,14 @@ const topicId = route.params.topicId
 
 // Import API composables
 const { getMeeting } = useMeetings()
-const { getVotingTopic } = useVotingTopics()
+const { getVotingTopic, updateVotingTopic } = useVotingTopics()
+const { showSuccess, showError } = useSweetAlert()
 
 // Get topic and meeting data from API
 const selectedTopic = ref(null)
 const meetingInfo = ref(null)
 const loading = ref(true)
+const isSaving = ref(false)
 
 // Form fields
 const topicName = ref('')
@@ -258,13 +260,13 @@ onMounted(async () => {
     // Fetch meeting information
     const meetingResult = await getMeeting(meetingId)
     if (meetingResult.success && meetingResult.data) {
-      const meeting = meetingResult.data
+      const meeting = meetingResult.data.data || meetingResult.data
       meetingInfo.value = {
-        name: meeting.name || '',
+        name: meeting.meeting_name || meeting.name || '',
         dateTime: meeting.meeting_date && meeting.meeting_time
           ? `${meeting.meeting_date} ${meeting.meeting_time}`
           : '',
-        renewalGroup: meeting.urban_renewal_name || ''
+        renewalGroup: meeting.urban_renewal_name || meeting.renewal_group || ''
       }
     }
 
@@ -276,11 +278,12 @@ onMounted(async () => {
       // Load existing topic data
       const topicResult = await getVotingTopic(topicId)
       if (topicResult.success && topicResult.data) {
-        selectedTopic.value = topicResult.data
+        const topicData = topicResult.data.data || topicResult.data
+        selectedTopic.value = topicData
 
         // Initialize form fields with existing data
-        topicName.value = selectedTopic.value.title || selectedTopic.value.name || ''
-        isAnonymous.value = selectedTopic.value.is_anonymous || selectedTopic.value.isAnonymous || false
+        topicName.value = selectedTopic.value.topic_title || selectedTopic.value.topic_name || selectedTopic.value.title || selectedTopic.value.name || ''
+        isAnonymous.value = selectedTopic.value.is_anonymous == 1 || selectedTopic.value.is_anonymous === true || selectedTopic.value.isAnonymous === true
         maxSelections.value = selectedTopic.value.max_selections || selectedTopic.value.maxSelections || 1
         acceptedCount.value = selectedTopic.value.accepted_count || selectedTopic.value.acceptedCount || 1
         alternateCount.value = selectedTopic.value.alternate_count || selectedTopic.value.alternateCount || 0
@@ -293,10 +296,11 @@ onMounted(async () => {
         remarks.value = selectedTopic.value.remarks || selectedTopic.value.notes || ''
 
         // Load property owners if available
-        if (selectedTopic.value.options && Array.isArray(selectedTopic.value.options)) {
-          propertyOwners.value = selectedTopic.value.options.map(option => ({
-            name: option.name || option.option_name || '',
-            isPinned: option.is_pinned || option.isPinned || false
+        const options = selectedTopic.value.voting_options || selectedTopic.value.options
+        if (options && Array.isArray(options)) {
+          propertyOwners.value = options.map(option => ({
+            name: option.option_name || option.name || '',
+            isPinned: option.is_pinned == 1 || option.is_pinned === true || option.isPinned === true
           }))
         }
       }
@@ -379,48 +383,56 @@ const goBack = () => {
 }
 
 // Save function
-const saveBasicInfo = () => {
-  if (selectedTopic.value) {
-    // Editing existing topic
-    console.log('Updating existing topic:', selectedTopic.value)
-    console.log('Form data:', {
-      topicName: topicName.value,
-      isAnonymous: isAnonymous.value,
-      propertyOwners: propertyOwners.value,
-      maxSelections: maxSelections.value,
-      acceptedCount: acceptedCount.value,
-      alternateCount: alternateCount.value,
-      landAreaRatioNumerator: landAreaRatioNumerator.value,
-      landAreaRatioDenominator: landAreaRatioDenominator.value,
-      buildingAreaRatioNumerator: buildingAreaRatioNumerator.value,
-      buildingAreaRatioDenominator: buildingAreaRatioDenominator.value,
-      peopleRatioNumerator: peopleRatioNumerator.value,
-      peopleRatioDenominator: peopleRatioDenominator.value,
-      remarks: remarks.value
-    })
-    // TODO: Implement update functionality
-  } else {
-    // Creating new topic
-    console.log('Creating new topic')
-    console.log('Form data:', {
-      topicName: topicName.value,
-      isAnonymous: isAnonymous.value,
-      propertyOwners: propertyOwners.value,
-      maxSelections: maxSelections.value,
-      acceptedCount: acceptedCount.value,
-      alternateCount: alternateCount.value,
-      landAreaRatioNumerator: landAreaRatioNumerator.value,
-      landAreaRatioDenominator: landAreaRatioDenominator.value,
-      buildingAreaRatioNumerator: buildingAreaRatioNumerator.value,
-      buildingAreaRatioDenominator: buildingAreaRatioDenominator.value,
-      peopleRatioNumerator: peopleRatioNumerator.value,
-      peopleRatioDenominator: peopleRatioDenominator.value,
-      remarks: remarks.value
-    })
-    // TODO: Implement create functionality
+const saveBasicInfo = async () => {
+  // Validation
+  if (!topicName.value.trim()) {
+    showError('資料不完整', '請輸入議題名稱')
+    return
   }
 
-  // Navigate back to voting topics list after save
-  navigateTo(`/tables/meeting/${meetingId}/voting-topics`)
+  isSaving.value = true
+
+  const formData = {
+    meeting_id: meetingId,
+    topic_name: topicName.value,
+    is_anonymous: isAnonymous.value,
+    property_owners: propertyOwners.value.map(owner => ({
+      name: owner.name,
+      is_pinned: owner.isPinned
+    })),
+    max_selections: parseInt(maxSelections.value) || 1,
+    accepted_count: parseInt(acceptedCount.value) || 1,
+    alternate_count: parseInt(alternateCount.value) || 0,
+    land_area_ratio_numerator: parseInt(landAreaRatioNumerator.value) || 0,
+    land_area_ratio_denominator: parseInt(landAreaRatioDenominator.value) || 0,
+    building_area_ratio_numerator: parseInt(buildingAreaRatioNumerator.value) || 0,
+    building_area_ratio_denominator: parseInt(buildingAreaRatioDenominator.value) || 0,
+    people_ratio_numerator: parseInt(peopleRatioNumerator.value) || 0,
+    people_ratio_denominator: parseInt(peopleRatioDenominator.value) || 0,
+    remarks: remarks.value
+  }
+
+  if (selectedTopic.value) {
+    // Editing existing topic
+    console.log('Updating existing topic:', selectedTopic.value.id, formData)
+    
+    const response = await updateVotingTopic(selectedTopic.value.id, formData)
+    
+    if (response.success) {
+      showSuccess('更新成功', '投票議題已成功更新')
+      // Navigate back to voting topics list after save
+      setTimeout(() => {
+        navigateTo(`/tables/meeting/${meetingId}/voting-topics`)
+      }, 1500)
+    } else {
+      console.error('Failed to update topic:', response.error)
+      showError('更新失敗', response.error?.message || '無法更新投票議題')
+    }
+  } else {
+    // Should not happen in this file as it handles existing topics
+    console.error('No selected topic for update')
+  }
+  
+  isSaving.value = false
 }
 </script>

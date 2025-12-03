@@ -17,16 +17,16 @@ echo "Urban Renewal Voting System - Production"
 echo "========================================="
 echo ""
 
-# 檢查 .env 檔案是否存在
-if [ ! -f .env ]; then
-    echo "❌ 錯誤：找不到 .env 檔案"
+# 檢查 .env.production 檔案是否存在
+if [ ! -f .env.production ]; then
+    echo "❌ 錯誤：找不到 .env.production 檔案"
     echo "請先複製 .env.example 並設定環境變數："
-    echo "  cp .env.example .env"
+    echo "  cp .env.example .env.production"
     exit 1
 fi
 
 # 載入環境變數
-source .env
+source .env.production
 
 echo "🔧 環境配置："
 echo "  - 前端 Port: ${FRONTEND_PORT}"
@@ -56,13 +56,13 @@ fi
 echo "🔍 檢查現有容器狀態..."
 if $DOCKER_COMPOSE -f docker-compose.prod.yml ps --quiet 2>/dev/null | grep -q .; then
     echo "⚠️  發現正式環境容器正在運行，先停止現有服務..."
-    $DOCKER_COMPOSE -f docker-compose.prod.yml --env-file .env down
+    $DOCKER_COMPOSE -f docker-compose.prod.yml --env-file .env.production down
     echo "✅ 現有服務已停止"
     echo ""
 fi
 
 echo "🚀 啟動 Docker Compose (Production Mode)..."
-$DOCKER_COMPOSE -f docker-compose.prod.yml --env-file .env up -d
+$DOCKER_COMPOSE -f docker-compose.prod.yml --env-file .env.production up -d
 
 echo ""
 echo "⏳ 等待服務啟動..."

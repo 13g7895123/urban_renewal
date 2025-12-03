@@ -190,13 +190,29 @@ class VotingTopicController extends ResourceController
 
             $data = $this->request->getJSON(true);
 
+            // Map frontend fields to backend fields
+            if (isset($data['topic_name']) && !isset($data['topic_title'])) {
+                $data['topic_title'] = $data['topic_name'];
+            }
+
+            // Auto-generate topic number if not provided
+            if (empty($data['topic_number'])) {
+                $count = $this->model->where('meeting_id', $data['meeting_id'])->countAllResults();
+                $data['topic_number'] = 'Topic-' . ($count + 1);
+            }
+
+            // Set default voting method if not provided
+            if (empty($data['voting_method'])) {
+                $data['voting_method'] = 'simple_majority';
+            }
+
             // 驗證必填欄位
             $validation = \Config\Services::validation();
             $validation->setRules([
                 'meeting_id' => 'required|integer',
                 'topic_number' => 'required|max_length[20]',
                 'topic_title' => 'required|max_length[500]',
-                'voting_method' => 'required|in_list[simple_majority,absolute_majority,two_thirds_majority,unanimous]'
+                'voting_method' => 'permit_empty|in_list[simple_majority,absolute_majority,two_thirds_majority,unanimous]'
             ]);
 
             if (!$validation->run($data)) {
@@ -253,7 +269,22 @@ class VotingTopicController extends ResourceController
                 return response_error('建立投票議題失敗', 500, $this->model->errors());
             }
 
-            $topic = $this->model->find($topicId);
+            // Handle property owners (voting options)
+            if (isset($data['property_owners']) && is_array($data['property_owners'])) {
+                $votingOptionModel = model('VotingOptionModel');
+                foreach ($data['property_owners'] as $index => $owner) {
+                    if (!empty($owner['name'])) {
+                        $votingOptionModel->insert([
+                            'voting_topic_id' => $topicId,
+                            'option_name' => $owner['name'],
+                            'is_pinned' => isset($owner['is_pinned']) ? $owner['is_pinned'] : 0,
+                            'sort_order' => $index
+                        ]);
+                    }
+                }
+            }
+
+            $topic = $this->model->getTopicWithDetails($topicId);
             return response_success('投票議題建立成功', $topic, 201);
 
         } catch (\Exception $e) {
@@ -310,6 +341,11 @@ class VotingTopicController extends ResourceController
 
             $data = $this->request->getJSON(true);
 
+            // Map frontend fields to backend fields
+            if (isset($data['topic_name']) && !isset($data['topic_title'])) {
+                $data['topic_title'] = $data['topic_name'];
+            }
+
             // 如果要修改議題編號，檢查是否重複
             if (isset($data['topic_number']) && $data['topic_number'] !== $topic['topic_number']) {
                 $existingTopic = $this->model->checkTopicNumberExists($topic['meeting_id'], $data['topic_number'], $id);
@@ -328,7 +364,27 @@ class VotingTopicController extends ResourceController
                 return response_error('更新投票議題失敗', 500, $this->model->errors());
             }
 
-            $topic = $this->model->find($id);
+            // Handle property owners (voting options)
+            if (isset($data['property_owners']) && is_array($data['property_owners'])) {
+                $votingOptionModel = model('VotingOptionModel');
+                
+                // Delete existing options
+                $votingOptionModel->where('voting_topic_id', $id)->delete();
+                
+                // Insert new options
+                foreach ($data['property_owners'] as $index => $owner) {
+                    if (!empty($owner['name'])) {
+                        $votingOptionModel->insert([
+                            'voting_topic_id' => $id,
+                            'option_name' => $owner['name'],
+                            'is_pinned' => isset($owner['is_pinned']) ? $owner['is_pinned'] : 0,
+                            'sort_order' => $index
+                        ]);
+                    }
+                }
+            }
+
+            $topic = $this->model->getTopicWithDetails($id);
             return response_success('投票議題更新成功', $topic);
 
         } catch (\Exception $e) {

@@ -8,13 +8,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const authStore = useAuthStore()
 
   // 在 SPA 模式下，頁面重整時可能需要等待 Pinia 持久化插件恢復狀態
-  // 如果 store 沒有 token，嘗試從 sessionStorage 直接讀取
+  // 如果 store 沒有 token，嘗試從 localStorage (主要) 或 sessionStorage (舊版) 讀取
   if (!authStore.token && process.client) {
-    const persistedAuth = sessionStorage.getItem('auth')
+    const persistedAuth = localStorage.getItem('auth') || sessionStorage.getItem('auth')
     if (persistedAuth) {
       try {
         const authData = JSON.parse(persistedAuth)
-        console.log('[Company Manager Middleware] Restoring auth from sessionStorage')
+        console.log('[Company Manager Middleware] Restoring auth from storage', {
+          source: localStorage.getItem('auth') ? 'localStorage' : 'sessionStorage'
+        })
         
         // 手動恢復狀態
         if (authData.token) {
@@ -30,7 +32,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
           authStore.tokenExpiresAt = authData.tokenExpiresAt
         }
       } catch (e) {
-        console.error('[Company Manager Middleware] Failed to parse auth from sessionStorage:', e)
+        console.error('[Company Manager Middleware] Failed to parse auth from storage:', e)
       }
     }
   }

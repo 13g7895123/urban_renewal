@@ -19,6 +19,17 @@ class VotingTopicModel extends Model
         'topic_title',
         'topic_description',
         'voting_method',
+        'is_anonymous',
+        'max_selections',
+        'accepted_count',
+        'alternate_count',
+        'land_area_ratio_numerator',
+        'land_area_ratio_denominator',
+        'building_area_ratio_numerator',
+        'building_area_ratio_denominator',
+        'people_ratio_numerator',
+        'people_ratio_denominator',
+        'remarks',
         'total_votes',
         'agree_votes',
         'disagree_votes',
@@ -45,7 +56,7 @@ class VotingTopicModel extends Model
         'meeting_id' => 'required|integer',
         'topic_number' => 'required|max_length[20]',
         'topic_title' => 'required|max_length[500]',
-        'voting_method' => 'required|in_list[simple_majority,absolute_majority,two_thirds_majority,unanimous]',
+        'voting_method' => 'permit_empty|in_list[simple_majority,absolute_majority,two_thirds_majority,unanimous]',
         'voting_result' => 'permit_empty|in_list[pending,passed,failed,withdrawn]',
         'voting_status' => 'permit_empty|in_list[draft,active,closed]'
     ];
@@ -114,6 +125,12 @@ class VotingTopicModel extends Model
 
         // 取得投票記錄列表
         $topic['voting_records'] = $votingRecordModel->getVotingRecords($topicId);
+
+        // 取得投票選項
+        $votingOptionModel = model('VotingOptionModel');
+        $topic['voting_options'] = $votingOptionModel->where('voting_topic_id', $topicId)
+                                                    ->orderBy('sort_order', 'ASC')
+                                                    ->findAll();
 
         // 計算投票結果
         $topic['result_analysis'] = $this->calculateVotingResult($topicId);
