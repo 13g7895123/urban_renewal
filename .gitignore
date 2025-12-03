@@ -56,7 +56,13 @@ writable/logs/
 writable/session/
 writable/uploads/
 writable/debugbar/
+backend/writable/cache/
+backend/writable/logs/
+backend/writable/session/
+backend/writable/uploads/
 backend/writable/debugbar/
+backend/writable/templates/*_backup_*.docx
+backend/writable/templates/*.bk
 
 # Composer
 composer.phar
