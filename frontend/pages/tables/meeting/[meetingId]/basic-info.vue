@@ -675,7 +675,25 @@ const fillMeetingTestData = () => {
     selectedUrbanRenewal.value = urbanRenewalOptions.value[0]
   }
   meetingName.value = '114年度第一屆第3次會員大會'
-  meetingDateTime.value = '2025-12-15T14:00'
+  
+  // Generate random date within next 30 days
+  const today = new Date()
+  const randomDays = Math.floor(Math.random() * 30) + 1
+  const randomDate = new Date(today.getTime() + randomDays * 24 * 60 * 60 * 1000)
+  
+  // Generate random hour between 9 and 17
+  const randomHour = Math.floor(Math.random() * (17 - 9 + 1)) + 9
+  const randomMinute = Math.floor(Math.random() * 4) * 15 // 0, 15, 30, 45
+  
+  // Format as YYYY-MM-DDTHH:mm
+  const year = randomDate.getFullYear()
+  const month = String(randomDate.getMonth() + 1).padStart(2, '0')
+  const day = String(randomDate.getDate()).padStart(2, '0')
+  const hour = String(randomHour).padStart(2, '0')
+  const minute = String(randomMinute).padStart(2, '0')
+  
+  meetingDateTime.value = `${year}-${month}-${day}T${hour}:${minute}`
+
   // totalObservers 由 computed property 自動計算（根據 observers 陣列）
   landAreaRatioNumerator.value = 3
   landAreaRatioDenominator.value = 4
