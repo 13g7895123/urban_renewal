@@ -52,7 +52,12 @@ html.light aside.bg-gray-800 .bg-blue-600 {
   }
 }
 
-/* Force override all Tailwind dark: prefixed classes */
+/* Force override all Tailwind dark: prefixed classes - COMMENTED OUT TO FIX TRANSPARENCY ISSUES
+   These rules were causing components with dark: classes (like dark:bg-gray-900) to become transparent
+   in light mode because the selector html.light .dark\:bg-gray-900 matches the element even in light mode,
+   and overrides the base light mode class (like bg-white) due to !important.
+*/
+/*
 html.light .dark\:bg-gray-900,
 html.light .dark\:bg-gray-800,
 html.light .dark\:text-white,
@@ -63,20 +68,17 @@ html.light .dark\:ring-gray-800,
 html.light .dark\:hover\:bg-gray-900,
 html.light .dark\:hover\:bg-gray-800,
 html.light .dark\:focus-visible\:ring-primary-400 {
-  /* Reset to default/light mode values */
   background-color: transparent !important;
-  /* color: inherit !important; */
   border-color: inherit !important;
   ring-color: inherit !important;
 }
+*/
 
-/* Specifically target common dark mode component classes */
+/* Specifically target common dark mode component classes - COMMENTED OUT
 html.light [class*="dark:"] {
-  /* Remove any dark mode styling */
-  
-  /* color: inherit !important; */
   border-color: inherit !important;
 }
+*/
 
 /* Exception: Don't override sidebar dark classes */
 html.light aside.bg-gray-800 [class*="dark:"] {
