@@ -18,16 +18,16 @@ echo "Urban Renewal Voting System - Development"
 echo "========================================="
 echo ""
 
-# 檢查 .env 檔案是否存在
-if [ ! -f .env ]; then
-    echo "❌ 錯誤：找不到 .env 檔案"
+# 檢查 .env.dev 檔案是否存在
+if [ ! -f .env.dev ]; then
+    echo "❌ 錯誤：找不到 .env.dev 檔案"
     echo "請先複製 .env.example 並設定環境變數："
-    echo "  cp .env.example .env"
+    echo "  cp .env.example .env.dev"
     exit 1
 fi
 
 # 載入環境變數
-source .env
+source .env.dev
 
 echo "🔧 環境配置："
 echo "  - 後端 Port: ${BACKEND_PORT}"
@@ -73,7 +73,7 @@ done
 if [ "$FOUND_CONTAINERS" = true ]; then
     echo ""
     echo "📦 停止並移除現有容器..."
-    $DOCKER_COMPOSE -f docker-compose.dev.yml --env-file .env down
+    $DOCKER_COMPOSE -f docker-compose.dev.yml --env-file .env.dev down
 
     # 額外檢查並強制移除任何殘留容器
     for container in "${CONTAINER_NAMES[@]}"; do
@@ -105,7 +105,7 @@ if [ "$PORTS_IN_USE" = true ]; then
 fi
 
 echo "🚀 啟動 Docker Compose (Development Mode)..."
-$DOCKER_COMPOSE -f docker-compose.dev.yml --env-file .env up -d
+$DOCKER_COMPOSE -f docker-compose.dev.yml --env-file .env.dev up -d
 
 echo ""
 echo "⏳ 等待服務啟動..."
@@ -115,7 +115,8 @@ echo ""
 echo "✅ 後端服務啟動完成！"
 echo ""
 echo "📊 服務存取資訊："
-echo "  - 後端 API: http://localhost:${BACKEND_PORT}/api"
+echo "  - 🌐 本地網域: https://urban.l"
+echo "  - 後端 API: https://urban.l/api"
 echo "  - phpMyAdmin: http://localhost:${PHPMYADMIN_PORT}"
 echo "  - 資料庫連線: localhost:${DB_PORT}"
 echo ""
@@ -124,7 +125,6 @@ echo "  請在另一個終端視窗執行："
 echo "    cd frontend"
 echo "    npm install"
 echo "    npm run dev"
-echo "  前端通常會在 http://localhost:3000 啟動"
 echo ""
 echo "📝 常用指令："
 echo "  - 查看服務狀態: docker-compose -f docker-compose.dev.yml ps"

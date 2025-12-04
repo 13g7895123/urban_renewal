@@ -225,8 +225,8 @@ const exportOwners = async () => {
       return
     }
 
-    const isDev = process.dev || process.env.NODE_ENV === 'development'
-    const baseURL = isDev ? 'http://localhost:9228' : (runtimeConfig.public.apiBaseUrl || '')
+    const apiBaseUrl = runtimeConfig.public.apiBaseUrl || ''
+    const baseURL = apiBaseUrl.replace(/\/api$/, '')
     const exportUrl = `${baseURL}/api/urban-renewals/${urbanRenewalId.value}/property-owners/export`
 
     console.log('[Export] Downloading from:', exportUrl)
@@ -269,8 +269,8 @@ const downloadTemplate = async () => {
       return
     }
 
-    const isDev = process.dev || process.env.NODE_ENV === 'development'
-    const baseURL = isDev ? 'http://localhost:9228' : (runtimeConfig.public.apiBaseUrl || '')
+    const apiBaseUrl = runtimeConfig.public.apiBaseUrl || ''
+    const baseURL = apiBaseUrl.replace(/\/api$/, '')
     const templateUrl = `${baseURL}/api/property-owners/template`
 
     console.log('[Template] Downloading from:', templateUrl)

@@ -7,7 +7,7 @@
 # 使用方式：
 #   啟動：./start-dev.sh
 #   停止：./stop-dev.sh
-#   或使用：docker-compose -f docker-compose.dev.yml --env-file .env up -d
+#   或使用：docker-compose -f docker-compose.dev.yml --env-file .env.dev up -d
 
 services:
   backend:

@@ -399,7 +399,8 @@ const goBack = () => {
 const exportCheckinResults = async () => {
   try {
     const config = useRuntimeConfig()
-    const backendUrl = config.public.backendUrl || 'http://localhost:8000'
+    const apiBaseUrl = config.public.apiBaseUrl || config.public.backendUrl || ''
+    const backendUrl = apiBaseUrl.replace(/\/api$/, '')
     
     // 呼叫後端 API 匯出 Excel
     const response = await fetch(`${backendUrl}/api/meetings/${meetingId}/attendances/export`, {

@@ -6,7 +6,7 @@ export default defineNuxtConfig({
     port: parseInt(process.env.FRONTEND_PORT || '4001'),
     host: 'localhost'
   },
-  ssr: false, // 改為 SPA 模式
+  ssr: true, // 改為 SPA 模式
   modules: [
     '@nuxt/ui',
     '@pinia/nuxt',
@@ -71,8 +71,13 @@ export default defineNuxtConfig({
     },
     server: {
       allowedHosts: [
-        'project.local'
+        'urban.l'
       ],
+      hmr: {
+        protocol: 'wss',  // 如果用 HTTPS，改成 'wss'；HTTP 用 'ws'
+        host: 'urban.l',
+        clientPort: 443   // HTTPS 用 443，HTTP 用 80
+      }
     },
     build: {
       rollupOptions: {

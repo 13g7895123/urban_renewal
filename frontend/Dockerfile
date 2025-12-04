@@ -24,10 +24,11 @@ RUN chmod -R 755 node_modules/.bin 2>/dev/null || true
 RUN if [ -f node_modules/.bin/nuxt ]; then chmod +x node_modules/.bin/nuxt; fi
 
 # Set production environment variables for build
+# These are placeholders - override with docker-compose environment
 ENV NODE_ENV=production
-ENV NUXT_PUBLIC_API_BASE_URL=http://localhost:8000/api
-ENV NUXT_PUBLIC_BACKEND_URL=http://localhost:8000/api
-ENV NUXT_PUBLIC_BACKEND_HOST=localhost
+ENV NUXT_PUBLIC_API_BASE_URL=http://backend:8000/api
+ENV NUXT_PUBLIC_BACKEND_URL=http://backend:8000
+ENV NUXT_PUBLIC_BACKEND_HOST=backend
 ENV NUXT_PUBLIC_BACKEND_PORT=8000
 
 # Build the application
@@ -53,10 +54,10 @@ ENV PORT 3000
 ENV HOST 0.0.0.0
 ENV NODE_ENV=production
 
-# Set production API configuration
-ENV NUXT_PUBLIC_API_BASE_URL=http://localhost:8000/api
-ENV NUXT_PUBLIC_BACKEND_URL=http://localhost:8000/api
-ENV NUXT_PUBLIC_BACKEND_HOST=localhost
+# Set production API configuration - override with docker-compose environment
+ENV NUXT_PUBLIC_API_BASE_URL=http://backend:8000/api
+ENV NUXT_PUBLIC_BACKEND_URL=http://backend:8000
+ENV NUXT_PUBLIC_BACKEND_HOST=backend
 ENV NUXT_PUBLIC_BACKEND_PORT=8000
 
 # Start the application
