@@ -1,17 +1,15 @@
 /**
  * Authentication plugin for automatic initialization
- * This plugin runs on the client-side to restore authentication state
+ * 使用 httpOnly Cookie，在頁面載入時驗證 cookie 是否有效
  */
 export default defineNuxtPlugin(async () => {
   const authStore = useAuthStore()
 
-  // Only run on client-side
   if (process.client) {
     console.log('[Auth Plugin] Initializing authentication...')
 
     try {
-      // Pinia 持久化插件會自動從 sessionStorage 恢復狀態
-      // initializeAuth() 只是一個向後兼容的空方法
+      // 嘗試從 cookie 驗證並取得用戶資料
       await authStore.initializeAuth()
 
       if (authStore.isLoggedIn) {
@@ -24,7 +22,6 @@ export default defineNuxtPlugin(async () => {
     }
   }
 
-  // Make auth store globally available
   return {
     provide: {
       authStore
