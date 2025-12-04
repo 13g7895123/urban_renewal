@@ -180,28 +180,39 @@ export const useAuthStore = defineStore('auth', () => {
   
   // 刷新 token
   const refreshAuthToken = async () => {
-    try {
-      const { post } = useApi()
-      const response = await post('/auth/refresh', {})
+    const doRefresh = async () => {
+      try {
+        const { post } = useApi()
+        const response = await post('/auth/refresh', {})
 
-      if (!response.success) {
-        throw new Error('Token refresh failed')
+        if (!response.success) {
+          throw new Error('Token refresh failed')
+        }
+
+        const backendData = response.data.data || response.data
+        const { expires_in } = backendData
+
+        if (expires_in) {
+          const expiresAt = new Date(Date.now() + (expires_in * 1000))
+          tokenExpiresAt.value = expiresAt.toISOString()
+        }
+
+        return true
+      } catch (error) {
+        console.error('Refresh token error:', error)
+        await logout(true)
+        throw error
       }
-
-      const backendData = response.data.data || response.data
-      const { expires_in } = backendData
-
-      if (expires_in) {
-        const expiresAt = new Date(Date.now() + (expires_in * 1000))
-        tokenExpiresAt.value = expiresAt.toISOString()
-      }
-
-      return true
-    } catch (error) {
-      console.error('Refresh token error:', error)
-      await logout(true)
-      throw error
     }
+
+    // 使用 Web Locks API 避免多個分頁同時刷新導致 Race Condition
+    if (typeof navigator !== 'undefined' && navigator.locks) {
+      return navigator.locks.request('auth_refresh_token', async () => {
+        return await doRefresh()
+      })
+    }
+
+    return await doRefresh()
   }
 
   return {

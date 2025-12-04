@@ -4,13 +4,13 @@
 
     <div class="p-8">
       <!-- Header -->
-      <div class="mb-8">
+      <div class="mb-8 text-center">
         <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ renewalGroupName }}</h1>
         <h2 class="text-xl font-semibold text-gray-700 mb-4">{{ meetingName }}</h2>
 
         <!-- Topic and Time -->
-        <div class="bg-white p-6 rounded-lg shadow-sm border mb-6">
-          <h3 class="text-lg font-medium text-gray-900 mb-2">{{ topicName }}</h3>
+        <div class="mb-6">
+          <h3 class="text-lg font-medium text-gray-900 mb-1">{{ topicName }}</h3>
           <p class="text-gray-600">{{ votingTime }}</p>
         </div>
 
@@ -30,12 +30,12 @@
           }"
           @click="!voter.hasVoted && openVotingModal(voter)"
         >
-          <!-- Two-digit Number -->
+          <!-- Sequence Number -->
           <div class="text-2xl font-bold text-gray-700 mb-2">
             {{ String(index + 1).padStart(2, '0') }}
           </div>
 
-          <!-- Voter Name -->
+          <!-- Voter Info (Code + Name) -->
           <div
             class="text-sm font-medium truncate"
             :class="{
@@ -43,7 +43,7 @@
               'text-gray-900': !voter.hasVoted
             }"
           >
-            {{ voter.name }}
+            {{ voter.ownerCode }} {{ voter.name }}
           </div>
 
           <!-- Voted Indicator -->
@@ -249,6 +249,7 @@ const loadVoters = async () => {
     voters.value = Array.isArray(votesData) ? votesData.map(v => ({
       id: v.voter_id || v.id,
       name: v.voter_name || v.name || '',
+      ownerCode: v.owner_code || '',
       hasVoted: v.has_voted || v.hasVoted || false,
       vote: v.vote || null
     })) : []

@@ -113,12 +113,9 @@ export default defineNuxtPlugin((nuxtApp) => {
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && authStore.isLoggedIn) {
         // 頁面重新可見，檢查是否需要更新 token
-        if (authStore.isTokenExpiringSoon()) {
-          console.log('[Token Refresh] Page visible and token expiring soon, refreshing...')
+        if (authStore.isTokenExpiringSoon() || authStore.isTokenExpired()) {
+          console.log('[Token Refresh] Page visible and token expired or expiring soon, attempting refresh...')
           refreshTokenNow()
-        } else if (authStore.isTokenExpired()) {
-          console.log('[Token Refresh] Page visible but token expired, logging out...')
-          authStore.logout(true)
         } else {
           // 重新排程
           scheduleTokenRefresh()

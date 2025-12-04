@@ -606,8 +606,8 @@ class AuthController extends ResourceController
     {
         $sessionModel = model('UserSessionModel');
 
-        // 先清除該使用者的舊 sessions
-        $sessionModel->where('user_id', $userId)->set(['is_active' => 0])->update();
+        // 先清除該使用者的舊 sessions (註解掉以支援多裝置/多視窗登入)
+        // $sessionModel->where('user_id', $userId)->set(['is_active' => 0])->update();
 
         // 建立新 session
         $sessionData = [

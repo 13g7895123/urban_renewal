@@ -67,7 +67,7 @@ class VotingRecordModel extends Model
      */
     public function getVotingRecords($topicId, $page = 1, $perPage = 10, $choice = null)
     {
-        $builder = $this->select('voting_records.*, property_owners.name as owner_name, property_owners.id_number')
+        $builder = $this->select('voting_records.*, property_owners.name as owner_name, property_owners.id_number, property_owners.owner_code')
                        ->join('property_owners', 'property_owners.id = voting_records.property_owner_id', 'left')
                        ->where('voting_records.voting_topic_id', $topicId);
 
