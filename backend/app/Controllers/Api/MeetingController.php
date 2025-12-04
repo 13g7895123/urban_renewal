@@ -318,8 +318,8 @@ class MeetingController extends ResourceController
 
             // 設定預設值
             $data['meeting_status'] = 'draft';
-            $data['attendee_count'] = 0;
-            $data['calculated_total_count'] = 0;
+            if (!isset($data['attendee_count'])) $data['attendee_count'] = 0;
+            if (!isset($data['calculated_total_count'])) $data['calculated_total_count'] = 0;
             $data['observer_count'] = 0;
 
             $meetingId = $this->meetingModel->insert($data);
@@ -332,6 +332,27 @@ class MeetingController extends ResourceController
                         'message' => '會議建立失敗'
                     ]
                 ], 500);
+            }
+
+            // Save observers if provided
+            if (!empty($data['observers']) && is_array($data['observers'])) {
+                $observerModel = model('MeetingObserverModel');
+                foreach ($data['observers'] as $observer) {
+                    if (!empty($observer['name'])) {
+                        $observerModel->insert([
+                            'meeting_id' => $meetingId,
+                            'observer_name' => $observer['name'],
+                            'observer_title' => $observer['title'] ?? null,
+                            'observer_organization' => $observer['organization'] ?? null,
+                            'contact_phone' => $observer['phone'] ?? null,
+                            'notes' => $observer['notes'] ?? null
+                        ]);
+                    }
+                }
+                
+                // Update observer count
+                $count = $observerModel->where('meeting_id', $meetingId)->countAllResults();
+                $this->meetingModel->update($meetingId, ['observer_count' => $count]);
             }
 
             $meeting = $this->meetingModel->getMeetingWithDetails($meetingId);
@@ -446,6 +467,30 @@ class MeetingController extends ResourceController
                         'message' => '會議更新失敗'
                     ]
                 ], 500);
+            }
+
+            // Update observers if provided
+            if (isset($data['observers']) && is_array($data['observers'])) {
+                $observerModel = model('MeetingObserverModel');
+                // Delete existing observers for this meeting (soft delete)
+                $observerModel->where('meeting_id', $id)->delete();
+                
+                foreach ($data['observers'] as $observer) {
+                    if (!empty($observer['name'])) {
+                        $observerModel->insert([
+                            'meeting_id' => $id,
+                            'observer_name' => $observer['name'],
+                            'observer_title' => $observer['title'] ?? null,
+                            'observer_organization' => $observer['organization'] ?? null,
+                            'contact_phone' => $observer['phone'] ?? null,
+                            'notes' => $observer['notes'] ?? null
+                        ]);
+                    }
+                }
+                
+                // Update observer count
+                $count = $observerModel->where('meeting_id', $id)->countAllResults();
+                $this->meetingModel->update($id, ['observer_count' => $count]);
             }
 
             $updatedMeeting = $this->meetingModel->getMeetingWithDetails($id);

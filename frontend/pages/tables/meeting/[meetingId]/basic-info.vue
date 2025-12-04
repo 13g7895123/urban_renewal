@@ -674,7 +674,11 @@ const fillMeetingTestData = () => {
   if (urbanRenewalOptions.value.length > 0) {
     selectedUrbanRenewal.value = urbanRenewalOptions.value[0]
   }
-  meetingName.value = '114年度第一屆第3次會員大會'
+  // Generate random meeting name
+  const randomYear = Math.floor(Math.random() * 3) + 113 // 113-115
+  const randomSession = Math.floor(Math.random() * 5) + 1 // 1-5
+  const randomTimes = Math.floor(Math.random() * 10) + 1 // 1-10
+  meetingName.value = `${randomYear}年度第${randomSession}屆第${randomTimes}次會員大會`
   
   // Generate random date within next 30 days
   const today = new Date()

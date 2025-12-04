@@ -81,6 +81,8 @@ class MeetingModel extends Model
     public function getMeetings($page = 1, $perPage = 10, $filters = [])
     {
         $builder = $this->select('meetings.*, urban_renewals.name as urban_renewal_name')
+                       ->select('(SELECT COUNT(*) FROM voting_topics WHERE voting_topics.meeting_id = meetings.id AND voting_topics.deleted_at IS NULL) as voting_topics_count')
+                       ->select('(SELECT COUNT(*) FROM meeting_observers WHERE meeting_observers.meeting_id = meetings.id) as total_observers')
                        ->join('urban_renewals', 'urban_renewals.id = meetings.urban_renewal_id', 'left')
                        ->where('meetings.deleted_at', null);
 
@@ -129,6 +131,8 @@ class MeetingModel extends Model
     public function getMeetingsByUrbanRenewal($urbanRenewalId, $page = 1, $perPage = 10, $status = null)
     {
         $builder = $this->select('meetings.*, urban_renewals.name as urban_renewal_name')
+                       ->select('(SELECT COUNT(*) FROM voting_topics WHERE voting_topics.meeting_id = meetings.id AND voting_topics.deleted_at IS NULL) as voting_topics_count')
+                       ->select('(SELECT COUNT(*) FROM meeting_observers WHERE meeting_observers.meeting_id = meetings.id) as total_observers')
                        ->join('urban_renewals', 'urban_renewals.id = meetings.urban_renewal_id', 'left')
                        ->where('meetings.urban_renewal_id', $urbanRenewalId)
                        ->where('meetings.deleted_at', null);
