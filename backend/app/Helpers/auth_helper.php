@@ -3,6 +3,7 @@
 if (!function_exists('auth_validate_request')) {
     /**
      * Validate authentication token and check user permissions with detailed debugging
+     * 支援從 httpOnly Cookie 或 Authorization header 讀取 token
      *
      * @param array $requiredRoles Optional array of required roles
      * @param bool $enableDebug Enable debug logging (default: true in development)
@@ -29,38 +30,43 @@ if (!function_exists('auth_validate_request')) {
             'required_roles' => !empty($requiredRoles) ? json_encode($requiredRoles) : null,
         ];
 
-        // Stage 1: 檢查 Authorization header
-        $authHeader = $request->getHeader('Authorization');
-        $debugData['has_auth_header'] = $authHeader ? 1 : 0;
+        // Stage 1: 取得 Token (優先從 Cookie，其次從 Header)
+        $token = null;
+        $tokenSource = null;
         
-        if (!$authHeader) {
-            $debugData['stage'] = 'header_check';
+        // 優先從 httpOnly Cookie 取得
+        if (isset($_COOKIE['auth_token']) && !empty($_COOKIE['auth_token'])) {
+            $token = $_COOKIE['auth_token'];
+            $tokenSource = 'cookie';
+            $debugData['token_source'] = 'cookie';
+        } else {
+            // 從 Authorization header 取得 (向後相容)
+            $authHeader = $request->getHeader('Authorization');
+            if ($authHeader) {
+                $authValue = $authHeader->getValue();
+                if ($authValue && str_starts_with($authValue, 'Bearer ')) {
+                    $token = substr($authValue, 7);
+                    $tokenSource = 'header';
+                    $debugData['token_source'] = 'header';
+                }
+            }
+        }
+        
+        $debugData['has_token'] = $token ? 1 : 0;
+        
+        if (!$token) {
+            $debugData['stage'] = 'token_check';
             $debugData['stage_status'] = 'fail';
-            $debugData['stage_message'] = 'Missing Authorization header';
+            $debugData['stage_message'] = 'No token found in cookie or header';
             auth_save_debug_log($debugData, $startTime, $enableDebug);
             return false;
         }
 
-        $authValue = $authHeader->getValue();
-        // 脫敏處理：只記錄前後各10個字元
-        $debugData['auth_header_value'] = auth_mask_token($authValue);
-        
-        if (!$authValue || !str_starts_with($authValue, 'Bearer ')) {
-            $debugData['stage'] = 'header_check';
-            $debugData['stage_status'] = 'fail';
-            $debugData['stage_message'] = 'Invalid Authorization header format';
-            $debugData['token_type'] = str_starts_with($authValue, 'Bearer ') ? 'Bearer' : 'Unknown';
-            auth_save_debug_log($debugData, $startTime, $enableDebug);
-            return false;
-        }
-
-        // Stage 2: 解析 Token
-        $token = substr($authValue, 7); // Remove 'Bearer ' prefix
+        // 脫敏處理
         $debugData['token_hash'] = hash('sha256', $token);
-        $debugData['token_type'] = 'Bearer';
 
         try {
-            // Stage 3: 解碼 JWT
+            // Stage 2: 解碼 JWT
             $jwtConfig = config('JWT');
             $debugData['stage'] = 'token_decode';
             
@@ -85,7 +91,7 @@ if (!function_exists('auth_validate_request')) {
             $debugData['jwt_session_id'] = $decoded->session_id ?? null;
             $debugData['jwt_jti'] = $decoded->jti ?? null;
 
-            // Stage 4: 檢查過期時間
+            // Stage 3: 檢查過期時間
             $debugData['stage'] = 'claims_validate';
             $currentTime = time();
             
@@ -94,7 +100,7 @@ if (!function_exists('auth_validate_request')) {
                 $debugData['time_until_exp'] = $decoded->exp - $currentTime;
             }
 
-            // Stage 5: 驗證使用者
+            // Stage 4: 驗證使用者
             $debugData['stage'] = 'user_validate';
             $debugData['user_id'] = $decoded->user_id;
             
@@ -120,7 +126,7 @@ if (!function_exists('auth_validate_request')) {
                 return false;
             }
 
-            // Stage 6: 檢查 Session（如果有）
+            // Stage 5: 檢查 Session（如果有）
             if (isset($decoded->session_id)) {
                 $sessionModel = model('UserSessionModel');
                 $session = $sessionModel->find($decoded->session_id);
@@ -144,7 +150,7 @@ if (!function_exists('auth_validate_request')) {
                 }
             }
 
-            // Stage 7: 檢查角色權限
+            // Stage 6: 檢查角色權限
             if (!empty($requiredRoles)) {
                 $debugData['stage'] = 'permission_check';
                 $debugData['role_check_passed'] = in_array($user['role'], $requiredRoles) ? 1 : 0;
@@ -161,7 +167,7 @@ if (!function_exists('auth_validate_request')) {
                 }
             }
 
-            // Stage 8: 成功
+            // Stage 7: 成功
             $debugData['stage'] = 'success';
             $debugData['stage_status'] = 'pass';
             $debugData['stage_message'] = 'Authentication successful';

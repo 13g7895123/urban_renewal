@@ -13,17 +13,40 @@ class AuthController extends ResourceController
     protected $userModel;
     protected $format = 'json';
 
+    // Cookie 設定常數
+    private const TOKEN_COOKIE_NAME = 'auth_token';
+    private const REFRESH_COOKIE_NAME = 'refresh_token';
+    private const TOKEN_EXPIRY = 86400; // 24 小時
+    private const REFRESH_EXPIRY = 604800; // 7 天
+
     public function __construct()
     {
         $this->userModel = new UserModel();
 
         // Load helper functions
-        helper(['auth', 'response', 'audit']);
+        helper(['auth', 'response', 'audit', 'cookie']);
+    }
 
-        // Set CORS headers
-        header('Access-Control-Allow-Origin: *');
+    /**
+     * 設定 CORS headers (支援 credentials)
+     */
+    private function setCorsHeaders()
+    {
+        $allowedOrigins = [
+            'https://urban.l',
+            'http://localhost:9128',
+            'http://localhost:3000'
+        ];
+        
+        $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+        
+        if (in_array($origin, $allowedOrigins)) {
+            header("Access-Control-Allow-Origin: {$origin}");
+        }
+        
         header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
         header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+        header('Access-Control-Allow-Credentials: true');
     }
 
     /**
@@ -31,6 +54,7 @@ class AuthController extends ResourceController
      */
     public function options()
     {
+        $this->setCorsHeaders();
         return $this->response->setStatusCode(200);
     }
 
@@ -107,6 +131,9 @@ class AuthController extends ResourceController
             // 儲存 session
             $this->saveUserSession($user['id'], $token, $refreshToken);
 
+            // 設定 httpOnly cookies
+            $this->setAuthCookies($token, $refreshToken);
+
             // 記錄成功登入事件
             log_auth_event('login_success', $user['id'], null, null, [
                 'role' => $user['role'],
@@ -116,13 +143,13 @@ class AuthController extends ResourceController
             // 移除敏感資料（保留 is_company_manager 和 user_type 等必要欄位）
             unset($user['password_hash'], $user['password_reset_token'], $user['login_attempts']);
 
+            $this->setCorsHeaders();
+            
             return $this->respond([
                 'success' => true,
                 'data' => [
                     'user' => $user, // 包含 is_company_manager, user_type 等所有使用者欄位
-                    'token' => $token,
-                    'refresh_token' => $refreshToken,
-                    'expires_in' => 86400 // 24小時
+                    'expires_in' => self::TOKEN_EXPIRY
                 ],
                 'message' => '登入成功'
             ]);
@@ -140,26 +167,26 @@ class AuthController extends ResourceController
     public function logout()
     {
         try {
-            $token = $this->getTokenFromHeader();
+            $token = $this->getTokenFromCookie();
             if (!$token) {
-                return $this->fail([
-                    'success' => false,
-                    'error' => [
-                        'code' => 'UNAUTHORIZED',
-                        'message' => '未提供認證令牌'
-                    ]
-                ], 401);
+                $token = $this->getTokenFromHeader(); // fallback
+            }
+            
+            if ($token) {
+                // 使 session 失效
+                $sessionModel = model('UserSessionModel');
+                $session = $sessionModel->where('session_token', $token)->first();
+                $sessionModel->where('session_token', $token)->set(['is_active' => 0])->update();
+
+                // 記錄登出事件
+                if ($session) {
+                    log_auth_event('logout', $session['user_id']);
+                }
             }
 
-            // 使 session 失效
-            $sessionModel = model('UserSessionModel');
-            $session = $sessionModel->where('session_token', $token)->first();
-            $sessionModel->where('session_token', $token)->set(['is_active' => 0])->update();
-
-            // 記錄登出事件
-            if ($session) {
-                log_auth_event('logout', $session['user_id']);
-            }
+            // 清除 cookies
+            $this->clearAuthCookies();
+            $this->setCorsHeaders();
 
             return $this->respond([
                 'success' => true,
@@ -185,7 +212,11 @@ class AuthController extends ResourceController
     public function refresh()
     {
         try {
-            $refreshToken = $this->request->getJSON()->refresh_token ?? '';
+            // 優先從 cookie 取得 refresh token
+            $refreshToken = $this->getRefreshTokenFromCookie();
+            if (!$refreshToken) {
+                $refreshToken = $this->request->getJSON()->refresh_token ?? '';
+            }
 
             $sessionModel = model('UserSessionModel');
             $session = $sessionModel->where('refresh_token', $refreshToken)
@@ -194,6 +225,7 @@ class AuthController extends ResourceController
                                    ->first();
 
             if (!$session) {
+                $this->clearAuthCookies();
                 return $this->fail([
                     'success' => false,
                     'error' => [
@@ -205,6 +237,7 @@ class AuthController extends ResourceController
 
             $user = $this->userModel->find($session['user_id']);
             if (!$user || !$user['is_active']) {
+                $this->clearAuthCookies();
                 return $this->fail([
                     'success' => false,
                     'error' => [
@@ -222,20 +255,23 @@ class AuthController extends ResourceController
             $sessionModel->update($session['id'], [
                 'session_token' => $newToken,
                 'refresh_token' => $newRefreshToken,
-                'expires_at' => date('Y-m-d H:i:s', time() + 86400),
-                'refresh_expires_at' => date('Y-m-d H:i:s', time() + 604800), // 7天
+                'expires_at' => date('Y-m-d H:i:s', time() + self::TOKEN_EXPIRY),
+                'refresh_expires_at' => date('Y-m-d H:i:s', time() + self::REFRESH_EXPIRY),
                 'last_activity_at' => date('Y-m-d H:i:s')
             ]);
+
+            // 設定新的 cookies
+            $this->setAuthCookies($newToken, $newRefreshToken);
 
             // 記錄 token 更新事件
             log_auth_event('token_refresh', $user['id']);
 
+            $this->setCorsHeaders();
+            
             return $this->respond([
                 'success' => true,
                 'data' => [
-                    'token' => $newToken,
-                    'refresh_token' => $newRefreshToken,
-                    'expires_in' => 86400
+                    'expires_in' => self::TOKEN_EXPIRY
                 ],
                 'message' => 'Token 刷新成功'
             ]);
@@ -259,6 +295,8 @@ class AuthController extends ResourceController
     public function me()
     {
         try {
+            $this->setCorsHeaders();
+            
             $user = $this->getCurrentUser();
             if (!$user) {
                 return $this->fail([
@@ -589,6 +627,83 @@ class AuthController extends ResourceController
     }
 
     /**
+     * 設定認證 Cookies
+     */
+    private function setAuthCookies($token, $refreshToken)
+    {
+        $secure = true; // HTTPS only
+        $httponly = true;
+        $samesite = 'Strict';
+        $path = '/';
+        
+        // Auth token cookie (24 小時)
+        setcookie(
+            self::TOKEN_COOKIE_NAME,
+            $token,
+            [
+                'expires' => time() + self::TOKEN_EXPIRY,
+                'path' => $path,
+                'secure' => $secure,
+                'httponly' => $httponly,
+                'samesite' => $samesite
+            ]
+        );
+        
+        // Refresh token cookie (7 天)
+        setcookie(
+            self::REFRESH_COOKIE_NAME,
+            $refreshToken,
+            [
+                'expires' => time() + self::REFRESH_EXPIRY,
+                'path' => $path,
+                'secure' => $secure,
+                'httponly' => $httponly,
+                'samesite' => $samesite
+            ]
+        );
+    }
+
+    /**
+     * 清除認證 Cookies
+     */
+    private function clearAuthCookies()
+    {
+        $path = '/';
+        
+        setcookie(self::TOKEN_COOKIE_NAME, '', [
+            'expires' => time() - 3600,
+            'path' => $path,
+            'secure' => true,
+            'httponly' => true,
+            'samesite' => 'Strict'
+        ]);
+        
+        setcookie(self::REFRESH_COOKIE_NAME, '', [
+            'expires' => time() - 3600,
+            'path' => $path,
+            'secure' => true,
+            'httponly' => true,
+            'samesite' => 'Strict'
+        ]);
+    }
+
+    /**
+     * 從 Cookie 取得 Token
+     */
+    private function getTokenFromCookie()
+    {
+        return $_COOKIE[self::TOKEN_COOKIE_NAME] ?? null;
+    }
+
+    /**
+     * 從 Cookie 取得 Refresh Token
+     */
+    private function getRefreshTokenFromCookie()
+    {
+        return $_COOKIE[self::REFRESH_COOKIE_NAME] ?? null;
+    }
+
+    /**
      * 從 Header 取得 Token
      */
     private function getTokenFromHeader()
@@ -605,7 +720,12 @@ class AuthController extends ResourceController
      */
     private function getCurrentUser()
     {
-        $token = $this->getTokenFromHeader();
+        // 優先從 cookie 取得 token
+        $token = $this->getTokenFromCookie();
+        if (!$token) {
+            $token = $this->getTokenFromHeader(); // fallback
+        }
+        
         if (!$token) {
             return null;
         }

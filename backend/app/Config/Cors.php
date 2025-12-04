@@ -35,14 +35,15 @@ class Cors extends BaseConfig
          *   - ['https://www.example.com']
          */
         'allowedOrigins' => [
-            'http://localhost:4357',  // Local npm dev server (start-local-npm.sh)
-            'http://localhost:9128',  // Frontend Docker container
-            'http://localhost:9228',  // Backend API port (for direct testing)
-            'http://localhost:3000',  // Alternative frontend port
-            'http://localhost:3001',  // Production environment port
+            'https://urban.l',         // Local domain with SSL
+            'http://localhost:4357',   // Local npm dev server (start-local-npm.sh)
+            'http://localhost:9128',   // Frontend Docker container
+            'http://localhost:9228',   // Backend API port (for direct testing)
+            'http://localhost:3000',   // Alternative frontend port
+            'http://localhost:3001',   // Production environment port
             'http://localhost:4001',   // Production environment port
             'http://localhost:4002',   // Production environment port
-            'http://localhost:4003'   // Production environment port
+            'http://localhost:4003'    // Production environment port
         ],
 
         /**
@@ -66,7 +67,7 @@ class Cors extends BaseConfig
          *
          * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Credentials
          */
-        'supportsCredentials' => false,
+        'supportsCredentials' => true,
 
         /**
          * Set headers to allow.
