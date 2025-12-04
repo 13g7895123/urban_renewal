@@ -229,6 +229,7 @@ const meetingId = route.params.meetingId
 // API composables
 const { getMeeting } = useMeetings()
 const { createVotingTopic } = useVotingTopics()
+const { getPropertyOwners } = useUrbanRenewal()
 const { showSuccess, showError } = useSweetAlert()
 
 // Loading states
@@ -275,7 +276,9 @@ const loadMeetingInfo = async () => {
       id: meeting.id,
       name: meeting.meeting_name || meeting.name || '',
       dateTime: `${meeting.meeting_date || meeting.date || ''} ${meeting.meeting_time || meeting.time || ''}`,
-      renewalGroup: meeting.urban_renewal_name || meeting.renewal_group || meeting.renewalGroup || ''
+      renewalGroup: meeting.urban_renewal_name || meeting.renewal_group || meeting.renewalGroup || '',
+      urbanRenewalId: meeting.urban_renewal_id,
+      calculatedTotalCount: meeting.calculated_total_count || 0
     }
     console.log('[New Voting Topic] Meeting info loaded:', meetingInfo.value)
   } else {
@@ -313,16 +316,48 @@ const removePropertyOwner = (index) => {
   propertyOwners.value.splice(index, 1)
 }
 
-const importPropertyOwners = () => {
-  // TODO: Implement import functionality
-  console.log('Import property owners')
+const importPropertyOwners = async () => {
+  if (!meetingInfo.value?.urbanRenewalId) {
+    showError('無法匯入', '找不到所屬更新會資料')
+    return
+  }
 
-  // For demo, add some sample owners
-  propertyOwners.value = [
-    { name: '王五', isPinned: false },
-    { name: '趙六', isPinned: false },
-    { name: '錢七', isPinned: true }
-  ]
+  const limit = meetingInfo.value.calculatedTotalCount
+  if (!limit || limit <= 0) {
+    showError('無法匯入', '納入計算總人數為 0')
+    return
+  }
+
+  isLoading.value = true
+  try {
+    console.log(`[New Voting Topic] Importing ${limit} property owners for renewal:`, meetingInfo.value.urbanRenewalId)
+    
+    // Fetch property owners with pagination limit matching calculatedTotalCount
+    const response = await getPropertyOwners(meetingInfo.value.urbanRenewalId, { 
+      per_page: limit,
+      page: 1
+    })
+
+    if (response.success) {
+      const owners = response.data.data || response.data
+      
+      // Map to required format and limit count just in case
+      const importedOwners = owners.slice(0, limit).map(owner => ({
+        name: owner.name,
+        isPinned: false
+      }))
+
+      propertyOwners.value = importedOwners
+      showSuccess('匯入成功', `已匯入 ${importedOwners.length} 位所有權人`)
+    } else {
+      showError('匯入失敗', response.error?.message || '無法取得所有權人資料')
+    }
+  } catch (error) {
+    console.error('[New Voting Topic] Import error:', error)
+    showError('匯入失敗', '發生未預期的錯誤')
+  } finally {
+    isLoading.value = false
+  }
 }
 
 // Export function
