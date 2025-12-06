@@ -536,4 +536,67 @@ class VotingController extends ResourceController
         $filename = '投票記錄_' . $topicId . '_' . date('YmdHis') . '.xlsx';
         return $excel->saveToFile($filename);
     }
+
+    /**
+     * 重新計算投票議題的面積權重
+     * POST /api/voting/{topicId}/recalculate-weights
+     */
+    public function recalculateWeights($topicId = null)
+    {
+        try {
+            // 驗證用戶
+            $user = auth_validate_request();
+            if (!$user) {
+                return $this->failUnauthorized('請重新登入');
+            }
+
+            if (!$topicId) {
+                return response_error('議題ID為必填', 400);
+            }
+
+            // 檢查議題存在
+            $votingTopicModel = model('VotingTopicModel');
+            $topic = $votingTopicModel->find($topicId);
+            if (!$topic) {
+                return response_error('投票議題不存在', 404);
+            }
+
+            // 檢查會議和權限
+            $meetingModel = model('MeetingModel');
+            $meeting = $meetingModel->find($topic['meeting_id']);
+            if (!$meeting) {
+                return response_error('會議不存在', 404);
+            }
+
+            // 檢查用戶權限
+            helper('auth');
+            if ($user['role'] !== 'admin' && !auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
+                return $this->failForbidden('無權限執行此操作');
+            }
+
+            // 執行重新計算
+            $result = $this->model->recalculateAreaWeights($topicId);
+
+            // 記錄操作
+            log_message('info', "重新計算投票議題 {$topicId} 的面積權重: " . json_encode($result));
+
+            if ($result['success']) {
+                return response_success('面積權重重新計算完成', [
+                    'total' => $result['total'],
+                    'updated' => $result['updated']
+                ]);
+            } else {
+                return response_success('面積權重重新計算完成（部分失敗）', [
+                    'total' => $result['total'],
+                    'updated' => $result['updated'],
+                    'failed' => $result['failed'],
+                    'errors' => $result['errors']
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            log_message('error', '重新計算面積權重失敗: ' . $e->getMessage());
+            return response_error('重新計算面積權重失敗', 500);
+        }
+    }
 }

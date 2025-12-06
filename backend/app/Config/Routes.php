@@ -174,6 +174,7 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         $routes->get('statistics/(:num)', 'VotingController::statistics/$1');   // GET /api/voting/statistics/{topicId}
         $routes->get('export/(:num)', 'VotingController::export/$1');           // GET /api/voting/export/{topicId}
         $routes->get('detailed/(:num)', 'VotingController::detailed/$1');       // GET /api/voting/detailed/{topicId}
+        $routes->post('recalculate-weights/(:num)', 'VotingController::recalculateWeights/$1');  // POST /api/voting/recalculate-weights/{topicId}
 
         // Handle OPTIONS for specific routes
         $routes->options('(:any)', 'VotingController::options');

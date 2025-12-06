@@ -139,6 +139,13 @@ export const useVoting = () => {
     return await get(`/voting/detailed/${topicId}`)
   }
 
+  /**
+   * Recalculate area weights for a voting topic
+   */
+  const recalculateAreaWeights = async (topicId) => {
+    return await post(`/voting/recalculate-weights/${topicId}`)
+  }
+
   return {
     getVotes,
     vote,
@@ -147,6 +154,7 @@ export const useVoting = () => {
     removeVote,
     getVotingStatistics,
     exportVotingResults,
-    getDetailedResults
+    getDetailedResults,
+    recalculateAreaWeights
   }
 }

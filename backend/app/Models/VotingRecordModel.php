@@ -151,14 +151,31 @@ class VotingRecordModel extends Model
             return false;
         }
 
+        // 使用計算後的總面積 (total_land_area, total_building_area)
+        // 如果資料庫中沒有，則即時計算
+        $landAreaWeight = $owner['total_land_area'] ?? 0;
+        $buildingAreaWeight = $owner['total_building_area'] ?? 0;
+
+        // 如果總面積為 0，嘗試重新計算
+        if ($landAreaWeight == 0 && $buildingAreaWeight == 0) {
+            $totals = $propertyOwnerModel->calculateTotalAreas($propertyOwnerId);
+            $landAreaWeight = $totals['total_land_area'] ?? 0;
+            $buildingAreaWeight = $totals['total_building_area'] ?? 0;
+            
+            // 更新資料庫中的快取值
+            if ($landAreaWeight > 0 || $buildingAreaWeight > 0) {
+                $propertyOwnerModel->updateTotalAreas($propertyOwnerId);
+            }
+        }
+
         $voteData = [
             'voting_topic_id' => $topicId,
             'property_owner_id' => $propertyOwnerId,
             'vote_choice' => $choice,
             'vote_time' => date('Y-m-d H:i:s'),
             'voter_name' => $voterName ?: $owner['name'],
-            'land_area_weight' => $owner['land_area'] ?? 0,
-            'building_area_weight' => $owner['building_area'] ?? 0,
+            'land_area_weight' => $landAreaWeight,
+            'building_area_weight' => $buildingAreaWeight,
             'notes' => $notes
         ];
 
@@ -232,8 +249,8 @@ class VotingRecordModel extends Model
                             property_owners.name as owner_name,
                             property_owners.id_number,
                             property_owners.phone,
-                            property_owners.land_area,
-                            property_owners.building_area')
+                            property_owners.total_land_area as land_area,
+                            property_owners.total_building_area as building_area')
                    ->join('property_owners', 'property_owners.id = voting_records.property_owner_id', 'left')
                    ->where('voting_records.voting_topic_id', $topicId)
                    ->orderBy('voting_records.vote_time', 'ASC')
@@ -315,5 +332,59 @@ class VotingRecordModel extends Model
             'abstain' => '棄權'
         ];
         return $translations[$choice] ?? $choice;
+    }
+
+    /**
+     * 重新計算並更新投票議題中所有投票記錄的面積權重
+     * 
+     * @param int $topicId 投票議題 ID
+     * @return array 更新結果統計
+     */
+    public function recalculateAreaWeights($topicId)
+    {
+        $records = $this->where('voting_topic_id', $topicId)->findAll();
+        $propertyOwnerModel = model('PropertyOwnerModel');
+        
+        $updated = 0;
+        $failed = 0;
+        $errors = [];
+
+        foreach ($records as $record) {
+            try {
+                $owner = $propertyOwnerModel->find($record['property_owner_id']);
+                if (!$owner) {
+                    $errors[] = "找不到所有權人 ID: {$record['property_owner_id']}";
+                    $failed++;
+                    continue;
+                }
+
+                // 取得計算後的面積
+                $totals = $propertyOwnerModel->calculateTotalAreas($record['property_owner_id']);
+                
+                // 更新投票記錄
+                $result = $this->update($record['id'], [
+                    'land_area_weight' => $totals['total_land_area'] ?? 0,
+                    'building_area_weight' => $totals['total_building_area'] ?? 0
+                ]);
+
+                if ($result) {
+                    $updated++;
+                } else {
+                    $failed++;
+                    $errors[] = "更新投票記錄 ID: {$record['id']} 失敗";
+                }
+            } catch (\Exception $e) {
+                $failed++;
+                $errors[] = "處理投票記錄 ID: {$record['id']} 時發生錯誤: " . $e->getMessage();
+            }
+        }
+
+        return [
+            'success' => $failed === 0,
+            'total' => count($records),
+            'updated' => $updated,
+            'failed' => $failed,
+            'errors' => $errors
+        ];
     }
 }
