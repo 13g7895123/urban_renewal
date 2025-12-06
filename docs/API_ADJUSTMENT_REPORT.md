@@ -13,10 +13,12 @@
 ### 2. 取得投票議題詳情
 - **Endpoint**: `GET /api/voting-topics/{id}`
 - **用途**: 載入目前的投票議題資料，包括議題名稱、匿名設定、以及現有的選項列表。
+- **回傳新增欄位**: `voting_choices` - 投票選項列表（如同意/不同意）
 
 ### 3. 更新投票議題
 - **Endpoint**: `PUT /api/voting-topics/{id}`
 - **用途**: 儲存使用者編輯後的投票議題資料。
+- **新增支援欄位**: `voting_options` - 投票選項列表
 
 ## 前端調整說明
 
@@ -35,10 +37,39 @@
 - **編號欄位**: 標題與內容皆調整為靠左對齊。
 - **置頂欄位**: (針對下方的所有權人列表) 標題與內容皆調整為置中對齊。
 
-### 3. 資料結構建議 (待後端配合)
-目前前端已完成 UI 實作，若要完整支援此功能，建議後端 `PUT /api/voting-topics/{id}` 接口需支援接收 `voting_options` 欄位，或確認是否與現有的 `property_owners` (即選項) 欄位整合。
+## 後端調整說明
 
-**建議 Payload 結構**:
+### 1. 新增資料表 `voting_choices`
+用於儲存投票選項（如同意/不同意），與原本的 `voting_options`（所有權人選項）區分。
+
+**資料表結構**:
+| 欄位 | 類型 | 說明 |
+|------|------|------|
+| id | INT | 主鍵 |
+| voting_topic_id | INT | 投票議題ID (外鍵) |
+| choice_name | VARCHAR(255) | 選項名稱 |
+| sort_order | INT | 排序順序 |
+| created_at | DATETIME | 建立時間 |
+| updated_at | DATETIME | 更新時間 |
+| deleted_at | DATETIME | 軟刪除時間 |
+
+### 2. 新增 Model
+- **檔案**: `backend/app/Models/VotingChoiceModel.php`
+- **功能**: 處理 `voting_choices` 資料表的 CRUD 操作
+
+### 3. 修改 Controller
+- **檔案**: `backend/app/Controllers/Api/VotingTopicController.php`
+- **修改內容**:
+  - `create()`: 支援接收 `voting_options` 欄位，若未提供則自動建立預設選項（同意/不同意）
+  - `update()`: 支援更新 `voting_options` 欄位
+
+### 4. 修改 VotingTopicModel
+- **檔案**: `backend/app/Models/VotingTopicModel.php`
+- **修改內容**: `getTopicWithDetails()` 方法新增回傳 `voting_choices` 欄位
+
+## Payload 結構
+
+**Request (PUT /api/voting-topics/{id})**:
 ```json
 {
   "meeting_id": 8,
@@ -48,6 +79,44 @@
     { "name": "同意" },
     { "name": "不同意" }
   ],
-  "property_owners": [ ... ]
+  "property_owners": [
+    { "name": "所有權人1", "is_pinned": false },
+    { "name": "所有權人2", "is_pinned": true }
+  ],
+  "max_selections": 1,
+  "accepted_count": 1,
+  "alternate_count": 0,
+  "land_area_ratio_numerator": 2,
+  "land_area_ratio_denominator": 3,
+  "building_area_ratio_numerator": 3,
+  "building_area_ratio_denominator": 4,
+  "people_ratio_numerator": 55,
+  "people_ratio_denominator": 100,
+  "remarks": "備註"
 }
 ```
+
+**Response (GET /api/voting-topics/{id})**:
+```json
+{
+  "success": true,
+  "message": "投票議題詳情",
+  "data": {
+    "id": 2,
+    "meeting_id": 8,
+    "topic_title": "議題名稱",
+    "is_anonymous": 0,
+    "voting_choices": [
+      { "id": 1, "choice_name": "同意", "sort_order": 0 },
+      { "id": 2, "choice_name": "不同意", "sort_order": 1 }
+    ],
+    "voting_options": [
+      { "id": 1, "option_name": "所有權人1", "is_pinned": 0 }
+    ]
+  }
+}
+```
+
+## 遷移檔案
+- **檔案**: `backend/app/Database/Migrations/2025-12-06-010000_CreateVotingChoicesTable.php`
+- **執行指令**: `docker exec urban_renewal_backend_dev php spark migrate`

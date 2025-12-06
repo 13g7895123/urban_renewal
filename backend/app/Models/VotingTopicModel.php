@@ -132,6 +132,13 @@ class VotingTopicModel extends Model
                                                     ->orderBy('sort_order', 'ASC')
                                                     ->findAll();
 
+        // 取得投票選項 (同意/不同意)
+        $votingChoiceModel = model('VotingChoiceModel');
+        $topic['voting_choices'] = $votingChoiceModel->where('voting_topic_id', $topicId)
+                                                     ->where('deleted_at', null)
+                                                     ->orderBy('sort_order', 'ASC')
+                                                     ->findAll();
+
         // 計算投票結果
         $topic['result_analysis'] = $this->calculateVotingResult($topicId);
 

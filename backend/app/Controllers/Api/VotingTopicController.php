@@ -284,6 +284,23 @@ class VotingTopicController extends ResourceController
                 }
             }
 
+            // Handle voting choices (同意/不同意 options)
+            $votingChoiceModel = model('VotingChoiceModel');
+            if (isset($data['voting_options']) && is_array($data['voting_options']) && count($data['voting_options']) > 0) {
+                foreach ($data['voting_options'] as $index => $option) {
+                    if (!empty($option['name'])) {
+                        $votingChoiceModel->insert([
+                            'voting_topic_id' => $topicId,
+                            'choice_name' => $option['name'],
+                            'sort_order' => $index
+                        ]);
+                    }
+                }
+            } else {
+                // Create default choices if not provided
+                $votingChoiceModel->createDefaultChoices($topicId);
+            }
+
             $topic = $this->model->getTopicWithDetails($topicId);
             return response_success('投票議題建立成功', $topic, 201);
 
@@ -378,6 +395,25 @@ class VotingTopicController extends ResourceController
                             'voting_topic_id' => $id,
                             'option_name' => $owner['name'],
                             'is_pinned' => isset($owner['is_pinned']) ? $owner['is_pinned'] : 0,
+                            'sort_order' => $index
+                        ]);
+                    }
+                }
+            }
+
+            // Handle voting choices (同意/不同意 options)
+            if (isset($data['voting_options']) && is_array($data['voting_options'])) {
+                $votingChoiceModel = model('VotingChoiceModel');
+                
+                // Delete existing choices
+                $votingChoiceModel->where('voting_topic_id', $id)->delete();
+                
+                // Insert new choices
+                foreach ($data['voting_options'] as $index => $option) {
+                    if (!empty($option['name'])) {
+                        $votingChoiceModel->insert([
+                            'voting_topic_id' => $id,
+                            'choice_name' => $option['name'],
                             'sort_order' => $index
                         ]);
                     }

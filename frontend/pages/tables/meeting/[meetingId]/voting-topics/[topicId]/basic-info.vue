@@ -342,6 +342,14 @@ onMounted(async () => {
             isPinned: option.is_pinned == 1 || option.is_pinned === true || option.isPinned === true
           }))
         }
+
+        // Load voting choices if available
+        const choices = selectedTopic.value.voting_choices
+        if (choices && Array.isArray(choices) && choices.length > 0) {
+          votingOptions.value = choices.map(choice => ({
+            name: choice.choice_name || choice.name || ''
+          }))
+        }
       }
     }
   } catch (error) {
@@ -449,6 +457,9 @@ const saveBasicInfo = async () => {
     meeting_id: meetingId,
     topic_name: topicName.value,
     is_anonymous: isAnonymous.value,
+    voting_options: votingOptions.value.map(option => ({
+      name: option.name
+    })),
     property_owners: propertyOwners.value.map(owner => ({
       name: owner.name,
       is_pinned: owner.isPinned
