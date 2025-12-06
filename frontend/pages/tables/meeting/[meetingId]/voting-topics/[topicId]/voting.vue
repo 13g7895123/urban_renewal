@@ -23,7 +23,7 @@
 
         <!-- Topic and Time -->
         <div class="mb-6">
-          <h3 class="text-lg font-medium text-gray-900 mb-1">{{ topicName }}</h3>
+          <h3 class="text-lg font-medium text-gray-900 mb-1">議題：{{ topicName }}</h3>
           <p class="text-gray-600">{{ votingTime }}</p>
         </div>
 
@@ -240,14 +240,14 @@ const loadTopicInfo = async () => {
 
   if (meetingResponse.success && meetingResponse.data) {
     const meeting = meetingResponse.data.data || meetingResponse.data
-    renewalGroupName.value = meeting.renewal_group || meeting.renewalGroup || ''
+    renewalGroupName.value = meeting.urban_renewal_name || meeting.renewal_group || meeting.renewalGroup || ''
     meetingName.value = meeting.meeting_name || meeting.name || ''
     urbanRenewalId.value = meeting.urban_renewal_id
   }
 
   if (topicResponse.success && topicResponse.data) {
     const topic = topicResponse.data.data || topicResponse.data
-    topicName.value = topic.topic_name || topic.name || ''
+    topicName.value = topic.topic_title || topic.topic_name || topic.name || ''
     votingTime.value = topic.voting_time || topic.votingTime || new Date().toLocaleString('zh-TW')
   } else {
     console.error('[Voting] Failed to load topic info:', topicResponse.error)
