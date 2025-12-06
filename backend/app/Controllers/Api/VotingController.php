@@ -104,10 +104,6 @@ class VotingController extends ResourceController
                 return response_error('找不到該投票議題', 404);
             }
 
-            if ($topic['voting_status'] !== 'active') {
-                return response_error('該議題目前不開放投票', 400);
-            }
-
             // 檢查所有權人是否存在
             $propertyOwnerModel = model('PropertyOwnerModel');
             $owner = $propertyOwnerModel->find($data['property_owner_id']);
@@ -115,13 +111,23 @@ class VotingController extends ResourceController
                 return response_error('找不到該所有權人', 404);
             }
 
-            // 檢查用戶權限（只能為自己投票或代理投票）
-            if ($user['role'] === 'member') {
-                if ($user['property_owner_id'] !== $data['property_owner_id']) {
-                    return $this->failForbidden('只能為自己投票');
+            // 檢查用戶權限
+            $isAdmin = $user['role'] === 'admin';
+            $isChairman = $user['role'] === 'chairman';
+            $isCompanyManager = isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
+            
+            // admin、chairman、企業管理者可以代理投票
+            if (!$isAdmin && !$isChairman && !$isCompanyManager) {
+                // 一般會員只能為自己投票
+                if ($user['role'] === 'member') {
+                    if (($user['property_owner_id'] ?? null) !== $data['property_owner_id']) {
+                        return $this->failForbidden('只能為自己投票');
+                    }
+                } else {
+                    return $this->failForbidden('無權限在此議題投票');
                 }
-            } elseif ($user['role'] !== 'admin' && $user['role'] !== 'chairman') {
-                // 檢查是否為同一個企業
+            } else if ($isCompanyManager && !$isAdmin) {
+                // 企業管理者需檢查是否為同一個企業
                 $meetingModel = model('MeetingModel');
                 $meeting = $meetingModel->find($topic['meeting_id']);
                 helper('auth');
@@ -248,10 +254,6 @@ class VotingController extends ResourceController
             $topic = $votingTopicModel->find($data['topic_id']);
             if (!$topic) {
                 return response_error('找不到該投票議題', 404);
-            }
-
-            if ($topic['voting_status'] !== 'active') {
-                return response_error('該議題目前不開放撤回投票', 400);
             }
 
             // 檢查權限（只能撤回自己的投票或代理投票）

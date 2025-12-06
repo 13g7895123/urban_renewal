@@ -342,8 +342,8 @@ const confirmVote = async () => {
 
   const voteData = {
     topic_id: topicId,
-    voter_id: selectedVoter.value.id,
-    vote: selectedVote.value
+    property_owner_id: selectedVoter.value.id,
+    choice: selectedVote.value
   }
 
   console.log('[Voting] Submitting vote:', voteData)
@@ -381,7 +381,7 @@ const confirmCancelVote = async () => {
 
   const voteData = {
     topic_id: topicId,
-    voter_id: selectedVoter.value.id
+    property_owner_id: selectedVoter.value.id
   }
 
   console.log('[Voting] Cancelling vote:', voteData)

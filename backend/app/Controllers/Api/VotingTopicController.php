@@ -248,7 +248,7 @@ class VotingTopicController extends ResourceController
 
             // 設定預設值
             $data = array_merge([
-                'voting_status' => 'draft',
+                'voting_status' => 'active',
                 'voting_result' => 'pending',
                 'total_votes' => 0,
                 'agree_votes' => 0,
