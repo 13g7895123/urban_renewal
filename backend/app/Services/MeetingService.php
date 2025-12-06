@@ -33,27 +33,29 @@ class MeetingService
     /**
      * 取得會議列表（分頁）
      */
-    public function getList(array $user, int $page, int $perPage, array $filters = []): array
+    public function getList(?array $user, int $page, int $perPage, array $filters = []): array
     {
-        // 非管理員只能看到自己企業的會議
-        if (!$this->authService->isAdmin($user)) {
-            $this->authService->assertIsCompanyManager($user);
-            
-            $renewalIds = $this->authService->getAccessibleRenewalIds($user);
-            if ($renewalIds !== null && !empty($renewalIds)) {
-                $filters['urban_renewal_ids'] = $renewalIds;
-            } elseif ($renewalIds !== null) {
-                // 沒有可存取的更新會
-                return [
-                    'data' => [],
-                    'pagination' => [
-                        'current_page' => $page,
-                        'per_page' => $perPage,
-                        'total' => 0,
-                        'total_pages' => 0
-                    ]
-                ];
+        // 非管理員需要過濾資料
+        if ($user && !$this->authService->isAdmin($user)) {
+            // 如果是企業管理者，只能看到自己企業的會議
+            if ($this->authService->isCompanyManager($user)) {
+                $renewalIds = $this->authService->getAccessibleRenewalIds($user);
+                if ($renewalIds !== null && !empty($renewalIds)) {
+                    $filters['urban_renewal_ids'] = $renewalIds;
+                } elseif ($renewalIds !== null) {
+                    // 沒有可存取的更新會
+                    return [
+                        'data' => [],
+                        'pagination' => [
+                            'current_page' => $page,
+                            'per_page' => $perPage,
+                            'total' => 0,
+                            'total_pages' => 0
+                        ]
+                    ];
+                }
             }
+            // 非企業管理者：不加過濾條件（與重構前行為一致）
         }
 
         $result = $this->repository->getPaginated($page, $perPage, $filters);

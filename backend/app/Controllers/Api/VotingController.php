@@ -335,8 +335,8 @@ class VotingController extends ResourceController
     public function export($topicId = null)
     {
         try {
-            // 驗證用戶權限
-            $user = auth_validate_request(['admin', 'chairman']);
+            // 驗證用戶權限 - 移除角色限制，改用企業權限檢查
+            $user = auth_validate_request();
             if (!$user) {
                 return $this->failUnauthorized('請重新登入');
             }
@@ -354,6 +354,11 @@ class VotingController extends ResourceController
 
             $meetingModel = model('MeetingModel');
             $meeting = $meetingModel->find($topic['meeting_id']);
+            if (!$meeting) {
+                return response_error('找不到該會議', 404);
+            }
+
+            // 檢查用戶是否有權限存取此更新會
             helper('auth');
             if ($user['role'] !== 'admin' && !auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
                 return $this->failForbidden('無權限匯出此投票記錄');

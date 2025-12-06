@@ -27,10 +27,10 @@ class UrbanRenewalService
     /**
      * 取得更新會列表（分頁）
      */
-    public function getList(array $user, int $page, int $perPage, array $filters = []): array
+    public function getList(?array $user, int $page, int $perPage, array $filters = []): array
     {
         // 非管理員只能看到自己企業的更新會
-        if (!$this->authService->isAdmin($user)) {
+        if ($user && !$this->authService->isAdmin($user)) {
             $companyFilter = $this->authService->getRenewalFilterForUser($user);
             $filters = array_merge($filters, $companyFilter);
         }
