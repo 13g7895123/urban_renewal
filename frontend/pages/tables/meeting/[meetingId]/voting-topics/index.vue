@@ -85,7 +85,7 @@
                       <span class="text-white">投票結果</span>
                     </UButton>
                     <UButton
-                      color="gray"
+                      color="orange"
                       size="xs"
                       @click="showOtherOptions(topic)"
                     >
@@ -127,7 +127,7 @@
 
 
     <!-- Other Options Dropdown -->
-    <UModal v-model="showOtherModal" :ui="{ width: 'max-w-md' }">
+    <UModal v-model="showOtherModal" :ui="{ width: 'max-w-md', overlay: { background: 'bg-gray-500/50' } }">
       <UCard>
         <template #header>
           <div class="flex items-center justify-between">
