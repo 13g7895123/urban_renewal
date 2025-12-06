@@ -364,8 +364,14 @@ class MeetingController extends ResourceController
             }
             
             // 更新會議的納入計算總人數
+            // 如果有勾選「排除所有權人不列計」，則減 1
+            $calculatedTotalCount = $snapshotResult['snapshot_count'];
+            if (!empty($data['exclude_owner_from_count'])) {
+                $calculatedTotalCount = max(0, $calculatedTotalCount - 1);
+            }
+            
             $this->meetingModel->update($meetingId, [
-                'calculated_total_count' => $snapshotResult['snapshot_count']
+                'calculated_total_count' => $calculatedTotalCount
             ]);
 
             $meeting = $this->meetingModel->getMeetingWithDetails($meetingId);
@@ -505,6 +511,22 @@ class MeetingController extends ResourceController
                 // Update observer count
                 $count = $observerModel->where('meeting_id', $id)->countAllResults();
                 $this->meetingModel->update($id, ['observer_count' => $count]);
+            }
+
+            // 如果 exclude_owner_from_count 有變更，重新計算 calculated_total_count
+            if (isset($data['exclude_owner_from_count'])) {
+                $eligibleVoterModel = model('MeetingEligibleVoterModel');
+                $snapshotStats = $eligibleVoterModel->getSnapshotStatistics($id);
+                $baseCount = $snapshotStats['total_voters'];
+                
+                $calculatedTotalCount = $baseCount;
+                if ($data['exclude_owner_from_count']) {
+                    $calculatedTotalCount = max(0, $baseCount - 1);
+                }
+                
+                $this->meetingModel->update($id, [
+                    'calculated_total_count' => $calculatedTotalCount
+                ]);
             }
 
             $updatedMeeting = $this->meetingModel->getMeetingWithDetails($id);

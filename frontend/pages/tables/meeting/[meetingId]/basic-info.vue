@@ -481,9 +481,22 @@ onMounted(async () => {
       meetingLocation.value = meeting.meeting_location || meeting.meetingLocation || meeting.location || ''
 
       // Load attendance data
-      attendees.value = meeting.attendee_count || 0
-      baseAttendees.value = meeting.attendee_count || 0
-      excludeOwnerFromCount.value = meeting.exclude_owner_from_count || false
+      attendees.value = parseInt(meeting.attendee_count) || 0
+      
+      // 納入計算總人數：如果有勾選「排除」，需要還原 +1 來取得原始基數
+      const storedCount = parseInt(meeting.calculated_total_count) || 0
+      const wasExcluded = meeting.exclude_owner_from_count === true || meeting.exclude_owner_from_count === 1 || meeting.exclude_owner_from_count === '1'
+      baseAttendees.value = wasExcluded ? storedCount + 1 : storedCount
+      excludeOwnerFromCount.value = wasExcluded
+
+      console.log('[Basic Info] Attendance data:', {
+        attendee_count: meeting.attendee_count,
+        calculated_total_count: meeting.calculated_total_count,
+        exclude_owner_from_count: meeting.exclude_owner_from_count,
+        storedCount,
+        wasExcluded,
+        baseAttendees: baseAttendees.value
+      })
 
       // Load ratio and area data
       landAreaRatioNumerator.value = meeting.quorum_land_area_numerator || 0
@@ -539,6 +552,12 @@ onMounted(async () => {
 
 // Watch for urban renewal selection changes
 watch(selectedUrbanRenewal, (newValue) => {
+  console.log('[Basic Info] selectedUrbanRenewal watch triggered:', {
+    newValue,
+    selectedMeeting: selectedMeeting.value,
+    willExecute: newValue && !selectedMeeting.value
+  })
+  
   if (newValue && !selectedMeeting.value) {
     console.log('[Basic Info] Urban renewal selected:', newValue)
     console.log('[Basic Info] Address:', newValue.address)
@@ -548,7 +567,7 @@ watch(selectedUrbanRenewal, (newValue) => {
     // 自動帶入開會地址
     meetingLocation.value = newValue.address || ''
 
-    // 自動帶入所有權人數
+    // 自動帶入所有權人數（納入計算總人數 = 全部所有權人數）
     const memberCount = newValue.member_count || 0
     attendees.value = memberCount
     baseAttendees.value = memberCount

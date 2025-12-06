@@ -202,6 +202,7 @@
 | `meeting_status` | 狀態：draft / scheduled / in_progress / completed / cancelled |
 | `attendee_count` | 出席人數 |
 | `calculated_total_count` | 納入計算總人數 |
+| `exclude_owner_from_count` | 是否排除所有權人不列計 (boolean) |
 | `quorum_*` | 成會門檻相關欄位 |
 
 **狀態流程**：
@@ -292,12 +293,13 @@ draft → active → closed
 - **且** `exclusion_type` 為空 (NULL)
 
 ```php
-// 取得納入計算的所有權人
+// 取得納入計算的所有權人（全部所有權人皆納入計算）
 $validOwners = $propertyOwnerModel
     ->where('urban_renewal_id', $urbanRenewalId)
-    ->where('exclusion_type', null)
     ->findAll();
 ```
+
+> 💡 **注意**：所有所有權人都會被納入計算，`exclusion_type` 欄位僅作為標記用途，不影響計算。若會議設定 `exclude_owner_from_count = true`，則「納入計算總人數」會自動減 1（排除所有權人本身）。
 
 ### 4.2 投票資格判定
 
@@ -436,3 +438,4 @@ if ($agreeLandPercentage > 50 &&
 | 版本 | 日期 | 說明 |
 |------|------|------|
 | 1.0 | 2025-12-06 | 初版建立 |
+| 1.1 | 2025-12-06 | 新增會議合格投票人快照功能與排除所有權人計算邏輯 |

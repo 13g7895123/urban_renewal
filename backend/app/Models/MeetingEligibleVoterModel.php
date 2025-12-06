@@ -71,10 +71,9 @@ class MeetingEligibleVoterModel extends Model
     {
         $propertyOwnerModel = model('PropertyOwnerModel');
         
-        // 取得該更新會所有「納入計算」的所有權人（排除 exclusion_type 不為空者）
+        // 取得該更新會所有的所有權人（不論 exclusion_type）
         $eligibleOwners = $propertyOwnerModel
             ->where('urban_renewal_id', $urbanRenewalId)
-            ->where('exclusion_type IS NULL')
             ->findAll();
 
         $snapshotTime = date('Y-m-d H:i:s');
