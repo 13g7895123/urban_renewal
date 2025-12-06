@@ -42,10 +42,26 @@ class MeetingAttendanceController extends ResourceController
     /**
      * 取得會議出席記錄
      * GET /api/meetings/{id}/attendances
+     * GET /api/meeting-attendance?meeting_id={id}
      */
     public function index($meetingId = null)
     {
         try {
+            // 支援從 query string 取得 meeting_id (舊 API 相容)
+            if ($meetingId === null) {
+                $meetingId = $this->request->getGet('meeting_id');
+            }
+
+            if (!$meetingId) {
+                return $this->fail([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'VALIDATION_ERROR',
+                        'message' => '缺少 meeting_id 參數'
+                    ]
+                ], 422);
+            }
+
             // Get authenticated user
             $user = $_SERVER['AUTH_USER'] ?? null;
             $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
@@ -116,10 +132,30 @@ class MeetingAttendanceController extends ResourceController
     /**
      * 會員報到
      * POST /api/meetings/{meetingId}/attendances/{ownerId}
+     * POST /api/meeting-attendance/check-in (從 request body 取得參數)
      */
     public function checkIn($meetingId = null, $ownerId = null)
     {
         try {
+            // 支援從 request body 取得參數 (舊 API 相容)
+            $data = $this->request->getJSON(true) ?? [];
+            if ($meetingId === null) {
+                $meetingId = $data['meeting_id'] ?? null;
+            }
+            if ($ownerId === null) {
+                $ownerId = $data['property_owner_id'] ?? null;
+            }
+
+            if (!$meetingId || !$ownerId) {
+                return $this->fail([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'VALIDATION_ERROR',
+                        'message' => '缺少必要參數 meeting_id 或 property_owner_id'
+                    ]
+                ], 422);
+            }
+
             // Get authenticated user
             $user = $_SERVER['AUTH_USER'] ?? null;
             $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
@@ -140,7 +176,7 @@ class MeetingAttendanceController extends ResourceController
             // Check permission for company managers
             if (!$isAdmin && $isCompanyManager) {
                 helper('auth');
-                if (!auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
+                if (!auth_check_company_access((int)($meeting['urban_renewal_id'] ?? 0), $user)) {
                     return $this->fail([
                         'success' => false,
                         'error' => [
@@ -153,7 +189,7 @@ class MeetingAttendanceController extends ResourceController
 
             // 檢查所有權人是否存在且屬於該更新會
             $propertyOwner = $this->propertyOwnerModel->where('id', $ownerId)
-                                                     ->where('urban_renewal_id', $meeting['urban_renewal_id'])
+                                                     ->where('urban_renewal_id', $meeting['urban_renewal_id'] ?? 0)
                                                      ->first();
 
             if (!$propertyOwner) {
@@ -166,36 +202,20 @@ class MeetingAttendanceController extends ResourceController
                 ], 404);
             }
 
-            $rules = [
-                'attendance_type' => 'required|in_list[present,proxy,absent]',
-                'proxy_person' => 'permit_empty|max_length[100]',
-                'notes' => 'permit_empty|max_length[500]'
-            ];
-
-            if (!$this->validate($rules)) {
+            // 取得出席類型
+            $attendanceType = $data['attendance_type'] ?? null;
+            if (!$attendanceType || !in_array($attendanceType, ['present', 'proxy', 'absent'])) {
                 return $this->fail([
                     'success' => false,
                     'error' => [
                         'code' => 'VALIDATION_ERROR',
-                        'message' => '驗證失敗',
-                        'details' => $this->validator->getErrors()
+                        'message' => '出席類型必須為 present、proxy 或 absent'
                     ]
                 ], 422);
             }
 
-            $data = $this->request->getJSON(true);
-            $attendanceType = $data['attendance_type'];
-
-            // 檢查委託出席是否有代理人姓名
-            if ($attendanceType === 'proxy' && empty($data['proxy_person'])) {
-                return $this->fail([
-                    'success' => false,
-                    'error' => [
-                        'code' => 'VALIDATION_ERROR',
-                        'message' => '委託出席需要填寫代理人姓名'
-                    ]
-                ], 422);
-            }
+            // 注意：委託出席的代理人姓名 (proxy_person) 為選填欄位
+            // 報到系統只需要記錄出席類型，代理人資訊可以之後補填
 
             // 檢查是否已經報到
             $existingAttendance = $this->attendanceModel->where('meeting_id', $meetingId)
@@ -208,7 +228,7 @@ class MeetingAttendanceController extends ResourceController
                 'attendance_type' => $attendanceType,
                 'proxy_person' => $data['proxy_person'] ?? null,
                 'notes' => $data['notes'] ?? null,
-                'is_calculated' => $propertyOwner['exclusion_type'] ? 0 : 1 // 有排除計算類型的不納入計算
+                'is_calculated' => ($propertyOwner['exclusion_type'] ?? null) ? 0 : 1 // 有排除計算類型的不納入計算
             ];
 
             if ($attendanceType === 'present' || $attendanceType === 'proxy') {
@@ -409,7 +429,14 @@ class MeetingAttendanceController extends ResourceController
                 ], 404);
             }
 
-            $statistics = $this->attendanceModel->getDetailedAttendanceStatistics($meetingId);
+            // 優先使用 getAreaStatistics 以取得面積資訊
+            $statistics = $this->attendanceModel->getAreaStatistics($meetingId);
+            
+            // 如果沒有快照資料 (total_count == 0)，回退到基本統計
+            if (empty($statistics['total_count'])) {
+                $basicStats = $this->attendanceModel->getDetailedAttendanceStatistics($meetingId);
+                $statistics = array_merge($statistics, $basicStats);
+            }
 
             return $this->respond([
                 'success' => true,

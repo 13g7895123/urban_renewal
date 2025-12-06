@@ -380,7 +380,8 @@ class MeetingModel extends Model
 
         return $this->update($meetingId, [
             'attendee_count' => $summary['present_count'] + $summary['proxy_count'],
-            'calculated_total_count' => $summary['calculated_count'],
+            // calculated_total_count 應該是應出席總數，不應在此更新 (由 refreshEligibleVoters 維護)
+            // 'calculated_total_count' => $summary['calculated_count'], 
             'observer_count' => $summary['observer_count'] ?? 0
         ]);
     }

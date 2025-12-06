@@ -296,3 +296,4 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         $routes->options('(:any)', 'JwtDebugController::options');
     });
 });
+

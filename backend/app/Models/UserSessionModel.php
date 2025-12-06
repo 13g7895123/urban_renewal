@@ -32,7 +32,7 @@ class UserSessionModel extends Model
 
     protected $validationRules = [
         'user_id' => 'required|integer',
-        'session_token' => 'required|max_length[255]',
+        'session_token' => 'required',
         'expires_at' => 'required'
     ];
 
