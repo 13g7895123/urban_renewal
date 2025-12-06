@@ -146,7 +146,9 @@ class VotingController extends ResourceController
             );
 
             if (!$success) {
-                return response_error('投票失敗', 500, $this->model->errors());
+                $errors = $this->model->errors();
+                log_message('error', '投票失敗: ' . json_encode($errors));
+                return response_error('投票失敗', 500, $errors ?: ['message' => '無法儲存投票記錄']);
             }
 
             // 更新議題統計

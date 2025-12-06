@@ -419,12 +419,30 @@ class PropertyOwnerController extends ResourceController
             $db = \Config\Database::connect();
             $db->transStart();
 
+            // 自動產生順序編號 (如果沒有提供 owner_code)
+            $ownerCode = $data['owner_code'] ?? null;
+            if (empty($ownerCode)) {
+                // 取得該更新會目前最大的編號
+                $maxCode = $this->propertyOwnerModel
+                    ->where('urban_renewal_id', $data['urban_renewal_id'])
+                    ->selectMax('owner_code')
+                    ->first();
+                
+                $nextNumber = 1;
+                if ($maxCode && $maxCode['owner_code']) {
+                    // 嘗試解析現有編號（支援純數字或數字字串）
+                    $currentMax = intval($maxCode['owner_code']);
+                    $nextNumber = $currentMax + 1;
+                }
+                $ownerCode = (string)$nextNumber;
+            }
+
             // Prepare property owner data
             $ownerData = [
                 'urban_renewal_id' => $data['urban_renewal_id'],
                 'name' => $data['owner_name'],
                 'id_number' => $data['identity_number'] ?? null,
-                'owner_code' => $data['owner_code'] ?? null,
+                'owner_code' => $ownerCode,
                 'phone1' => $data['phone1'] ?? null,
                 'phone2' => $data['phone2'] ?? null,
                 'contact_address' => $data['contact_address'] ?? null,
@@ -1235,6 +1253,16 @@ class PropertyOwnerController extends ResourceController
             $seenOwnerCodes = []; // Track owner codes in this import
             $seenIdNumbers = [];  // Track ID numbers in this import
 
+            // 取得該更新會目前最大的編號，用於自動產生編號
+            $maxCodeResult = $this->propertyOwnerModel
+                ->where('urban_renewal_id', $urbanRenewalId)
+                ->selectMax('owner_code')
+                ->first();
+            $nextAutoNumber = 1;
+            if ($maxCodeResult && $maxCodeResult['owner_code']) {
+                $nextAutoNumber = intval($maxCodeResult['owner_code']) + 1;
+            }
+
             // Process each row
             foreach ($rows as $index => $row) {
                 $rowNumber = $index + 2; // +2 because index starts at 0 and we removed header
@@ -1251,10 +1279,13 @@ class PropertyOwnerController extends ResourceController
                     continue;
                 }
 
+                // 如果沒有提供 owner_code，自動產生順序編號
+                $finalOwnerCode = !empty($row[0]) ? trim($row[0]) : (string)$nextAutoNumber++;
+
                 // Prepare data
                 $data = [
                     'urban_renewal_id' => (int)$urbanRenewalId,
-                    'owner_code' => !empty($row[0]) ? trim($row[0]) : null,
+                    'owner_code' => $finalOwnerCode,
                     'name' => !empty($row[1]) ? trim($row[1]) : null,
                     'id_number' => !empty($row[2]) ? trim($row[2]) : null,
                     'phone1' => !empty($row[3]) ? trim($row[3]) : null,

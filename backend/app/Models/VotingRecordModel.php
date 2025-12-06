@@ -147,6 +147,7 @@ class VotingRecordModel extends Model
         $propertyOwnerModel = model('PropertyOwnerModel');
         $owner = $propertyOwnerModel->find($propertyOwnerId);
         if (!$owner) {
+            log_message('error', "castVote: 找不到所有權人 ID: {$propertyOwnerId}");
             return false;
         }
 
@@ -156,17 +157,27 @@ class VotingRecordModel extends Model
             'vote_choice' => $choice,
             'vote_time' => date('Y-m-d H:i:s'),
             'voter_name' => $voterName ?: $owner['name'],
-            'land_area_weight' => $owner['land_area'] ?: 0,
-            'building_area_weight' => $owner['building_area'] ?: 0,
+            'land_area_weight' => $owner['land_area'] ?? 0,
+            'building_area_weight' => $owner['building_area'] ?? 0,
             'notes' => $notes
         ];
 
+        log_message('debug', 'castVote data: ' . json_encode($voteData));
+
         if ($existingVote) {
             // 更新投票
-            return $this->update($existingVote['id'], $voteData);
+            $result = $this->update($existingVote['id'], $voteData);
+            if (!$result) {
+                log_message('error', 'castVote update failed: ' . json_encode($this->errors()));
+            }
+            return $result;
         } else {
             // 新增投票
-            return $this->insert($voteData);
+            $result = $this->insert($voteData);
+            if (!$result) {
+                log_message('error', 'castVote insert failed: ' . json_encode($this->errors()));
+            }
+            return $result;
         }
     }
 

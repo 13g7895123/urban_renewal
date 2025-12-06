@@ -53,11 +53,13 @@
           <div
             class="text-center py-3 px-2"
             :class="{
-              'bg-gray-200': voter.hasVoted,
-              'bg-white': !voter.hasVoted
+              'bg-blue-500 text-white': voter.hasVoted && voter.vote === 'agree',
+              'bg-gray-200 text-gray-900': voter.hasVoted && voter.vote !== 'agree',
+              'bg-white text-gray-900': !voter.hasVoted
             }"
           >
-            <div class="text-sm font-medium truncate text-gray-900">
+            <div class="text-sm font-medium truncate">
+              <span v-if="voter.ownerCode" class="mr-1">{{ String(voter.ownerCode).padStart(2, '0') }}</span>
               {{ voter.name }}
             </div>
           </div>
@@ -285,6 +287,9 @@ const loadVoters = async () => {
       ? (votesResponse.data.data?.records || votesResponse.data.records || []) 
       : []
       
+    console.log('[Voting] Raw votes response:', votesResponse)
+    console.log('[Voting] Processed votes data:', votesData)
+
     // Create a map of votes for quick lookup
     const votesMap = new Map()
     votesData.forEach(vote => {
@@ -293,7 +298,10 @@ const loadVoters = async () => {
 
     // Merge data - use snapshot data
     voters.value = Array.isArray(eligibleVoters) ? eligibleVoters.map(voter => {
-      const voteRecord = votesMap.get(voter.property_owner_id)
+      const voteRecord = votesMap.get(parseInt(voter.property_owner_id))
+      if (voteRecord) {
+        console.log(`[Voting] Found vote for owner ${voter.property_owner_id}:`, voteRecord)
+      }
       return {
         id: voter.property_owner_id,
         name: voter.owner_name || '',
