@@ -89,6 +89,41 @@
             </div>
           </div>
 
+          <!-- 投票選項 Group -->
+          <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <h4 class="text-lg font-medium text-gray-900">投票選項</h4>
+            </div>
+
+            <div class="border border-gray-200 rounded-lg">
+              <div class="max-h-64 overflow-y-auto">
+                <table class="w-full">
+                  <thead class="bg-gray-50 sticky top-0">
+                    <tr>
+                      <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">編號</th>
+                      <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">選項名稱</th>
+                      <th class="px-4 py-2 text-center text-sm font-medium text-gray-700">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(option, index) in votingOptions" :key="index" class="border-b border-gray-100">
+                      <td class="px-4 py-2 text-left">{{ index + 1 }}</td>
+                      <td class="px-4 py-2">
+                        <UInput v-model="option.name" size="sm" placeholder="選項名稱" />
+                      </td>
+                      <td class="px-4 py-2 text-center">
+                        <div class="flex gap-1 justify-center">
+                          <UButton color="green" size="xs" @click="addVotingOption(index)">新增項目</UButton>
+                          <UButton color="red" size="xs" @click="removeVotingOption(index)">刪除</UButton>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
           <!-- 所有權人 Group -->
           <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
             <div class="flex items-center justify-between mb-4">
@@ -115,11 +150,11 @@
                       <td colspan="4" class="px-4 py-8 text-center text-gray-500">請點擊"匯入所有權人"或手動新增</td>
                     </tr>
                     <tr v-for="(owner, index) in propertyOwners" :key="index" class="border-b border-gray-100">
-                      <td class="px-4 py-2 text-center">{{ index + 1 }}</td>
+                      <td class="px-4 py-2 text-left">{{ index + 1 }}</td>
                       <td class="px-4 py-2">
                         <UInput v-model="owner.name" size="sm" placeholder="所有權人姓名" />
                       </td>
-                      <td class="px-4 py-2 text-center">
+                      <td class="px-4 py-2 text-center flex justify-center">
                         <UCheckbox v-model="owner.isPinned" />
                       </td>
                       <td class="px-4 py-2 text-center">
@@ -241,6 +276,10 @@ const isSaving = ref(false)
 // Form fields
 const topicName = ref('')
 const isAnonymous = ref(false)
+const votingOptions = ref([
+  { name: '同意' },
+  { name: '不同意' }
+])
 const propertyOwners = ref([])
 const maxSelections = ref(1)
 const acceptedCount = ref(1)
@@ -318,6 +357,10 @@ onMounted(async () => {
 const resetFormFields = () => {
   topicName.value = ''
   isAnonymous.value = false
+  votingOptions.value = [
+    { name: '同意' },
+    { name: '不同意' }
+  ]
   propertyOwners.value = []
   maxSelections.value = 1
   acceptedCount.value = 1
@@ -332,6 +375,16 @@ const resetFormFields = () => {
 }
 
 // Property owner management functions
+const addVotingOption = (index) => {
+  votingOptions.value.splice(index + 1, 0, {
+    name: ''
+  })
+}
+
+const removeVotingOption = (index) => {
+  votingOptions.value.splice(index, 1)
+}
+
 const addPropertyOwner = (index) => {
   propertyOwners.value.splice(index + 1, 0, {
     name: '',
