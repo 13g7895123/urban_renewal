@@ -121,7 +121,7 @@
         </UButton>
       </div> -->
       <!-- Back Button -->
-      <div class="mt-8 text-center no-print">
+      <div class="mt-8 text-center no-print flex justify-center gap-2">
         <UButton
           color="gray"
           variant="solid"
@@ -130,6 +130,16 @@
         >
           <Icon name="heroicons:arrow-left" class="w-5 h-5 mr-2" />
           回到投票議題頁面
+        </UButton>
+        <UButton
+          @click="loadResults"
+          :loading="isLoading"
+          color="gray"
+          variant="solid"
+          class="px-4"
+          title="重新整理"
+        >
+          <Icon name="heroicons:arrow-path" class="w-5 h-5" />
         </UButton>
       </div>
     </div>

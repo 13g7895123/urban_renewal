@@ -23,15 +23,6 @@
           回上一頁
         </UButton>
         <UButton
-          color="gray"
-          variant="outline"
-          :loading="isLoading"
-          @click="loadVotingTopics"
-        >
-          <Icon name="heroicons:arrow-path" class="w-5 h-5 mr-2" />
-          重新整理
-        </UButton>
-        <UButton
           color="green"
           @click="addVotingTopic"
         >
@@ -119,6 +110,17 @@
             <UButton variant="ghost" size="sm" class="bg-blue-500 text-white">1</UButton>
             <UButton variant="ghost" size="sm" disabled>
               <Icon name="heroicons:chevron-right" class="w-4 h-4" />
+            </UButton>
+            <!-- Refresh Button -->
+            <UButton
+              @click="loadVotingTopics"
+              :loading="isLoading"
+              variant="ghost"
+              size="sm"
+              class="ml-2 text-gray-600 hover:text-green-600 hover:bg-green-50"
+              title="重新整理"
+            >
+              <Icon name="heroicons:arrow-path" class="w-4 h-4" />
             </UButton>
           </div>
         </div>

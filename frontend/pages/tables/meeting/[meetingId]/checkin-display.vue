@@ -177,13 +177,22 @@
       </div>
 
       <!-- Bottom Navigation -->
-      <div class="flex justify-end mt-6">
+      <div class="flex justify-end mt-6 gap-2">
         <UButton
           variant="outline"
           @click="goBack"
         >
           <Icon name="heroicons:arrow-left" class="w-5 h-5 mr-2" />
           回上一頁
+        </UButton>
+        <UButton
+          @click="refreshData"
+          :loading="isLoading"
+          variant="ghost"
+          class="text-gray-600 hover:text-green-600 hover:bg-green-50"
+          title="重新整理"
+        >
+          <Icon name="heroicons:arrow-path" class="w-5 h-5" />
         </UButton>
       </div>
     </div>
@@ -392,6 +401,13 @@ const updateClock = () => {
 
 const goBack = () => {
   router.push('/tables/meeting')
+}
+
+const refreshData = async () => {
+  await Promise.all([
+    loadMeeting(),
+    loadAttendanceData()
+  ])
 }
 
 // Lifecycle
