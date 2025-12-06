@@ -36,32 +36,30 @@
         <div
           v-for="(voter, index) in voters"
           :key="index"
-          class="bg-white border border-gray-200 rounded-lg p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+          class="border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
           :class="{
-            'bg-gray-100': voter.hasVoted,
             'hover:border-blue-300': !voter.hasVoted
           }"
           @click="!voter.hasVoted && openVotingModal(voter)"
         >
-          <!-- Sequence Number -->
-          <div class="text-2xl font-bold text-gray-700 mb-2">
-            {{ String(index + 1).padStart(2, '0') }}
+          <!-- Sequence Number - 上半部淺綠色底 -->
+          <div class="bg-green-100 text-center py-3">
+            <span class="text-2xl font-bold text-gray-700">
+              {{ String(index + 1).padStart(2, '0') }}
+            </span>
           </div>
 
-          <!-- Voter Info (Code + Name) -->
+          <!-- Voter Name - 下半部顯示所有權人姓名，已投票灰底 -->
           <div
-            class="text-sm font-medium truncate"
+            class="text-center py-3 px-2"
             :class="{
-              'text-gray-400 bg-gray-200 px-2 py-1 rounded': voter.hasVoted,
-              'text-gray-900': !voter.hasVoted
+              'bg-gray-200': voter.hasVoted,
+              'bg-white': !voter.hasVoted
             }"
           >
-            {{ voter.ownerCode }} {{ voter.name }}
-          </div>
-
-          <!-- Voted Indicator -->
-          <div v-if="voter.hasVoted" class="mt-2 text-xs text-gray-500">
-            已投票
+            <div class="text-sm font-medium truncate text-gray-900">
+              {{ voter.name }}
+            </div>
           </div>
         </div>
       </div>
@@ -79,7 +77,16 @@
     </div>
 
     <!-- Voting Modal -->
-    <UModal v-model="showVotingModal" :ui="{ width: 'max-w-md' }" :prevent-close="true">
+    <UModal
+      v-model="showVotingModal"
+      :ui="{
+        width: 'max-w-md',
+        overlay: {
+          background: 'bg-gray-200/75'
+        }
+      }"
+      :prevent-close="true"
+    >
       <UCard>
         <template #header>
           <div class="flex items-center justify-between">
