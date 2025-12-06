@@ -176,7 +176,8 @@ const router = useRouter()
 const meetingId = route.params.meetingId
 
 // API composables
-const { getVotingTopics, deleteVotingTopic: deleteTopicApi, exportVotingResults } = useVotingTopics()
+const { getVotingTopics, deleteVotingTopic: deleteTopicApi } = useVotingTopics()
+const { exportVotingResults } = useVoting()
 const { showSuccess, showError, showConfirm } = useSweetAlert()
 
 const pageSize = ref(10)

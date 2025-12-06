@@ -2,7 +2,20 @@
   <NuxtLayout name="main">
     <template #title>開始投票</template>
 
-    <div class="p-8">
+    <div class="p-8 relative">
+      <!-- Debug Button -->
+      <div class="absolute top-4 right-4">
+        <UButton
+          color="gray"
+          variant="ghost"
+          icon="heroicons:arrow-path"
+          @click="loadVoters"
+          :loading="isLoading"
+        >
+          載入資料
+        </UButton>
+      </div>
+
       <!-- Header -->
       <div class="mb-8 text-center">
         <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ renewalGroupName }}</h1>
@@ -176,7 +189,7 @@ const meetingId = route.params.meetingId
 const topicId = route.params.topicId
 
 // API composables
-const { getMeeting } = useMeetings()
+const { getMeeting, getEligibleVoters } = useMeetings()
 const { getVotingTopic } = useVotingTopics()
 const { getVotes, vote: submitVote, removeVote } = useVoting()
 const { showSuccess, showError } = useSweetAlert()
@@ -196,6 +209,7 @@ const renewalGroupName = ref('')
 const meetingName = ref('')
 const topicName = ref('')
 const votingTime = ref('')
+const urbanRenewalId = ref(null)
 
 // Voters data
 const voters = ref([])
@@ -219,6 +233,7 @@ const loadTopicInfo = async () => {
     const meeting = meetingResponse.data.data || meetingResponse.data
     renewalGroupName.value = meeting.renewal_group || meeting.renewalGroup || ''
     meetingName.value = meeting.meeting_name || meeting.name || ''
+    urbanRenewalId.value = meeting.urban_renewal_id
   }
 
   if (topicResponse.success && topicResponse.data) {
@@ -238,26 +253,55 @@ const loadTopicInfo = async () => {
 // Load voters
 const loadVoters = async () => {
   isLoading.value = true
-  console.log('[Voting] Loading voters for topic:', topicId)
+  console.log('[Voting] Loading voters for topic:', topicId, 'meeting:', meetingId)
 
-  const response = await getVotes({ topic_id: topicId })
+  // Fetch both eligible voters (snapshot) and existing votes
+  const [eligibleResponse, votesResponse] = await Promise.all([
+    getEligibleVoters(meetingId, { per_page: 1000 }),
+    getVotes({ topic_id: topicId, per_page: 1000 })
+  ])
+
   isLoading.value = false
 
-  if (response.success && response.data) {
-    const votesData = response.data.data || response.data
+  if (eligibleResponse.success && eligibleResponse.data) {
+    const eligibleVoters = eligibleResponse.data.data || eligibleResponse.data || []
+    const hasSnapshot = eligibleResponse.data.has_snapshot
+    
+    // If no snapshot exists, show warning
+    if (!hasSnapshot) {
+      console.warn('[Voting] No voter snapshot found for this meeting')
+      showError('提示', '此會議尚未建立投票人快照，請先重新整理投票人名單')
+    }
+    
+    // Process votes data
+    const votesData = (votesResponse.success && votesResponse.data) 
+      ? (votesResponse.data.data?.records || votesResponse.data.records || []) 
+      : []
+      
+    // Create a map of votes for quick lookup
+    const votesMap = new Map()
+    votesData.forEach(vote => {
+      votesMap.set(parseInt(vote.property_owner_id), vote)
+    })
 
-    voters.value = Array.isArray(votesData) ? votesData.map(v => ({
-      id: v.voter_id || v.id,
-      name: v.voter_name || v.name || '',
-      ownerCode: v.owner_code || '',
-      hasVoted: v.has_voted || v.hasVoted || false,
-      vote: v.vote || null
-    })) : []
+    // Merge data - use snapshot data
+    voters.value = Array.isArray(eligibleVoters) ? eligibleVoters.map(voter => {
+      const voteRecord = votesMap.get(voter.property_owner_id)
+      return {
+        id: voter.property_owner_id,
+        name: voter.owner_name || '',
+        ownerCode: voter.owner_code || '',
+        landAreaWeight: voter.land_area_weight || 0,
+        buildingAreaWeight: voter.building_area_weight || 0,
+        hasVoted: !!voteRecord,
+        vote: voteRecord ? voteRecord.vote_choice : null
+      }
+    }) : []
 
-    console.log('[Voting] Voters loaded:', voters.value.length)
+    console.log('[Voting] Voters loaded from snapshot:', voters.value.length)
   } else {
-    console.error('[Voting] Failed to load voters:', response.error)
-    showError('載入失敗', response.error?.message || '無法載入投票人資料')
+    console.error('[Voting] Failed to load voters:', eligibleResponse.error)
+    showError('載入失敗', eligibleResponse.error?.message || '無法載入投票人資料')
     voters.value = []
   }
 }

@@ -355,7 +355,21 @@ class MeetingController extends ResourceController
                 $this->meetingModel->update($meetingId, ['observer_count' => $count]);
             }
 
+            // 建立合格投票人快照
+            $eligibleVoterModel = model('MeetingEligibleVoterModel');
+            $snapshotResult = $eligibleVoterModel->createSnapshot($meetingId, $data['urban_renewal_id']);
+            
+            if (!$snapshotResult['success']) {
+                log_message('warning', 'Meeting voter snapshot creation had errors: ' . json_encode($snapshotResult['errors']));
+            }
+            
+            // 更新會議的納入計算總人數
+            $this->meetingModel->update($meetingId, [
+                'calculated_total_count' => $snapshotResult['snapshot_count']
+            ]);
+
             $meeting = $this->meetingModel->getMeetingWithDetails($meetingId);
+            $meeting['voter_snapshot'] = $snapshotResult;
 
             return $this->respondCreated([
                 'success' => true,
@@ -946,6 +960,178 @@ class MeetingController extends ResourceController
                 'error' => [
                     'code' => 'INTERNAL_ERROR',
                     'message' => '匯出簽到冊失敗'
+                ]
+            ], 500);
+        }
+    }
+
+    /**
+     * 取得會議的合格投票人快照
+     * GET /api/meetings/{id}/eligible-voters
+     */
+    public function getEligibleVoters($id = null)
+    {
+        try {
+            $meeting = $this->meetingModel->find($id);
+            if (!$meeting) {
+                return $this->fail([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'NOT_FOUND',
+                        'message' => '會議不存在'
+                    ]
+                ], 404);
+            }
+
+            // Get authenticated user and check permission
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
+            $isCompanyManager = $user && isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
+
+            // Check permission for company managers
+            if (!$isAdmin && $isCompanyManager) {
+                helper('auth');
+                if (!auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
+                    return $this->fail([
+                        'success' => false,
+                        'error' => [
+                            'code' => 'FORBIDDEN',
+                            'message' => '您沒有權限存取此會議的投票人名單'
+                        ]
+                    ], 403);
+                }
+            }
+
+            $page = $this->request->getGet('page') ?? 1;
+            $perPage = $this->request->getGet('per_page') ?? 100;
+
+            $eligibleVoterModel = model('MeetingEligibleVoterModel');
+            
+            // 檢查是否有快照
+            if (!$eligibleVoterModel->hasSnapshot($id)) {
+                return $this->respond([
+                    'success' => true,
+                    'data' => [],
+                    'statistics' => [
+                        'total_voters' => 0,
+                        'total_land_area' => 0,
+                        'total_building_area' => 0,
+                        'snapshot_at' => null
+                    ],
+                    'has_snapshot' => false,
+                    'message' => '此會議尚未建立投票人快照'
+                ]);
+            }
+
+            $voters = $eligibleVoterModel->getByMeetingIdPaginated($id, $page, $perPage);
+            $statistics = $eligibleVoterModel->getSnapshotStatistics($id);
+            $pager = $eligibleVoterModel->pager;
+
+            return $this->respond([
+                'success' => true,
+                'data' => $voters,
+                'statistics' => $statistics,
+                'has_snapshot' => true,
+                'pagination' => [
+                    'current_page' => $pager->getCurrentPage(),
+                    'per_page' => $pager->getPerPage(),
+                    'total' => $pager->getTotal(),
+                    'total_pages' => $pager->getPageCount()
+                ],
+                'message' => '取得合格投票人名單成功'
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Get eligible voters error: ' . $e->getMessage());
+            return $this->fail([
+                'success' => false,
+                'error' => [
+                    'code' => 'INTERNAL_ERROR',
+                    'message' => '取得合格投票人名單失敗'
+                ]
+            ], 500);
+        }
+    }
+
+    /**
+     * 重新整理會議的合格投票人快照
+     * POST /api/meetings/{id}/eligible-voters/refresh
+     */
+    public function refreshEligibleVoters($id = null)
+    {
+        try {
+            $meeting = $this->meetingModel->find($id);
+            if (!$meeting) {
+                return $this->fail([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'NOT_FOUND',
+                        'message' => '會議不存在'
+                    ]
+                ], 404);
+            }
+
+            // Get authenticated user and check permission
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
+            $isCompanyManager = $user && isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
+
+            // Check permission for company managers
+            if (!$isAdmin && $isCompanyManager) {
+                helper('auth');
+                if (!auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
+                    return $this->fail([
+                        'success' => false,
+                        'error' => [
+                            'code' => 'FORBIDDEN',
+                            'message' => '您沒有權限重新整理此會議的投票人名單'
+                        ]
+                    ], 403);
+                }
+            }
+
+            // 檢查會議狀態，只有草稿或已排程的會議可以重新整理快照
+            if (!in_array($meeting['meeting_status'], ['draft', 'scheduled'])) {
+                return $this->fail([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'BUSINESS_LOGIC_ERROR',
+                        'message' => '只有草稿或已排程的會議可以重新整理投票人名單'
+                    ]
+                ], 422);
+            }
+
+            $eligibleVoterModel = model('MeetingEligibleVoterModel');
+            $result = $eligibleVoterModel->recreateSnapshot($id, $meeting['urban_renewal_id']);
+
+            if (!$result['success']) {
+                return $this->fail([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'INTERNAL_ERROR',
+                        'message' => $result['error'] ?? '重新整理投票人名單失敗'
+                    ]
+                ], 500);
+            }
+
+            // 更新會議的納入計算總人數
+            $this->meetingModel->update($id, [
+                'calculated_total_count' => $result['snapshot_count']
+            ]);
+
+            return $this->respond([
+                'success' => true,
+                'data' => $result,
+                'message' => '投票人名單已重新整理'
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Refresh eligible voters error: ' . $e->getMessage());
+            return $this->fail([
+                'success' => false,
+                'error' => [
+                    'code' => 'INTERNAL_ERROR',
+                    'message' => '重新整理投票人名單失敗'
                 ]
             ], 500);
         }

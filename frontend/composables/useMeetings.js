@@ -240,6 +240,20 @@ export const useMeetings = () => {
     }
   }
 
+  /**
+   * Get eligible voters (snapshot) for a meeting
+   */
+  const getEligibleVoters = async (meetingId, params = {}) => {
+    return await get(`/meetings/${meetingId}/eligible-voters`, params)
+  }
+
+  /**
+   * Refresh eligible voters snapshot for a meeting
+   */
+  const refreshEligibleVoters = async (meetingId) => {
+    return await post(`/meetings/${meetingId}/eligible-voters/refresh`)
+  }
+
   return {
     getMeetings,
     getMeeting,
@@ -252,6 +266,8 @@ export const useMeetings = () => {
     getUpcomingMeetings,
     getStatusStatistics,
     exportMeetingNotice,
-    exportSignatureBook
+    exportSignatureBook,
+    getEligibleVoters,
+    refreshEligibleVoters
   }
 }

@@ -124,6 +124,10 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         $routes->post('(:num)/attendances/export', 'MeetingAttendanceController::export/$1'); // POST /api/meetings/{id}/attendances/export
         $routes->post('(:num)/attendances/batch', 'MeetingAttendanceController::batchCheckIn/$1'); // POST /api/meetings/{id}/attendances/batch
 
+        // Eligible Voters (Snapshot) nested routes
+        $routes->get('(:num)/eligible-voters', 'MeetingController::getEligibleVoters/$1');    // GET /api/meetings/{id}/eligible-voters
+        $routes->post('(:num)/eligible-voters/refresh', 'MeetingController::refreshEligibleVoters/$1'); // POST /api/meetings/{id}/eligible-voters/refresh
+
         // Handle OPTIONS for specific routes
         $routes->options('(:any)', 'MeetingController::options');
         $routes->options('(:num)/attendances', 'MeetingAttendanceController::options');
