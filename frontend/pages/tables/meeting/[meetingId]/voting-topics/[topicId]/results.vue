@@ -109,7 +109,7 @@
       </div>
 
       <!-- Print Button -->
-      <div class="mt-8 text-center no-print">
+      <!-- <div class="mt-8 text-center no-print">
         <UButton
           color="gray"
           variant="solid"
@@ -118,6 +118,18 @@
         >
           <Icon name="heroicons:printer" class="w-5 h-5 mr-2" />
           列印結果
+        </UButton>
+      </div> -->
+      <!-- Back Button -->
+      <div class="mt-8 text-center no-print">
+        <UButton
+          color="gray"
+          variant="solid"
+          @click="goBack"
+          class="px-6"
+        >
+          <Icon name="heroicons:arrow-left" class="w-5 h-5 mr-2" />
+          回到投票議題頁面
         </UButton>
       </div>
     </div>
@@ -132,6 +144,7 @@ definePageMeta({
   layout: false
 })
 
+const router = useRouter()
 const route = useRoute()
 const meetingId = route.params.meetingId
 const topicId = route.params.topicId
@@ -220,7 +233,7 @@ const loadResults = async () => {
 
     if (topicResponse.success && topicResponse.data) {
       const topic = topicResponse.data.data || topicResponse.data
-      topicName.value = topic.topic_name || topic.name || ''
+      topicName.value = topic.topic_title || topic.topic_name || topic.name || ''
     }
 
     if (statsResponse.success && statsResponse.data) {
@@ -249,6 +262,10 @@ const formatNumber = (num, decimals = 0) => {
 
 const printResults = () => {
   window.print()
+}
+
+const goBack = () => {
+  router.push(`/tables/meeting/${meetingId}/voting-topics`)
 }
 </script>
 
