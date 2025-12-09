@@ -61,7 +61,11 @@ if $DOCKER_COMPOSE -f docker-compose.prod.yml ps --quiet 2>/dev/null | grep -q .
     echo ""
 fi
 
-echo "🚀 啟動 Docker Compose (Production Mode)..."
+echo "� 重建映像檔 (確保使用最新代碼)..."
+$DOCKER_COMPOSE -f docker-compose.prod.yml --env-file .env.production build
+
+echo ""
+echo "�🚀 啟動 Docker Compose (Production Mode)..."
 $DOCKER_COMPOSE -f docker-compose.prod.yml --env-file .env.production up -d
 
 echo ""
