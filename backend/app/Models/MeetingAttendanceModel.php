@@ -202,8 +202,6 @@ class MeetingAttendanceModel extends Model
         ');
         $attendanceBuilder->join('meeting_eligible_voters mev', 'mev.meeting_id = ma.meeting_id AND mev.property_owner_id = ma.property_owner_id', 'left');
         $attendanceBuilder->where('ma.meeting_id', $meetingId);
-        // 排除不納入計算的
-        $attendanceBuilder->where('ma.is_calculated', 1);
         
         $attendanceStats = $attendanceBuilder->get()->getRowArray();
 

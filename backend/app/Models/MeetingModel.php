@@ -259,31 +259,32 @@ class MeetingModel extends Model
         $attendance = $attendanceModel->getAttendanceSummary($meetingId);
 
         // 取得總數據（所有應出席的所有權人）
-        $propertyOwnerModel = model('PropertyOwnerModel');
-        $totalStats = $propertyOwnerModel->getUrbanRenewalStatistics($meeting['urban_renewal_id']);
+        // 使用 MeetingEligibleVoterModel 取得快照統計，而非 PropertyOwnerModel
+        $eligibleVoterModel = model('MeetingEligibleVoterModel');
+        $totalStats = $eligibleVoterModel->getSnapshotStatistics($meetingId);
 
         $quorumStatus = [
             'land_area' => [
                 'required' => $meeting['quorum_land_area'],
-                'current' => $attendance['total_land_area'],
+                'current' => $attendance['total_land_area'] ?? 0,
                 'percentage' => $totalStats['total_land_area'] > 0 ?
-                              ($attendance['total_land_area'] / $totalStats['total_land_area']) * 100 : 0,
+                              (($attendance['total_land_area'] ?? 0) / $totalStats['total_land_area']) * 100 : 0,
                 'threshold' => $meeting['quorum_land_area_numerator'] / $meeting['quorum_land_area_denominator'] * 100,
                 'met' => false
             ],
             'building_area' => [
                 'required' => $meeting['quorum_building_area'],
-                'current' => $attendance['total_building_area'],
+                'current' => $attendance['total_building_area'] ?? 0,
                 'percentage' => $totalStats['total_building_area'] > 0 ?
-                              ($attendance['total_building_area'] / $totalStats['total_building_area']) * 100 : 0,
+                              (($attendance['total_building_area'] ?? 0) / $totalStats['total_building_area']) * 100 : 0,
                 'threshold' => $meeting['quorum_building_area_numerator'] / $meeting['quorum_building_area_denominator'] * 100,
                 'met' => false
             ],
             'member_count' => [
                 'required' => $meeting['quorum_member_count'],
-                'current' => $attendance['present_count'] + $attendance['proxy_count'],
-                'percentage' => $totalStats['total_owners'] > 0 ?
-                              (($attendance['present_count'] + $attendance['proxy_count']) / $totalStats['total_owners']) * 100 : 0,
+                'current' => ($attendance['present_count'] ?? 0) + ($attendance['proxy_count'] ?? 0),
+                'percentage' => $totalStats['total_voters'] > 0 ?
+                              ((($attendance['present_count'] ?? 0) + ($attendance['proxy_count'] ?? 0)) / $totalStats['total_voters']) * 100 : 0,
                 'threshold' => $meeting['quorum_member_numerator'] / $meeting['quorum_member_denominator'] * 100,
                 'met' => false
             ]

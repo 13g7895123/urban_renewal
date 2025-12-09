@@ -98,7 +98,8 @@
                     <UButton
                       color="orange"
                       size="xs"
-                      @click="showCheckinDisplay(meeting)"
+                      :to="`/tables/meeting/${meeting.id}/checkin-display`"
+                      target="_blank"
                     >
                       報到顯示
                     </UButton>
@@ -423,11 +424,6 @@ const showVotingTopics = (meeting) => {
 const showMemberCheckin = (meeting) => {
   console.log('Showing member check-in for:', meeting)
   navigateTo(`/tables/meeting/${meeting.id}/member-checkin`)
-}
-
-const showCheckinDisplay = (meeting) => {
-  console.log('Showing check-in display for:', meeting)
-  navigateTo(`/tables/meeting/${meeting.id}/checkin-display`)
 }
 
 

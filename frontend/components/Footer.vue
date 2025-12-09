@@ -5,11 +5,11 @@
         <div class="md:col-span-4"></div>
 
         <div class="md:col-span-4 flex flex-col gap-8 md:flex-row items-center justify-center">
-          <label class="text-4xl font-bold">開發建經</label>
+          <label class="text-4xl font-bold">騰海永續</label>
           <div class="contact-info space-y-2 text-sm text-gray-600 text-center md:text-left">
             <div class="flex items-center justify-center md:justify-start">
               <Icon name="heroicons:phone" class="w-4 h-4 mr-2" />
-              服務電話: 02-6604-3889
+              服務電話: 02-6617-1081
             </div>
             <div class="flex items-center justify-center md:justify-start">
               <Icon name="heroicons:printer" class="w-4 h-4 mr-2" />
@@ -17,7 +17,7 @@
             </div>
             <div class="flex items-center justify-center md:justify-start whitespace-nowrap">
               <Icon name="heroicons:envelope" class="w-4 h-4 mr-2" />
-              服務信箱: K80686159@gmail.com
+              服務信箱: wenchi886@gmail.com
             </div>
           </div>
         </div>
