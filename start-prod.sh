@@ -17,16 +17,30 @@ echo "Urban Renewal Voting System - Production"
 echo "========================================="
 echo ""
 
-# 檢查 .env.production 檔案是否存在
+# 檢查 .env.production 檔案是否存在，不存在則自動創建
 if [ ! -f .env.production ]; then
-    echo "❌ 錯誤：找不到 .env.production 檔案"
-    echo "請先複製 .env.example 並設定環境變數："
-    echo "  cp .env.example .env.production"
-    exit 1
+    echo "⚠️  找不到 .env.production 檔案"
+    if [ -f .env.example ]; then
+        echo "📝 自動從 .env.example 創建 .env.production..."
+        cp .env.example .env.production
+        echo "✅ 已創建 .env.production"
+        echo ""
+    else
+        echo "❌ 錯誤：找不到 .env.example 檔案"
+        echo "請確保專案檔案完整"
+        exit 1
+    fi
 fi
 
 # 載入環境變數
 source .env.production
+
+# 檢查必要的環境變數
+if [ -z "$FRONTEND_PORT" ] || [ -z "$BACKEND_PORT" ] || [ -z "$DB_PORT" ]; then
+    echo "❌ 錯誤：環境變數設定不完整"
+    echo "請檢查 .env.production 檔案"
+    exit 1
+fi
 
 echo "🔧 環境配置："
 echo "  - 前端 Port: ${FRONTEND_PORT}"
@@ -62,27 +76,79 @@ if $DOCKER_COMPOSE -f docker-compose.prod.yml ps --quiet 2>/dev/null | grep -q .
 fi
 
 echo "� 重建映像檔 (確保使用最新代碼)..."
-$DOCKER_COMPOSE -f docker-compose.prod.yml --env-file .env.production build
+if ! $DOCKER_COMPOSE -f docker-compose.prod.yml --env-file .env.production build; then
+    echo "❌ 錯誤：映像建置失敗"
+    echo "請檢查 Docker 日誌或網路連線"
+    exit 1
+fi
 
 echo ""
-echo "�🚀 啟動 Docker Compose (Production Mode)..."
-$DOCKER_COMPOSE -f docker-compose.prod.yml --env-file .env.production up -d
+echo "🚀 啟動 Docker Compose (Production Mode)..."
+if ! $DOCKER_COMPOSE -f docker-compose.prod.yml --env-file .env.production up -d; then
+    echo "❌ 錯誤：服務啟動失敗"
+    echo "請執行以下命令查看詳細錯誤："
+    echo "  docker compose -f docker-compose.prod.yml logs"
+    exit 1
+fi
 
 echo ""
 echo "⏳ 等待服務啟動..."
-sleep 5
+sleep 8
+
+# 檢查服務是否正常運行
+echo "🔍 檢查服務健康狀態..."
+RETRY=0
+MAX_RETRY=30
+
+while [ $RETRY -lt $MAX_RETRY ]; do
+    if $DOCKER_COMPOSE -f docker-compose.prod.yml ps --status running | grep -q "urban_renewal"; then
+        echo "✅ 服務啟動成功"
+        break
+    fi
+    echo "   等待服務啟動... ($((RETRY+1))/$MAX_RETRY)"
+    sleep 2
+    RETRY=$((RETRY+1))
+done
+
+if [ $RETRY -eq $MAX_RETRY ]; then
+    echo "⚠️  警告：部分服務可能未正常啟動"
+    echo "請執行以下命令檢查："
+    echo "  docker compose -f docker-compose.prod.yml ps"
+    echo "  docker compose -f docker-compose.prod.yml logs"
+fi
 
 echo ""
-echo "✅ 服務啟動完成！"
+echo "========================================="
+echo "✅ 部署完成！"
+echo "========================================="
 echo ""
 echo "📊 服務存取資訊："
-echo "  - 前端網站: http://localhost:${FRONTEND_PORT}"
-echo "  - 後端 API: http://localhost:${BACKEND_PORT}/api"
-echo "  - phpMyAdmin: http://localhost:${PHPMYADMIN_PORT}"
-echo "  - 資料庫連線: localhost:${DB_PORT}"
+
+# 檢測是否在 VPS 上運行
+if [ -n "$SSH_CONNECTION" ] || [ -n "$SSH_CLIENT" ]; then
+    # 在 VPS 上，顯示 IP 地址
+    SERVER_IP=$(hostname -I | awk '{print $1}')
+    echo "  - 前端網站: http://${SERVER_IP}:${FRONTEND_PORT}"
+    echo "  - 後端 API: http://${SERVER_IP}:${BACKEND_PORT}/api"
+    echo "  - phpMyAdmin: http://${SERVER_IP}:${PHPMYADMIN_PORT}"
+    echo "  - 資料庫連線: ${SERVER_IP}:${DB_PORT}"
+else
+    # 在本地運行
+    echo "  - 前端網站: http://localhost:${FRONTEND_PORT}"
+    echo "  - 後端 API: http://localhost:${BACKEND_PORT}/api"
+    echo "  - phpMyAdmin: http://localhost:${PHPMYADMIN_PORT}"
+    echo "  - 資料庫連線: localhost:${DB_PORT}"
+fi
+
 echo ""
 echo "📝 常用指令："
-echo "  - 查看服務狀態: docker-compose -f docker-compose.prod.yml ps"
-echo "  - 查看服務日誌: docker-compose -f docker-compose.prod.yml logs -f"
-echo "  - 停止所有服務: ./stop-prod.sh"
+echo "  - 查看服務狀態: docker compose -f docker-compose.prod.yml ps"
+echo "  - 查看服務日誌: docker compose -f docker-compose.prod.yml logs -f"
+echo "  - 重啟特定服務: docker compose -f docker-compose.prod.yml restart [service]"
+echo "  - 停止所有服務: docker compose -f docker-compose.prod.yml down"
+echo ""
+echo "🔒 安全提醒："
+echo "  - 請修改 .env.production 中的資料庫密碼"
+echo "  - 建議設定防火牆規則"
+echo "  - 考慮使用 Nginx 反向代理並設定 SSL"
 echo ""

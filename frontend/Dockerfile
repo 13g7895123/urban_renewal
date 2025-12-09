@@ -8,13 +8,16 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+RUN npm install --only=production --legacy-peer-deps && npm cache clean --force
 
 # Build stage
 FROM base AS builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+
+# Use npm install instead of npm ci for better compatibility
+# This will work even if package-lock.json is slightly out of sync
+RUN npm install --legacy-peer-deps
 
 # Copy source code
 COPY . .
