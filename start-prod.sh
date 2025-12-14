@@ -166,7 +166,7 @@ echo "🗄️  執行資料庫 Migration..."
 RETRY=0
 MAX_RETRY=15
 while [ $RETRY -lt $MAX_RETRY ]; do
-    if $DOCKER_COMPOSE -f docker-compose.prod.yml exec -T mariadb healthcheck.sh --connect 2>/dev/null; then
+    if $DOCKER_COMPOSE -f docker-compose.prod.yml --env-file .env.production exec -T mariadb healthcheck.sh --connect 2>/dev/null; then
         break
     fi
     echo "   等待資料庫就緒... ($((RETRY+1))/$MAX_RETRY)"
@@ -175,11 +175,11 @@ while [ $RETRY -lt $MAX_RETRY ]; do
 done
 
 # 執行 migration
-if $DOCKER_COMPOSE -f docker-compose.prod.yml exec -T backend php spark migrate --all; then
+if $DOCKER_COMPOSE -f docker-compose.prod.yml --env-file .env.production exec -T backend php spark migrate --all; then
     echo "✅ Migration 執行完成"
 else
     echo "⚠️  Migration 執行失敗，請手動檢查"
-    echo "   docker compose -f docker-compose.prod.yml exec backend php spark migrate --all"
+    echo "   docker compose -f docker-compose.prod.yml --env-file .env.production exec backend php spark migrate --all"
 fi
 
 echo ""
