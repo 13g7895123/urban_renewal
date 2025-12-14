@@ -32,21 +32,62 @@ if [ ! -f .env.production ]; then
     fi
 fi
 
-# 載入環境變數
-source .env.production
+# 載入環境變數 (正確處理 .env 檔案格式)
+echo "📂 載入環境變數..."
+set -a  # 自動 export 所有變數
+while IFS='=' read -r key value || [ -n "$key" ]; do
+    # 跳過空行和註解
+    [[ -z "$key" || "$key" =~ ^[[:space:]]*# ]] && continue
+    # 移除前後空白
+    key=$(echo "$key" | xargs)
+    value=$(echo "$value" | xargs)
+    # 移除值的引號
+    value="${value%\"}"
+    value="${value#\"}"
+    value="${value%\'}"
+    value="${value#\'}"
+    # 設定變數
+    if [ -n "$key" ]; then
+        export "$key=$value"
+    fi
+done < .env.production
+set +a
 
 # 檢查必要的環境變數
-if [ -z "$FRONTEND_PORT" ] || [ -z "$BACKEND_PORT" ] || [ -z "$DB_PORT" ]; then
-    echo "❌ 錯誤：環境變數設定不完整"
-    echo "請檢查 .env.production 檔案"
+MISSING_VARS=()
+[ -z "$FRONTEND_PORT" ] && MISSING_VARS+=("FRONTEND_PORT")
+[ -z "$BACKEND_PORT" ] && MISSING_VARS+=("BACKEND_PORT")
+[ -z "$DB_PORT" ] && MISSING_VARS+=("DB_PORT")
+[ -z "$PHPMYADMIN_PORT" ] && MISSING_VARS+=("PHPMYADMIN_PORT")
+[ -z "$DB_HOST" ] && MISSING_VARS+=("DB_HOST")
+[ -z "$DB_DATABASE" ] && MISSING_VARS+=("DB_DATABASE")
+[ -z "$DB_USERNAME" ] && MISSING_VARS+=("DB_USERNAME")
+[ -z "$DB_PASSWORD" ] && MISSING_VARS+=("DB_PASSWORD")
+[ -z "$DB_ROOT_PASSWORD" ] && MISSING_VARS+=("DB_ROOT_PASSWORD")
+[ -z "$BACKEND_URL" ] && MISSING_VARS+=("BACKEND_URL")
+[ -z "$BACKEND_API_URL" ] && MISSING_VARS+=("BACKEND_API_URL")
+
+if [ ${#MISSING_VARS[@]} -gt 0 ]; then
+    echo "❌ 錯誤：以下環境變數未設定："
+    for var in "${MISSING_VARS[@]}"; do
+        echo "   - $var"
+    done
+    echo ""
+    echo "請檢查 .env.production 檔案，確保包含以下變數："
+    echo "   FRONTEND_PORT, BACKEND_PORT, DB_PORT, PHPMYADMIN_PORT"
+    echo "   DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD, DB_ROOT_PASSWORD"
+    echo "   BACKEND_URL, BACKEND_API_URL"
     exit 1
 fi
 
+echo "✅ 環境變數載入完成"
+echo ""
 echo "🔧 環境配置："
 echo "  - 前端 Port: ${FRONTEND_PORT}"
 echo "  - 後端 Port: ${BACKEND_PORT}"
 echo "  - 資料庫 Port: ${DB_PORT}"
 echo "  - phpMyAdmin Port: ${PHPMYADMIN_PORT}"
+echo "  - 資料庫: ${DB_DATABASE}@${DB_HOST}"
 echo ""
 
 # 檢查 Docker 是否正在執行
