@@ -83,10 +83,22 @@
             <UInput v-model="formData.nickname" placeholder="暱稱" />
           </div>
           <div class="form-field">
-            <UInput v-model="formData.password" placeholder="密碼" type="password" />
+            <UInput v-model="formData.password" placeholder="密碼" :type="showPassword ? 'text' : 'password'">
+              <template #trailing>
+                <UButton variant="ghost" size="xs" @click="showPassword = !showPassword" class="focus:outline-none">
+                  <Icon :name="showPassword ? 'heroicons:eye-slash' : 'heroicons:eye'" class="w-4 h-4 text-gray-500" />
+                </UButton>
+              </template>
+            </UInput>
           </div>
           <div class="form-field">
-            <UInput v-model="formData.confirmPassword" placeholder="確認密碼" type="password" />
+            <UInput v-model="formData.confirmPassword" placeholder="確認密碼" :type="showConfirmPassword ? 'text' : 'password'">
+              <template #trailing>
+                <UButton variant="ghost" size="xs" @click="showConfirmPassword = !showConfirmPassword" class="focus:outline-none">
+                  <Icon :name="showConfirmPassword ? 'heroicons:eye-slash' : 'heroicons:eye'" class="w-4 h-4 text-gray-500" />
+                </UButton>
+              </template>
+            </UInput>
           </div>
           <div class="form-field">
             <UInput v-model="formData.fullName" placeholder="姓名" />
@@ -98,13 +110,13 @@
             <UInput v-model="formData.phone" placeholder="手機號碼" />
           </div>
           <div class="form-field">
-            <UInput v-model="formData.lineId" placeholder="Line帳號" />
+            <UInput v-model="formData.lineId" placeholder="Line ID (選填)" />
           </div>
           <div class="form-field">
             <UInput v-model="formData.companyName" placeholder="公司名稱" />
           </div>
           <div class="form-field">
-            <UInput v-model="formData.jobTitle" placeholder="職稱" />
+            <UInput v-model="formData.jobTitle" placeholder="職稱 (選填)" />
           </div>
         </div>
       </div>
@@ -119,10 +131,22 @@
             <UInput v-model="formData.nickname" placeholder="暱稱" />
           </div>
           <div class="form-field">
-            <UInput v-model="formData.password" placeholder="密碼" type="password" />
+            <UInput v-model="formData.password" placeholder="密碼" :type="showPassword ? 'text' : 'password'">
+              <template #trailing>
+                <UButton variant="ghost" size="xs" @click="showPassword = !showPassword" class="focus:outline-none">
+                  <Icon :name="showPassword ? 'heroicons:eye-slash' : 'heroicons:eye'" class="w-4 h-4 text-gray-500" />
+                </UButton>
+              </template>
+            </UInput>
           </div>
           <div class="form-field">
-            <UInput v-model="formData.confirmPassword" placeholder="確認密碼" type="password" />
+            <UInput v-model="formData.confirmPassword" placeholder="確認密碼" :type="showConfirmPassword ? 'text' : 'password'">
+              <template #trailing>
+                <UButton variant="ghost" size="xs" @click="showConfirmPassword = !showConfirmPassword" class="focus:outline-none">
+                  <Icon :name="showConfirmPassword ? 'heroicons:eye-slash' : 'heroicons:eye'" class="w-4 h-4 text-gray-500" />
+                </UButton>
+              </template>
+            </UInput>
           </div>
           <div class="form-field">
             <UInput v-model="formData.fullName" placeholder="姓名" />
@@ -134,13 +158,13 @@
             <UInput v-model="formData.phone" placeholder="手機號碼" />
           </div>
           <div class="form-field">
-            <UInput v-model="formData.lineId" placeholder="Line帳號" />
+            <UInput v-model="formData.lineId" placeholder="Line ID (選填)" />
           </div>
           <div class="form-field">
             <UInput v-model="formData.companyName" placeholder="公司名稱" />
           </div>
           <div class="form-field">
-            <UInput v-model="formData.jobTitle" placeholder="職稱" />
+            <UInput v-model="formData.jobTitle" placeholder="職稱 (選填)" />
           </div>
           <div class="form-field">
             <UInput v-model="formData.businessName" placeholder="企業名稱" />
@@ -184,6 +208,8 @@ const { showSuccess, showError, showWarning } = useSweetAlert()
 const currentStep = ref(1)
 const selectedAccountType = ref('')
 const loading = ref(false)
+const showPassword = ref(false)
+const showConfirmPassword = ref(false)
 const formData = ref({
   account: '',
   nickname: '',
