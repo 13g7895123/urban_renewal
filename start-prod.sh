@@ -159,6 +159,29 @@ if [ $RETRY -eq $MAX_RETRY ]; then
 fi
 
 echo ""
+echo "🗄️  執行資料庫 Migration..."
+
+# 等待資料庫完全就緒
+RETRY=0
+MAX_RETRY=15
+while [ $RETRY -lt $MAX_RETRY ]; do
+    if $DOCKER_COMPOSE -f docker-compose.prod.yml exec -T mariadb healthcheck.sh --connect 2>/dev/null; then
+        break
+    fi
+    echo "   等待資料庫就緒... ($((RETRY+1))/$MAX_RETRY)"
+    sleep 2
+    RETRY=$((RETRY+1))
+done
+
+# 執行 migration
+if $DOCKER_COMPOSE -f docker-compose.prod.yml exec -T backend php spark migrate --all; then
+    echo "✅ Migration 執行完成"
+else
+    echo "⚠️  Migration 執行失敗，請手動檢查"
+    echo "   docker compose -f docker-compose.prod.yml exec backend php spark migrate --all"
+fi
+
+echo ""
 echo "========================================="
 echo "✅ 部署完成！"
 echo "========================================="
