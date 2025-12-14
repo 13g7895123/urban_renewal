@@ -78,6 +78,7 @@ services:
     environment:
       - PMA_HOST=mariadb
       - PMA_PORT=3306
+      - PMA_ABSOLUTE_URI=${PHPMYADMIN_URL}
       - UPLOAD_LIMIT=300M
     ports:
       - "${PHPMYADMIN_PORT}:80"

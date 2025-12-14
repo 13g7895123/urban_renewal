@@ -66,6 +66,7 @@ MISSING_VARS=()
 [ -z "$DB_ROOT_PASSWORD" ] && MISSING_VARS+=("DB_ROOT_PASSWORD")
 [ -z "$BACKEND_URL" ] && MISSING_VARS+=("BACKEND_URL")
 [ -z "$BACKEND_API_URL" ] && MISSING_VARS+=("BACKEND_API_URL")
+[ -z "$PHPMYADMIN_URL" ] && MISSING_VARS+=("PHPMYADMIN_URL")
 
 if [ ${#MISSING_VARS[@]} -gt 0 ]; then
     echo "❌ 錯誤：以下環境變數未設定："
@@ -76,7 +77,7 @@ if [ ${#MISSING_VARS[@]} -gt 0 ]; then
     echo "請檢查 .env.production 檔案，確保包含以下變數："
     echo "   FRONTEND_PORT, BACKEND_PORT, DB_PORT, PHPMYADMIN_PORT"
     echo "   DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD, DB_ROOT_PASSWORD"
-    echo "   BACKEND_URL, BACKEND_API_URL"
+    echo "   BACKEND_URL, BACKEND_API_URL, PHPMYADMIN_URL"
     exit 1
 fi
 
