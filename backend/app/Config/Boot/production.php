@@ -10,9 +10,13 @@
  | If you set 'display_errors' to '1', CI4's detailed error report will show.
  */
 error_reporting(E_ALL & ~E_DEPRECATED);
-// If you want to suppress more types of errors.
-// error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT & ~E_USER_NOTICE & ~E_USER_DEPRECATED);
-ini_set('display_errors', '0');
+
+// In CLI mode, we need to show errors for spark commands to work properly
+if (php_sapi_name() === 'cli' || defined('STDIN')) {
+    ini_set('display_errors', '1');
+} else {
+    ini_set('display_errors', '0');
+}
 
 /*
  |--------------------------------------------------------------------------
@@ -23,3 +27,4 @@ ini_set('display_errors', '0');
  | release of the framework.
  */
 defined('CI_DEBUG') || define('CI_DEBUG', false);
+

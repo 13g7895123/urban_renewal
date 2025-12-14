@@ -4,6 +4,11 @@ set -e
 # Update .env file with environment variables if they're set
 if [ -f .env ]; then
     echo "Updating .env file with environment variables..."
+    echo "  DB_HOST=${DB_HOST}"
+    echo "  DB_DATABASE=${DB_DATABASE}"
+    echo "  DB_USERNAME=${DB_USERNAME}"
+    echo "  DB_PASSWORD=******"
+    
     if [ ! -z "${DB_HOST}" ]; then
         sed -i "s/^database\.default\.hostname\s*=.*/database.default.hostname = ${DB_HOST}/" .env
     fi
@@ -16,6 +21,9 @@ if [ -f .env ]; then
     if [ ! -z "${DB_PASSWORD}" ]; then
         sed -i "s/^database\.default\.password\s*=.*/database.default.password = ${DB_PASSWORD}/" .env
     fi
+    
+    echo "Updated .env database settings:"
+    grep "database.default" .env | head -5
 fi
 
 # Install composer dependencies if needed
