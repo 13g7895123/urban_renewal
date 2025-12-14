@@ -56,7 +56,7 @@ services:
     image: mariadb:11.4
     container_name: urban_renewal_db_prod
     environment:
-      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
       - MYSQL_DATABASE=${DB_DATABASE}
     ports:
       - "${DB_PORT}:3306"
@@ -79,7 +79,7 @@ services:
       - PMA_HOST=mariadb
       - PMA_PORT=3306
       - PMA_USER=root
-      - PMA_PASSWORD=${DB_PASSWORD}
+      - PMA_PASSWORD=${DB_ROOT_PASSWORD}
       - UPLOAD_LIMIT=300M
     ports:
       - "${PHPMYADMIN_PORT}:80"
