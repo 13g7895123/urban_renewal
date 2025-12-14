@@ -83,18 +83,20 @@
             <UInput v-model="formData.nickname" placeholder="暱稱" />
           </div>
           <div class="form-field">
-            <UInput v-model="formData.password" placeholder="密碼" :type="showPassword ? 'text' : 'password'">
+            <UInput v-model="formData.password" placeholder="密碼" :type="showPassword ? 'text' : 'password'"
+              :ui="{ base: 'pr-10' }">
               <template #trailing>
-                <UButton variant="ghost" size="xs" @click="showPassword = !showPassword" class="focus:outline-none">
+                <UButton variant="ghost" size="xs" @click="showPassword = !showPassword" class="focus:outline-none relative z-20 cursor-pointer">
                   <Icon :name="showPassword ? 'heroicons:eye-slash' : 'heroicons:eye'" class="w-4 h-4 text-gray-500" />
                 </UButton>
               </template>
             </UInput>
           </div>
           <div class="form-field">
-            <UInput v-model="formData.confirmPassword" placeholder="確認密碼" :type="showConfirmPassword ? 'text' : 'password'">
+            <UInput v-model="formData.confirmPassword" placeholder="確認密碼" :type="showConfirmPassword ? 'text' : 'password'"
+              :ui="{ base: 'pr-10' }">
               <template #trailing>
-                <UButton variant="ghost" size="xs" @click="showConfirmPassword = !showConfirmPassword" class="focus:outline-none">
+                <UButton variant="ghost" size="xs" @click="showConfirmPassword = !showConfirmPassword" class="focus:outline-none relative z-20 cursor-pointer">
                   <Icon :name="showConfirmPassword ? 'heroicons:eye-slash' : 'heroicons:eye'" class="w-4 h-4 text-gray-500" />
                 </UButton>
               </template>
@@ -131,18 +133,20 @@
             <UInput v-model="formData.nickname" placeholder="暱稱" />
           </div>
           <div class="form-field">
-            <UInput v-model="formData.password" placeholder="密碼" :type="showPassword ? 'text' : 'password'">
+            <UInput v-model="formData.password" placeholder="密碼" :type="showPassword ? 'text' : 'password'"
+              :ui="{ base: 'pr-10' }">
               <template #trailing>
-                <UButton variant="ghost" size="xs" @click="showPassword = !showPassword" class="focus:outline-none">
+                <UButton variant="ghost" size="xs" @click="showPassword = !showPassword" class="focus:outline-none relative z-20 cursor-pointer">
                   <Icon :name="showPassword ? 'heroicons:eye-slash' : 'heroicons:eye'" class="w-4 h-4 text-gray-500" />
                 </UButton>
               </template>
             </UInput>
           </div>
           <div class="form-field">
-            <UInput v-model="formData.confirmPassword" placeholder="確認密碼" :type="showConfirmPassword ? 'text' : 'password'">
+            <UInput v-model="formData.confirmPassword" placeholder="確認密碼" :type="showConfirmPassword ? 'text' : 'password'"
+              :ui="{ base: 'pr-10' }">
               <template #trailing>
-                <UButton variant="ghost" size="xs" @click="showConfirmPassword = !showConfirmPassword" class="focus:outline-none">
+                <UButton variant="ghost" size="xs" @click="showConfirmPassword = !showConfirmPassword" class="focus:outline-none relative z-20 cursor-pointer">
                   <Icon :name="showConfirmPassword ? 'heroicons:eye-slash' : 'heroicons:eye'" class="w-4 h-4 text-gray-500" />
                 </UButton>
               </template>

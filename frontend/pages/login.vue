@@ -20,9 +20,9 @@
         <Icon name="heroicons:lock-closed" class="input-icon" />
         <UInput v-model="password" placeholder="密碼" :type="showPassword ? 'text' : 'password'" variant="none"
           class="custom-input"
-          :ui="{ base: 'w-full border-0 border-b border-gray-300 rounded-none bg-transparent focus:border-primary-500' }">
+          :ui="{ base: 'w-full border-0 border-b border-gray-300 rounded-none bg-transparent focus:border-primary-500 pr-10' }">
           <template #trailing>
-            <UButton variant="ghost" size="xs" @click="showPassword = !showPassword" class="password-toggle">
+            <UButton variant="ghost" size="xs" @click="showPassword = !showPassword" class="password-toggle relative z-20 cursor-pointer">
               <Icon :name="showPassword ? 'heroicons:eye-slash' : 'heroicons:eye'" class="w-4 h-4 text-gray-500" />
             </UButton>
           </template>
