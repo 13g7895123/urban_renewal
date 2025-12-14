@@ -35,7 +35,11 @@ RUN if [ ! -f .env ]; then cp env .env; fi && \
 RUN composer install --no-interaction --no-dev --optimize-autoloader
 
 # Create necessary directories and set permissions
-RUN mkdir -p /var/www/html/writable && \
+RUN mkdir -p /var/www/html/writable/cache \
+    /var/www/html/writable/logs \
+    /var/www/html/writable/session \
+    /var/www/html/writable/uploads \
+    /var/www/html/writable/debugbar && \
     chmod -R 777 /var/www/html/writable
 
 # Copy and set permissions for entrypoint script
