@@ -84,20 +84,24 @@
           </div>
           <div class="form-field">
             <UInput v-model="formData.password" placeholder="密碼" :type="showPassword ? 'text' : 'password'"
-              :ui="{ base: 'pr-10' }">
+              :ui="{ base: 'pr-10', icon: { trailing: { pointer: 'pointer-events-auto' } } }">
               <template #trailing>
-                <UButton variant="ghost" size="xs" @click="showPassword = !showPassword" class="focus:outline-none relative z-20 cursor-pointer">
-                  <Icon :name="showPassword ? 'heroicons:eye-slash' : 'heroicons:eye'" class="w-4 h-4 text-gray-500" />
+                <UButton variant="ghost" size="xs" @click="showPassword = !showPassword"
+                  class="focus:outline-none relative z-20 cursor-pointer">
+                  <Icon :name="showPassword ? 'heroicons:eye' : 'heroicons:eye-slash'" class="w-4 h-4 text-gray-500" />
                 </UButton>
               </template>
             </UInput>
           </div>
           <div class="form-field">
-            <UInput v-model="formData.confirmPassword" placeholder="確認密碼" :type="showConfirmPassword ? 'text' : 'password'"
-              :ui="{ base: 'pr-10' }">
+            <UInput v-model="formData.confirmPassword" placeholder="確認密碼"
+              :type="showConfirmPassword ? 'text' : 'password'"
+              :ui="{ base: 'pr-10', icon: { trailing: { pointer: 'pointer-events-auto' } } }">
               <template #trailing>
-                <UButton variant="ghost" size="xs" @click="showConfirmPassword = !showConfirmPassword" class="focus:outline-none relative z-20 cursor-pointer">
-                  <Icon :name="showConfirmPassword ? 'heroicons:eye-slash' : 'heroicons:eye'" class="w-4 h-4 text-gray-500" />
+                <UButton variant="ghost" size="xs" @click="showConfirmPassword = !showConfirmPassword"
+                  class="focus:outline-none relative z-20 cursor-pointer">
+                  <Icon :name="showConfirmPassword ? 'heroicons:eye' : 'heroicons:eye-slash'"
+                    class="w-4 h-4 text-gray-500" />
                 </UButton>
               </template>
             </UInput>
@@ -134,20 +138,24 @@
           </div>
           <div class="form-field">
             <UInput v-model="formData.password" placeholder="密碼" :type="showPassword ? 'text' : 'password'"
-              :ui="{ base: 'pr-10' }">
+              :ui="{ base: 'pr-10', icon: { trailing: { pointer: 'pointer-events-auto' } } }">
               <template #trailing>
-                <UButton variant="ghost" size="xs" @click="showPassword = !showPassword" class="focus:outline-none relative z-20 cursor-pointer">
-                  <Icon :name="showPassword ? 'heroicons:eye-slash' : 'heroicons:eye'" class="w-4 h-4 text-gray-500" />
+                <UButton variant="ghost" size="xs" @click="showPassword = !showPassword"
+                  class="focus:outline-none relative z-20 cursor-pointer">
+                  <Icon :name="showPassword ? 'heroicons:eye' : 'heroicons:eye-slash'" class="w-4 h-4 text-gray-500" />
                 </UButton>
               </template>
             </UInput>
           </div>
           <div class="form-field">
-            <UInput v-model="formData.confirmPassword" placeholder="確認密碼" :type="showConfirmPassword ? 'text' : 'password'"
-              :ui="{ base: 'pr-10' }">
+            <UInput v-model="formData.confirmPassword" placeholder="確認密碼"
+              :type="showConfirmPassword ? 'text' : 'password'"
+              :ui="{ base: 'pr-10', icon: { trailing: { pointer: 'pointer-events-auto' } } }">
               <template #trailing>
-                <UButton variant="ghost" size="xs" @click="showConfirmPassword = !showConfirmPassword" class="focus:outline-none relative z-20 cursor-pointer">
-                  <Icon :name="showConfirmPassword ? 'heroicons:eye-slash' : 'heroicons:eye'" class="w-4 h-4 text-gray-500" />
+                <UButton variant="ghost" size="xs" @click="showConfirmPassword = !showConfirmPassword"
+                  class="focus:outline-none relative z-20 cursor-pointer">
+                  <Icon :name="showConfirmPassword ? 'heroicons:eye' : 'heroicons:eye-slash'"
+                    class="w-4 h-4 text-gray-500" />
                 </UButton>
               </template>
             </UInput>
