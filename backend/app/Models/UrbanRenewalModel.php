@@ -20,7 +20,12 @@ class UrbanRenewalModel extends Model
         'chairman_phone',
         'address',
         'representative',
-        'assigned_admin_id'
+        'assigned_admin_id',
+        'phone',
+        'fax',
+        'email',
+        'contact_person',
+        'notes'
     ];
 
     protected $useTimestamps = true;
@@ -28,11 +33,9 @@ class UrbanRenewalModel extends Model
     protected $updatedField = 'updated_at';
     protected $deletedField = 'deleted_at';
 
-    // Validation rules
+    // Validation rules - 只有 name 是必填的
     protected $validationRules = [
         'name' => 'required|min_length[2]|max_length[255]',
-        'chairman_name' => 'required|min_length[2]|max_length[100]',
-        'chairman_phone' => 'required|min_length[8]|max_length[20]'
     ];
 
     protected $validationMessages = [
@@ -41,16 +44,6 @@ class UrbanRenewalModel extends Model
             'min_length' => '更新會名稱至少需要2個字元',
             'max_length' => '更新會名稱不能超過255個字元'
         ],
-        'chairman_name' => [
-            'required' => '理事長姓名為必填項目',
-            'min_length' => '理事長姓名至少需要2個字元',
-            'max_length' => '理事長姓名不能超過100個字元'
-        ],
-        'chairman_phone' => [
-            'required' => '理事長電話為必填項目',
-            'min_length' => '理事長電話至少需要8個字元',
-            'max_length' => '理事長電話不能超過20個字元'
-        ]
     ];
 
     protected $skipValidation = false;

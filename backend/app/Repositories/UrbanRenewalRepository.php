@@ -89,11 +89,23 @@ class UrbanRenewalRepository implements UrbanRenewalRepositoryInterface
             $this->urbanRenewalModel->update($entity->getId(), $data);
             $id = $entity->getId();
         } else {
-            $id = $this->urbanRenewalModel->insert($data);
+            $result = $this->urbanRenewalModel->insert($data);
+            if ($result === false) {
+                // Log validation errors if insert fails
+                $errors = $this->urbanRenewalModel->errors();
+                log_message('error', 'UrbanRenewal insert failed: ' . json_encode($errors));
+                throw new \RuntimeException('新增更新會失敗: ' . implode(', ', $errors));
+            }
+            $id = $result;
             $entity->setId($id);
         }
 
-        return $this->findById($id);
+        $saved = $this->findById($id);
+        if ($saved === null) {
+            throw new \RuntimeException('無法取得已儲存的更新會資料');
+        }
+        
+        return $saved;
     }
 
     /**

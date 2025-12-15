@@ -362,28 +362,26 @@ class AuthController extends ResourceController
             $db = \Config\Database::connect();
             $db->transStart();
 
-            $urbanRenewalId = null;
+            $companyId = null;
 
-            // 如果是企業帳號，先建立 urban_renewal 記錄
+            // 如果是企業帳號，先建立 company 記錄
             if ($data['accountType'] === 'business') {
-                $urbanRenewalModel = new \App\Models\UrbanRenewalModel();
+                $companyModel = new \App\Models\CompanyModel();
 
-                $urbanRenewalData = [
+                $companyData = [
                     'name' => $data['businessName'],
                     'tax_id' => $data['taxId'] ?? null,
                     'company_phone' => $data['businessPhone'] ?? null,
-                    // 設定預設值以通過驗證（area 必須大於 0）
-                    'area' => 1.0,
-                    'member_count' => 1,
-                    'chairman_name' => $data['fullName'],
-                    'chairman_phone' => $data['phone']
+                    'max_renewal_count' => 1, // 預設可建立 1 個更新會
+                    'max_issue_count' => 8,   // 預設最多 8 個議題
                 ];
 
-                $urbanRenewalId = $urbanRenewalModel->insert($urbanRenewalData);
+                $companyId = $companyModel->insert($companyData);
 
-                if (!$urbanRenewalId) {
+                if (!$companyId) {
                     $db->transRollback();
-                    return response_error('企業資料建立失敗', 500);
+                    $errors = $companyModel->errors();
+                    return response_error('企業資料建立失敗: ' . implode(', ', $errors), 500);
                 }
             }
 
@@ -399,7 +397,8 @@ class AuthController extends ResourceController
                 'position' => $data['jobTitle'] ?? null,
                 'user_type' => $data['accountType'] === 'business' ? 'enterprise' : 'general',
                 'is_company_manager' => $data['accountType'] === 'business' ? 1 : 0,
-                'urban_renewal_id' => $urbanRenewalId,
+                'company_id' => $companyId, // 設定企業 ID（新架構）
+                'urban_renewal_id' => null,  // 使用者不直接關聯更新會，透過企業關聯
                 'role' => 'member', // 預設角色
                 'is_active' => 1
             ];
@@ -420,14 +419,15 @@ class AuthController extends ResourceController
             // 記錄註冊事件
             log_auth_event('register', $userId, $data['account'], null, [
                 'user_type' => $userData['user_type'],
-                'urban_renewal_id' => $urbanRenewalId
+                'company_id' => $companyId
             ]);
 
             return $this->respond([
                 'success' => true,
                 'data' => [
                     'user_id' => $userId,
-                    'username' => $data['account']
+                    'username' => $data['account'],
+                    'company_id' => $companyId
                 ],
                 'message' => '註冊成功'
             ], 201);
