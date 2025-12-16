@@ -36,7 +36,7 @@ class UrbanRenewalService
         }
 
         $result = $this->repository->getPaginated($page, $perPage, $filters);
-        
+
         return [
             'data' => array_map(fn($entity) => $entity->toArray(), $result['data']),
             'pagination' => $result['pagination']
@@ -49,7 +49,7 @@ class UrbanRenewalService
     public function getDetail(array $user, int $id): array
     {
         $entity = $this->repository->findById($id);
-        
+
         if (!$entity) {
             throw new NotFoundException('更新會不存在');
         }
@@ -72,7 +72,7 @@ class UrbanRenewalService
         if (!$this->authService->isAdmin($user)) {
             $this->authService->assertIsCompanyManager($user);
             $userCompanyId = $this->authService->getUserCompanyId($user);
-            
+
             if (empty($data['company_id'])) {
                 $data['company_id'] = $userCompanyId;
             } elseif ((int)$data['company_id'] !== $userCompanyId) {
@@ -81,20 +81,23 @@ class UrbanRenewalService
         }
 
         $entity = new UrbanRenewal($data['name']);
-        
+
         if (!empty($data['company_id'])) {
             $entity->setCompanyId((int)$data['company_id']);
         }
-        
+
         $entity->setAddress($data['address'] ?? null);
         $entity->setPhone($data['phone'] ?? null);
         $entity->setFax($data['fax'] ?? null);
         $entity->setEmail($data['email'] ?? null);
         $entity->setContactPerson($data['contact_person'] ?? null);
+        $entity->setChairmanName($data['chairman_name'] ?? null);
+        $entity->setChairmanPhone($data['chairman_phone'] ?? null);
+        $entity->setRepresentative($data['representative'] ?? null);
         $entity->setNotes($data['notes'] ?? null);
 
         $saved = $this->repository->save($entity);
-        
+
         return $saved->toArray();
     }
 
@@ -104,7 +107,7 @@ class UrbanRenewalService
     public function update(array $user, int $id, array $data): array
     {
         $entity = $this->repository->findById($id);
-        
+
         if (!$entity) {
             throw new NotFoundException('更新會不存在');
         }
@@ -130,12 +133,21 @@ class UrbanRenewalService
         if (array_key_exists('contact_person', $data)) {
             $entity->setContactPerson($data['contact_person']);
         }
+        if (array_key_exists('chairman_name', $data)) {
+            $entity->setChairmanName($data['chairman_name']);
+        }
+        if (array_key_exists('chairman_phone', $data)) {
+            $entity->setChairmanPhone($data['chairman_phone']);
+        }
+        if (array_key_exists('representative', $data)) {
+            $entity->setRepresentative($data['representative']);
+        }
         if (array_key_exists('notes', $data)) {
             $entity->setNotes($data['notes']);
         }
 
         $saved = $this->repository->save($entity);
-        
+
         return $saved->toArray();
     }
 
@@ -145,7 +157,7 @@ class UrbanRenewalService
     public function delete(array $user, int $id): bool
     {
         $entity = $this->repository->findById($id);
-        
+
         if (!$entity) {
             throw new NotFoundException('更新會不存在');
         }
@@ -168,7 +180,7 @@ class UrbanRenewalService
     public function getStatistics(array $user, int $id): array
     {
         $entity = $this->repository->findById($id);
-        
+
         if (!$entity) {
             throw new NotFoundException('更新會不存在');
         }
@@ -192,7 +204,7 @@ class UrbanRenewalService
         }
 
         $entities = $this->repository->findByCompanyId($companyId);
-        
+
         return array_map(fn($e) => $e->toArray(), $entities);
     }
 }

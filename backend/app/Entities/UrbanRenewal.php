@@ -15,11 +15,14 @@ class UrbanRenewal
     private ?string $fax = null;
     private ?string $email = null;
     private ?string $contactPerson = null;
+    private ?string $chairmanName = null;
+    private ?string $chairmanPhone = null;
+    private ?string $representative = null;
     private ?string $notes = null;
     private ?int $memberCount = null;
     private ?float $totalLandArea = null;
     private ?float $totalBuildingArea = null;
-    
+
     private ?\DateTime $createdAt = null;
     private ?\DateTime $updatedAt = null;
 
@@ -34,7 +37,7 @@ class UrbanRenewal
     }
 
     // === Getters ===
-    
+
     public function getId(): ?int
     {
         return $this->id;
@@ -73,6 +76,21 @@ class UrbanRenewal
     public function getContactPerson(): ?string
     {
         return $this->contactPerson;
+    }
+
+    public function getChairmanName(): ?string
+    {
+        return $this->chairmanName;
+    }
+
+    public function getChairmanPhone(): ?string
+    {
+        return $this->chairmanPhone;
+    }
+
+    public function getRepresentative(): ?string
+    {
+        return $this->representative;
     }
 
     public function getNotes(): ?string
@@ -149,6 +167,24 @@ class UrbanRenewal
         return $this;
     }
 
+    public function setChairmanName(?string $chairmanName): self
+    {
+        $this->chairmanName = $chairmanName ? trim($chairmanName) : null;
+        return $this;
+    }
+
+    public function setChairmanPhone(?string $chairmanPhone): self
+    {
+        $this->chairmanPhone = $chairmanPhone ? trim($chairmanPhone) : null;
+        return $this;
+    }
+
+    public function setRepresentative(?string $representative): self
+    {
+        $this->representative = $representative ? trim($representative) : null;
+        return $this;
+    }
+
     public function setNotes(?string $notes): self
     {
         $this->notes = $notes ? trim($notes) : null;
@@ -218,6 +254,9 @@ class UrbanRenewal
             'fax' => $this->fax,
             'email' => $this->email,
             'contact_person' => $this->contactPerson,
+            'chairman_name' => $this->chairmanName,
+            'chairman_phone' => $this->chairmanPhone,
+            'representative' => $this->representative,
             'notes' => $this->notes,
             'member_count' => $this->memberCount,
             'total_land_area' => $this->totalLandArea,
@@ -235,27 +274,30 @@ class UrbanRenewal
     public static function fromArray(array $data): self
     {
         $entity = new self($data['name']);
-        
+
         if (isset($data['id'])) $entity->setId((int)$data['id']);
         if (isset($data['company_id'])) $entity->setCompanyId((int)$data['company_id']);
-        
+
         $entity->setAddress($data['address'] ?? null);
         $entity->setPhone($data['phone'] ?? null);
         $entity->setFax($data['fax'] ?? null);
         $entity->setEmail($data['email'] ?? null);
         $entity->setContactPerson($data['contact_person'] ?? null);
+        $entity->setChairmanName($data['chairman_name'] ?? null);
+        $entity->setChairmanPhone($data['chairman_phone'] ?? null);
+        $entity->setRepresentative($data['representative'] ?? null);
         $entity->setNotes($data['notes'] ?? null);
-        
+
         if (isset($data['member_count'])) $entity->setMemberCount((int)$data['member_count']);
         if (isset($data['total_land_area'])) $entity->setTotalLandArea((float)$data['total_land_area']);
         if (isset($data['total_building_area'])) $entity->setTotalBuildingArea((float)$data['total_building_area']);
         if (isset($data['company_name'])) $entity->setCompanyName($data['company_name']);
         if (isset($data['property_owner_count'])) $entity->setPropertyOwnerCount((int)$data['property_owner_count']);
         if (isset($data['meeting_count'])) $entity->setMeetingCount((int)$data['meeting_count']);
-        
+
         if (isset($data['created_at'])) $entity->setCreatedAt(new \DateTime($data['created_at']));
         if (isset($data['updated_at'])) $entity->setUpdatedAt(new \DateTime($data['updated_at']));
-        
+
         return $entity;
     }
 }

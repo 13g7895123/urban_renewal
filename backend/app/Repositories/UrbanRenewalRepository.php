@@ -27,7 +27,7 @@ class UrbanRenewalRepository implements UrbanRenewalRepositoryInterface
     public function findById(int $id): ?UrbanRenewal
     {
         $data = $this->urbanRenewalModel->find($id);
-        
+
         if (!$data) {
             return null;
         }
@@ -64,8 +64,8 @@ class UrbanRenewalRepository implements UrbanRenewalRepositoryInterface
 
         $total = $builder->countAllResults(false);
         $data = $builder->orderBy('created_at', 'DESC')
-                        ->limit($perPage, ($page - 1) * $perPage)
-                        ->findAll();
+            ->limit($perPage, ($page - 1) * $perPage)
+            ->findAll();
 
         return [
             'data' => array_map(fn($item) => $this->hydrateWithRelations($item), $data),
@@ -84,7 +84,7 @@ class UrbanRenewalRepository implements UrbanRenewalRepositoryInterface
     public function save(UrbanRenewal $entity): UrbanRenewal
     {
         $data = $this->dehydrate($entity);
-        
+
         if ($entity->getId()) {
             $this->urbanRenewalModel->update($entity->getId(), $data);
             $id = $entity->getId();
@@ -104,7 +104,7 @@ class UrbanRenewalRepository implements UrbanRenewalRepositoryInterface
         if ($saved === null) {
             throw new \RuntimeException('無法取得已儲存的更新會資料');
         }
-        
+
         return $saved;
     }
 
@@ -171,6 +171,9 @@ class UrbanRenewalRepository implements UrbanRenewalRepositoryInterface
             'fax' => $entity->getFax(),
             'email' => $entity->getEmail(),
             'contact_person' => $entity->getContactPerson(),
+            'chairman_name' => $entity->getChairmanName(),
+            'chairman_phone' => $entity->getChairmanPhone(),
+            'representative' => $entity->getRepresentative(),
             'notes' => $entity->getNotes(),
         ];
     }
