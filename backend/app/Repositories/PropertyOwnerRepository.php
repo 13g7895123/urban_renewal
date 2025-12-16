@@ -44,7 +44,7 @@ class PropertyOwnerRepository implements PropertyOwnerRepositoryInterface
         $this->propertyOwnerModel->allowCallbacks(false);
         $data = $this->propertyOwnerModel->find($id);
         $this->propertyOwnerModel->allowCallbacks(true);
-        
+
         if (!$data) {
             return null;
         }
@@ -81,8 +81,8 @@ class PropertyOwnerRepository implements PropertyOwnerRepositoryInterface
         $records = $this->propertyOwnerModel
             ->where('urban_renewal_id', $urbanRenewalId)
             ->groupStart()
-                ->where('exclusion_type IS NULL')
-                ->orWhere('exclusion_type', '')
+            ->where('exclusion_type IS NULL')
+            ->orWhere('exclusion_type', '')
             ->groupEnd()
             ->orderBy('created_at', 'DESC')
             ->findAll();
@@ -105,13 +105,17 @@ class PropertyOwnerRepository implements PropertyOwnerRepositoryInterface
         try {
             // 停用 callbacks 以避免衝突
             $this->propertyOwnerModel->allowCallbacks(false);
-            
+
             // 準備主實體資料
             $data = $this->dehydrate($entity);
-            
+
             if ($entity->getId()) {
                 // 更新
-                $this->propertyOwnerModel->update($entity->getId(), $data);
+                $result = $this->propertyOwnerModel->update($entity->getId(), $data);
+                if ($result === false) {
+                    $errors = $this->propertyOwnerModel->errors();
+                    throw new \RuntimeException('更新所有權人失敗: ' . json_encode($errors, JSON_UNESCAPED_UNICODE));
+                }
                 $id = $entity->getId();
             } else {
                 // 新增 - 確保有 owner_code
@@ -119,9 +123,13 @@ class PropertyOwnerRepository implements PropertyOwnerRepositoryInterface
                     $data['owner_code'] = $this->getNextOwnerCode($entity->getUrbanRenewalId());
                 }
                 $id = $this->propertyOwnerModel->insert($data);
+                if ($id === false) {
+                    $errors = $this->propertyOwnerModel->errors();
+                    throw new \RuntimeException('新增所有權人失敗: ' . json_encode($errors, JSON_UNESCAPED_UNICODE));
+                }
                 $entity->setId($id);
             }
-            
+
             $this->propertyOwnerModel->allowCallbacks(true);
 
             // 同步建物關聯
@@ -137,7 +145,6 @@ class PropertyOwnerRepository implements PropertyOwnerRepositoryInterface
             }
 
             return $this->findById($id);
-
         } catch (\Exception $e) {
             $db->transRollback();
             log_message('error', 'PropertyOwnerRepository::save 錯誤: ' . $e->getMessage());
@@ -163,7 +170,6 @@ class PropertyOwnerRepository implements PropertyOwnerRepositoryInterface
 
             $db->transComplete();
             return $db->transStatus();
-            
         } catch (\Exception $e) {
             $db->transRollback();
             log_message('error', 'PropertyOwnerRepository::delete 錯誤: ' . $e->getMessage());
@@ -192,7 +198,7 @@ class PropertyOwnerRepository implements PropertyOwnerRepositoryInterface
             ->where('urban_renewal_id', $urbanRenewalId)
             ->first();
         $this->propertyOwnerModel->allowCallbacks(true);
-        
+
         if (!$data) {
             return null;
         }
@@ -211,7 +217,7 @@ class PropertyOwnerRepository implements PropertyOwnerRepositoryInterface
             ->where('urban_renewal_id', $urbanRenewalId)
             ->first();
         $this->propertyOwnerModel->allowCallbacks(true);
-        
+
         if (!$data) {
             return null;
         }
@@ -228,13 +234,13 @@ class PropertyOwnerRepository implements PropertyOwnerRepositoryInterface
             ->where('urban_renewal_id', $urbanRenewalId)
             ->selectMax('owner_code')
             ->first();
-        
+
         $nextNumber = 1;
         if ($maxCode && $maxCode['owner_code']) {
             $currentMax = intval($maxCode['owner_code']);
             $nextNumber = $currentMax + 1;
         }
-        
+
         return (string)$nextNumber;
     }
 
@@ -260,14 +266,14 @@ class PropertyOwnerRepository implements PropertyOwnerRepositoryInterface
                     (int)$ownership['ownership_numerator'],
                     (int)$ownership['ownership_denominator']
                 );
-                
+
                 // 轉換地點代碼為名稱
                 $location = $this->resolveLocationNames(
                     $building['county'] ?? null,
                     $building['district'] ?? null,
                     $building['section'] ?? null
                 );
-                
+
                 $building['location'] = $location;
                 $buildingOwnership->setBuildingData($building);
                 $entity->addBuilding($buildingOwnership);
@@ -303,18 +309,18 @@ class PropertyOwnerRepository implements PropertyOwnerRepositoryInterface
         $countyName = $countyCode ?? '';
         $districtName = $districtCode ?? '';
         $sectionName = $sectionCode ?? '';
-        
+
         try {
             if ($countyCode) {
                 $county = $this->countyModel->where('code', $countyCode)->first();
                 if ($county) {
                     $countyName = $county['name'];
-                    
+
                     if ($districtCode) {
                         $district = $this->districtModel->getByCodeAndCounty($districtCode, $county['id']);
                         if ($district) {
                             $districtName = $district['name'];
-                            
+
                             if ($sectionCode) {
                                 $section = $this->sectionModel->getByCodeAndDistrict($sectionCode, $district['id']);
                                 if ($section) {
@@ -328,7 +334,7 @@ class PropertyOwnerRepository implements PropertyOwnerRepositoryInterface
         } catch (\Exception $e) {
             log_message('warning', 'resolveLocationNames 錯誤: ' . $e->getMessage());
         }
-        
+
         return "{$countyName}/{$districtName}/{$sectionName}";
     }
 
