@@ -54,10 +54,11 @@ export const useMeetings = () => {
   }
 
   /**
-   * Search meetings
+   * Search meetings (using standard list endpoint with parameter)
    */
   const searchMeetings = async (params) => {
-    return await get('/meetings/search', params)
+    // API doc says GET /api/meetings?search=...
+    return await getMeetings(params)
   }
 
   /**
@@ -84,8 +85,8 @@ export const useMeetings = () => {
 
       // 使用 runtimeConfig 取得正確的後端 URL
       const backendUrl = config.public.backendUrl ||
-                        config.public.apiBaseUrl?.replace('/api', '') ||
-                        `http://localhost:${config.public.backendPort || 9228}`
+        config.public.apiBaseUrl?.replace('/api', '') ||
+        `http://localhost:${config.public.backendPort || 9228}`
 
       console.log('[Export] Using backend URL:', backendUrl)
 
@@ -168,14 +169,14 @@ export const useMeetings = () => {
 
       // 使用 runtimeConfig 取得正確的後端 URL
       const backendUrl = config.public.backendUrl ||
-                        config.public.apiBaseUrl?.replace('/api', '') ||
-                        `http://localhost:${config.public.backendPort || 9228}`
+        config.public.apiBaseUrl?.replace('/api', '') ||
+        `http://localhost:${config.public.backendPort || 9228}`
 
       console.log('[Export] Using backend URL:', backendUrl)
 
       // 使用 useApi 的 getAuthToken 方法取得 token
       const token = getAuthToken()
-      
+
       if (!token) {
         return {
           success: false,

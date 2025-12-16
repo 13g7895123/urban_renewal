@@ -9,7 +9,7 @@ export const useUsers = () => {
    */
   const getUsers = async (params = {}) => {
     const queryParams = new URLSearchParams()
-    
+
     if (params.search) queryParams.append('search', params.search)
     if (params.role) queryParams.append('role', params.role)
     if (params.status) queryParams.append('status', params.status)
@@ -20,7 +20,7 @@ export const useUsers = () => {
 
     const queryString = queryParams.toString()
     const endpoint = queryString ? `/users?${queryString}` : '/users'
-    
+
     return await get(endpoint)
   }
 
@@ -94,14 +94,14 @@ export const useUsers = () => {
     createUser,
     updateUser,
     deleteUser,
-    
-    // Status management
-    toggleUserStatus,
-    changeUserPassword,
-    
-    // Advanced operations
-    restoreUser,
-    forceDeleteUser,
+
+    // Status management - DISABLED: Endpoints not in API docs
+    // toggleUserStatus,
+    // changeUserPassword,
+
+    // Advanced operations - DISABLED: Endpoints not in API docs
+    // restoreUser,
+    // forceDeleteUser,
     getUserStats
   }
 }

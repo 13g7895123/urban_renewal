@@ -7,50 +7,55 @@ export const useAttendance = () => {
   /**
    * Get meeting attendance records
    */
-  const getAttendance = async (params = {}) => {
-    return await get('/meeting-attendance', params)
+  const getAttendance = async (meetingId, params = {}) => {
+    return await get(`/meetings/${meetingId}/attendances`, params)
   }
 
   /**
    * Check in for a meeting
    */
-  const checkIn = async (data) => {
-    return await post('/meeting-attendance/check-in', data)
+  const checkIn = async (meetingId, ownerId, data) => {
+    return await post(`/meetings/${meetingId}/attendances/${ownerId}`, data)
   }
 
   /**
    * Batch check in multiple attendees
    */
-  const batchCheckIn = async (data) => {
-    return await post('/meeting-attendance/batch-check-in', data)
+  const batchCheckIn = async (meetingId, data) => {
+    return await post(`/meetings/${meetingId}/attendances/batch`, data)
   }
 
   /**
    * Update attendance status
    */
-  const updateAttendanceStatus = async (id, status) => {
-    return await patch(`/meeting-attendance/${id}/update-status`, { status })
+  const updateAttendanceStatus = async (meetingId, ownerId, status) => {
+    return await patch(`/meetings/${meetingId}/attendances/${ownerId}`, {
+      attendance_type: status
+    })
   }
 
   /**
    * Get attendance summary for meeting
+   * Note: Using getAttendanceStatistics as they seem redundant in doc or one is missing
+   * Doc says: GET /api/meetings/{id}/attendances/statistics
    */
   const getAttendanceSummary = async (meetingId) => {
-    return await get(`/meeting-attendance/${meetingId}/summary`)
+    return await get(`/meetings/${meetingId}/attendances/statistics`)
   }
 
   /**
    * Export attendance data
    */
-  const exportAttendance = async (meetingId) => {
-    return await get(`/meeting-attendance/${meetingId}/export`)
+  const exportAttendance = async (meetingId, params = {}) => {
+    // Doc says POST /api/meetings/{id}/attendances/export
+    return await post(`/meetings/${meetingId}/attendances/export`, params)
   }
 
   /**
    * Get attendance statistics
    */
   const getAttendanceStatistics = async (meetingId) => {
-    return await get(`/meeting-attendance/${meetingId}/statistics`)
+    return await get(`/meetings/${meetingId}/attendances/statistics`)
   }
 
   return {
