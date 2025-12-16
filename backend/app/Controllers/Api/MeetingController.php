@@ -62,7 +62,7 @@ class MeetingController extends ResourceController
 
             $page = (int)($this->request->getGet('page') ?? 1);
             $perPage = (int)($this->request->getGet('per_page') ?? 10);
-            
+
             $filters = [];
             if ($urbanRenewalId = $this->request->getGet('urban_renewal_id')) {
                 $filters['urban_renewal_id'] = $urbanRenewalId;
@@ -82,7 +82,6 @@ class MeetingController extends ResourceController
                 'pagination' => $result['pagination'],
                 'message' => '取得會議列表成功'
             ]);
-
         } catch (UnauthorizedException $e) {
             return $this->fail(['success' => false, 'error' => ['code' => 'UNAUTHORIZED', 'message' => $e->getMessage()]], 401);
         } catch (ForbiddenException $e) {
@@ -115,7 +114,6 @@ class MeetingController extends ResourceController
                 'data' => $data,
                 'message' => '取得會議列表成功'
             ]);
-
         } catch (UnauthorizedException $e) {
             return $this->fail(['success' => false, 'error' => ['code' => 'UNAUTHORIZED', 'message' => $e->getMessage()]], 401);
         } catch (ForbiddenException $e) {
@@ -142,7 +140,6 @@ class MeetingController extends ResourceController
                 'data' => $data,
                 'message' => '取得會議詳情成功'
             ]);
-
         } catch (NotFoundException $e) {
             return $this->fail(['success' => false, 'error' => ['code' => 'NOT_FOUND', 'message' => $e->getMessage()]], 404);
         } catch (UnauthorizedException $e) {
@@ -172,7 +169,6 @@ class MeetingController extends ResourceController
                 'data' => $result,
                 'message' => '會議建立成功'
             ]);
-
         } catch (NotFoundException $e) {
             return $this->fail(['success' => false, 'error' => ['code' => 'NOT_FOUND', 'message' => $e->getMessage()]], 404);
         } catch (UnauthorizedException $e) {
@@ -206,7 +202,6 @@ class MeetingController extends ResourceController
                 'data' => $result,
                 'message' => '會議更新成功'
             ]);
-
         } catch (NotFoundException $e) {
             return $this->fail(['success' => false, 'error' => ['code' => 'NOT_FOUND', 'message' => $e->getMessage()]], 404);
         } catch (UnauthorizedException $e) {
@@ -236,7 +231,6 @@ class MeetingController extends ResourceController
                 'success' => true,
                 'message' => '會議刪除成功'
             ]);
-
         } catch (NotFoundException $e) {
             return $this->fail(['success' => false, 'error' => ['code' => 'NOT_FOUND', 'message' => $e->getMessage()]], 404);
         } catch (UnauthorizedException $e) {
@@ -267,7 +261,6 @@ class MeetingController extends ResourceController
                 'data' => $data,
                 'message' => '取得會議統計成功'
             ]);
-
         } catch (NotFoundException $e) {
             return $this->fail(['success' => false, 'error' => ['code' => 'NOT_FOUND', 'message' => $e->getMessage()]], 404);
         } catch (\Exception $e) {
@@ -297,7 +290,6 @@ class MeetingController extends ResourceController
                 'data' => $result,
                 'message' => '會議狀態更新成功'
             ]);
-
         } catch (NotFoundException $e) {
             return $this->fail(['success' => false, 'error' => ['code' => 'NOT_FOUND', 'message' => $e->getMessage()]], 404);
         } catch (ValidationException $e) {
@@ -329,7 +321,6 @@ class MeetingController extends ResourceController
                 'pagination' => $result['pagination'] ?? null,
                 'message' => $result['has_snapshot'] ? '取得合格投票人名單成功' : '此會議尚未建立投票人快照'
             ]);
-
         } catch (NotFoundException $e) {
             return $this->fail(['success' => false, 'error' => ['code' => 'NOT_FOUND', 'message' => $e->getMessage()]], 404);
         } catch (ForbiddenException $e) {
@@ -356,7 +347,6 @@ class MeetingController extends ResourceController
                 'data' => $result,
                 'message' => '投票人名單已重新整理'
             ]);
-
         } catch (NotFoundException $e) {
             return $this->fail(['success' => false, 'error' => ['code' => 'NOT_FOUND', 'message' => $e->getMessage()]], 404);
         } catch (ForbiddenException $e) {
@@ -409,7 +399,6 @@ class MeetingController extends ResourceController
 
             readfile($filepath);
             exit;
-
         } catch (ForbiddenException $e) {
             return $this->fail(['success' => false, 'error' => ['code' => 'FORBIDDEN', 'message' => $e->getMessage()]], 403);
         } catch (\Exception $e) {
@@ -456,12 +445,162 @@ class MeetingController extends ResourceController
 
             readfile($filepath);
             exit;
-
         } catch (ForbiddenException $e) {
             return $this->fail(['success' => false, 'error' => ['code' => 'FORBIDDEN', 'message' => $e->getMessage()]], 403);
         } catch (\Exception $e) {
             log_message('error', 'Export signature book error: ' . $e->getMessage());
             return $this->fail(['success' => false, 'error' => ['code' => 'INTERNAL_ERROR', 'message' => '匯出簽到冊失敗']], 500);
+        }
+    }
+
+    /**
+     * 取得即將到來的會議
+     * GET /api/meetings/upcoming
+     */
+    public function upcoming()
+    {
+        try {
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            if (!$user) {
+                return $this->fail(['success' => false, 'error' => ['code' => 'UNAUTHORIZED', 'message' => '未授權']], 401);
+            }
+
+            $days = (int)($this->request->getGet('days') ?? 7);
+            $limit = (int)($this->request->getGet('limit') ?? 5);
+
+            $meetingModel = new \App\Models\MeetingModel();
+
+            // Get upcoming meetings within the specified days
+            $futureDate = date('Y-m-d', strtotime("+{$days} days"));
+            $today = date('Y-m-d');
+
+            $builder = $meetingModel->builder();
+            $builder->where('meeting_date >=', $today);
+            $builder->where('meeting_date <=', $futureDate);
+            $builder->whereIn('meeting_status', ['draft', 'scheduled']);
+            $builder->orderBy('meeting_date', 'ASC');
+            $builder->orderBy('meeting_time', 'ASC');
+            $builder->limit($limit);
+
+            // Apply company filter for non-admin users
+            if ($user['role'] !== 'admin' && !empty($user['company_id'])) {
+                $urbanRenewalModel = new \App\Models\UrbanRenewalModel();
+                $companyRenewals = $urbanRenewalModel->where('company_id', $user['company_id'])->findColumn('id') ?? [];
+                if (!empty($companyRenewals)) {
+                    $builder->whereIn('urban_renewal_id', $companyRenewals);
+                } else {
+                    return $this->respond([
+                        'success' => true,
+                        'data' => [],
+                        'message' => '即將到來的會議'
+                    ]);
+                }
+            }
+
+            $meetings = $builder->get()->getResultArray();
+
+            return $this->respond([
+                'success' => true,
+                'data' => $meetings,
+                'message' => '即將到來的會議'
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Get upcoming meetings error: ' . $e->getMessage());
+            return $this->fail(['success' => false, 'error' => ['code' => 'INTERNAL_ERROR', 'message' => '取得即將到來的會議失敗']], 500);
+        }
+    }
+
+    /**
+     * 取得會議狀態統計
+     * GET /api/meetings/status-statistics
+     */
+    public function statusStatistics()
+    {
+        try {
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            if (!$user) {
+                return $this->fail(['success' => false, 'error' => ['code' => 'UNAUTHORIZED', 'message' => '未授權']], 401);
+            }
+
+            $meetingModel = new \App\Models\MeetingModel();
+            $builder = $meetingModel->builder();
+
+            // Apply company filter for non-admin users
+            if ($user['role'] !== 'admin' && !empty($user['company_id'])) {
+                $urbanRenewalModel = new \App\Models\UrbanRenewalModel();
+                $companyRenewals = $urbanRenewalModel->where('company_id', $user['company_id'])->findColumn('id') ?? [];
+                if (!empty($companyRenewals)) {
+                    $builder->whereIn('urban_renewal_id', $companyRenewals);
+                } else {
+                    return $this->respond([
+                        'success' => true,
+                        'data' => [
+                            'total' => 0,
+                            'by_status' => [
+                                'draft' => 0,
+                                'scheduled' => 0,
+                                'in_progress' => 0,
+                                'completed' => 0,
+                                'cancelled' => 0
+                            ]
+                        ],
+                        'message' => '會議狀態統計'
+                    ]);
+                }
+            }
+
+            // Get total count
+            $total = $builder->countAllResults(false);
+
+            // Get counts by status
+            $statusCounts = [];
+            $statuses = ['draft', 'scheduled', 'in_progress', 'completed', 'cancelled'];
+
+            foreach ($statuses as $status) {
+                $countBuilder = $meetingModel->builder();
+
+                if ($user['role'] !== 'admin' && !empty($user['company_id'])) {
+                    $urbanRenewalModel = new \App\Models\UrbanRenewalModel();
+                    $companyRenewals = $urbanRenewalModel->where('company_id', $user['company_id'])->findColumn('id') ?? [];
+                    if (!empty($companyRenewals)) {
+                        $countBuilder->whereIn('urban_renewal_id', $companyRenewals);
+                    }
+                }
+
+                $statusCounts[$status] = $countBuilder->where('meeting_status', $status)->countAllResults(false);
+            }
+
+            return $this->respond([
+                'success' => true,
+                'data' => [
+                    'total' => $total,
+                    'by_status' => $statusCounts
+                ],
+                'message' => '會議狀態統計'
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Get meeting status statistics error: ' . $e->getMessage());
+            return $this->fail(['success' => false, 'error' => ['code' => 'INTERNAL_ERROR', 'message' => '取得會議狀態統計失敗']], 500);
+        }
+    }
+
+    /**
+     * 搜尋會議
+     * GET /api/meetings/search
+     */
+    public function search()
+    {
+        try {
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            if (!$user) {
+                return $this->fail(['success' => false, 'error' => ['code' => 'UNAUTHORIZED', 'message' => '未授權']], 401);
+            }
+
+            // Forward to index with search parameter
+            return $this->index();
+        } catch (\Exception $e) {
+            log_message('error', 'Search meetings error: ' . $e->getMessage());
+            return $this->fail(['success' => false, 'error' => ['code' => 'INTERNAL_ERROR', 'message' => '搜尋會議失敗']], 500);
         }
     }
 }

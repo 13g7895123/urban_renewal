@@ -47,11 +47,11 @@ class CompanyController extends BaseController
                 ]);
             }
 
-            $isCompanyManager = isset($user['is_company_manager']) && 
-                               ($user['is_company_manager'] === 1 || 
-                                $user['is_company_manager'] === '1' || 
-                                $user['is_company_manager'] === true);
-            
+            $isCompanyManager = isset($user['is_company_manager']) &&
+                ($user['is_company_manager'] === 1 ||
+                    $user['is_company_manager'] === '1' ||
+                    $user['is_company_manager'] === true);
+
             if (!$isCompanyManager) {
                 return $this->response->setStatusCode(403)->setJSON([
                     'status' => 'error',
@@ -90,7 +90,6 @@ class CompanyController extends BaseController
                 'message' => '查詢成功',
                 'data' => $company
             ]);
-
         } catch (\Exception $e) {
             log_message('error', '[CompanyController::me] Exception: ' . $e->getMessage());
             return $this->response->setStatusCode(500)->setJSON([
@@ -115,11 +114,11 @@ class CompanyController extends BaseController
                 ]);
             }
 
-            $isCompanyManager = isset($user['is_company_manager']) && 
-                               ($user['is_company_manager'] === 1 || 
-                                $user['is_company_manager'] === '1' || 
-                                $user['is_company_manager'] === true);
-            
+            $isCompanyManager = isset($user['is_company_manager']) &&
+                ($user['is_company_manager'] === 1 ||
+                    $user['is_company_manager'] === '1' ||
+                    $user['is_company_manager'] === true);
+
             if (!$isCompanyManager) {
                 return $this->response->setStatusCode(403)->setJSON([
                     'status' => 'error',
@@ -180,7 +179,6 @@ class CompanyController extends BaseController
                 'message' => '更新成功',
                 'data' => $updatedCompany
             ]);
-
         } catch (\Exception $e) {
             log_message('error', '[CompanyController::update] Exception: ' . $e->getMessage());
             return $this->response->setStatusCode(500)->setJSON([
@@ -205,11 +203,11 @@ class CompanyController extends BaseController
                 ]);
             }
 
-            $isCompanyManager = isset($user['is_company_manager']) && 
-                               ($user['is_company_manager'] === 1 || 
-                                $user['is_company_manager'] === '1' || 
-                                $user['is_company_manager'] === true);
-            
+            $isCompanyManager = isset($user['is_company_manager']) &&
+                ($user['is_company_manager'] === 1 ||
+                    $user['is_company_manager'] === '1' ||
+                    $user['is_company_manager'] === true);
+
             if (!$isCompanyManager) {
                 return $this->response->setStatusCode(403)->setJSON([
                     'status' => 'error',
@@ -270,9 +268,121 @@ class CompanyController extends BaseController
                     'to' => $pager->getLastRow() + 1
                 ]
             ]);
-
         } catch (\Exception $e) {
             log_message('error', '[CompanyController::getRenewals] Exception: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON([
+                'status' => 'error',
+                'message' => '伺服器錯誤：' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Get company managers list
+     * GET /api/companies/{id}/managers
+     */
+    public function getManagers($companyId = null)
+    {
+        try {
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            if (!$user) {
+                return $this->response->setStatusCode(401)->setJSON([
+                    'status' => 'error',
+                    'message' => '未授權：無法識別用戶身份'
+                ]);
+            }
+
+            if (!$companyId) {
+                return $this->response->setStatusCode(400)->setJSON([
+                    'status' => 'error',
+                    'message' => '請提供企業 ID'
+                ]);
+            }
+
+            // Check access permission
+            if ($user['role'] !== 'admin') {
+                if (empty($user['company_id']) || $user['company_id'] != $companyId) {
+                    return $this->response->setStatusCode(403)->setJSON([
+                        'status' => 'error',
+                        'message' => '權限不足：無法查看其他企業的管理者'
+                    ]);
+                }
+            }
+
+            $userModel = new \App\Models\UserModel();
+            $managers = $userModel
+                ->where('company_id', $companyId)
+                ->where('is_company_manager', 1)
+                ->findAll();
+
+            // Remove sensitive fields
+            foreach ($managers as &$manager) {
+                unset($manager['password_hash'], $manager['password_reset_token']);
+            }
+
+            return $this->response->setJSON([
+                'status' => 'success',
+                'data' => $managers,
+                'message' => '企業管理者列表'
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', '[CompanyController::getManagers] Exception: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON([
+                'status' => 'error',
+                'message' => '伺服器錯誤：' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Get company users list
+     * GET /api/companies/{id}/users
+     */
+    public function getUsers($companyId = null)
+    {
+        try {
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            if (!$user) {
+                return $this->response->setStatusCode(401)->setJSON([
+                    'status' => 'error',
+                    'message' => '未授權：無法識別用戶身份'
+                ]);
+            }
+
+            if (!$companyId) {
+                return $this->response->setStatusCode(400)->setJSON([
+                    'status' => 'error',
+                    'message' => '請提供企業 ID'
+                ]);
+            }
+
+            // Check access permission
+            if ($user['role'] !== 'admin') {
+                if (empty($user['company_id']) || $user['company_id'] != $companyId) {
+                    return $this->response->setStatusCode(403)->setJSON([
+                        'status' => 'error',
+                        'message' => '權限不足：無法查看其他企業的使用者'
+                    ]);
+                }
+            }
+
+            $userModel = new \App\Models\UserModel();
+            $users = $userModel
+                ->where('company_id', $companyId)
+                ->findAll();
+
+            // Remove sensitive fields
+            foreach ($users as &$u) {
+                unset($u['password_hash'], $u['password_reset_token']);
+            }
+
+            return $this->response->setJSON([
+                'status' => 'success',
+                'data' => $users,
+                'message' => '企業使用者列表'
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', '[CompanyController::getUsers] Exception: ' . $e->getMessage());
             return $this->response->setStatusCode(500)->setJSON([
                 'status' => 'error',
                 'message' => '伺服器錯誤：' . $e->getMessage()

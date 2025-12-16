@@ -72,7 +72,7 @@ class UserController extends ResourceController
             $users = $this->model->getUsers($page, $perPage, $filters);
 
             // 移除敏感資訊
-            $users = array_map(function($userData) {
+            $users = array_map(function ($userData) {
                 unset($userData['password_hash'], $userData['password_reset_token']);
                 return $userData;
             }, $users);
@@ -81,7 +81,6 @@ class UserController extends ResourceController
                 'users' => $users,
                 'pager' => $this->model->pager->getDetails()
             ]);
-
         } catch (\Exception $e) {
             log_message('error', '取得使用者列表失敗: ' . $e->getMessage());
             return response_error('取得使用者列表失敗', 500);
@@ -127,7 +126,6 @@ class UserController extends ResourceController
             unset($targetUser['password_hash'], $targetUser['password_reset_token']);
 
             return response_success('使用者詳情', $targetUser);
-
         } catch (\Exception $e) {
             log_message('error', '取得使用者詳情失敗: ' . $e->getMessage());
             return response_error('取得使用者詳情失敗', 500);
@@ -216,12 +214,12 @@ class UserController extends ResourceController
                 if ($isCompanyManager) {
                     // user_type 已在驗證前設定為 'enterprise'
                     // company_id 已在驗證前設定或驗證
-                    
+
                     // 驗證前端傳入的 company_id 是否為自己的企業
                     if (isset($data['company_id']) && $data['company_id'] != $user['company_id']) {
                         return $this->failForbidden('只能建立同企業的使用者');
                     }
-                    
+
                     // 如果標記為企業管理者，進行額外驗證
                     if (isset($data['is_company_manager']) && $data['is_company_manager'] == 1) {
                         // 企業管理者不能是管理員或主席
@@ -230,7 +228,7 @@ class UserController extends ResourceController
                         }
                     }
                 }
-                
+
                 // 完全移除 urban_renewal_id（用不到）
                 unset($data['urban_renewal_id']);
             }
@@ -251,7 +249,6 @@ class UserController extends ResourceController
             unset($newUser['password_hash'], $newUser['password_reset_token']);
 
             return response_success('使用者建立成功', $newUser, 201);
-
         } catch (\Exception $e) {
             log_message('error', '建立使用者失敗: ' . $e->getMessage());
             return response_error('建立使用者失敗', 500);
@@ -333,7 +330,6 @@ class UserController extends ResourceController
             unset($updatedUser['password_hash'], $updatedUser['password_reset_token']);
 
             return response_success('使用者更新成功', $updatedUser);
-
         } catch (\Exception $e) {
             log_message('error', '更新使用者失敗: ' . $e->getMessage());
             return response_error('更新使用者失敗', 500);
@@ -405,7 +401,6 @@ class UserController extends ResourceController
             }
 
             return response_success('使用者刪除成功');
-
         } catch (\Exception $e) {
             log_message('error', '刪除使用者失敗: ' . $e->getMessage());
             return response_error('刪除使用者失敗', 500);
@@ -457,7 +452,6 @@ class UserController extends ResourceController
             unset($updatedUser['password_hash'], $updatedUser['password_reset_token']);
 
             return response_success('使用者狀態更新成功', $updatedUser);
-
         } catch (\Exception $e) {
             log_message('error', '切換使用者狀態失敗: ' . $e->getMessage());
             return response_error('切換使用者狀態失敗', 500);
@@ -501,7 +495,6 @@ class UserController extends ResourceController
             }
 
             return response_success('登入失敗次數已重設');
-
         } catch (\Exception $e) {
             log_message('error', '重設登入失敗次數失敗: ' . $e->getMessage());
             return response_error('重設登入失敗次數失敗', 500);
@@ -532,13 +525,13 @@ class UserController extends ResourceController
 
             // 如果是主席，過濾只顯示同更新會的使用者
             if ($user['role'] === 'chairman') {
-                $users = array_filter($users, function($userData) use ($user) {
+                $users = array_filter($users, function ($userData) use ($user) {
                     return $userData['urban_renewal_id'] === $user['urban_renewal_id'];
                 });
             }
 
             // 移除敏感資訊
-            $users = array_map(function($userData) {
+            $users = array_map(function ($userData) {
                 unset($userData['password_hash'], $userData['password_reset_token']);
                 return $userData;
             }, $users);
@@ -547,7 +540,6 @@ class UserController extends ResourceController
                 'users' => array_values($users),
                 'pager' => $this->model->pager->getDetails()
             ]);
-
         } catch (\Exception $e) {
             log_message('error', '搜尋使用者失敗: ' . $e->getMessage());
             return response_error('搜尋使用者失敗', 500);
@@ -569,7 +561,6 @@ class UserController extends ResourceController
             $statistics = $this->model->getRoleStatistics();
 
             return response_success('角色統計', $statistics);
-
         } catch (\Exception $e) {
             log_message('error', '取得角色統計失敗: ' . $e->getMessage());
             return response_error('取得角色統計失敗', 500);
@@ -592,7 +583,6 @@ class UserController extends ResourceController
             unset($userProfile['password_hash'], $userProfile['password_reset_token']);
 
             return response_success('使用者資料', $userProfile);
-
         } catch (\Exception $e) {
             log_message('error', '取得使用者資料失敗: ' . $e->getMessage());
             return response_error('取得使用者資料失敗', 500);
@@ -646,7 +636,6 @@ class UserController extends ResourceController
             }
 
             return response_success('密碼更新成功');
-
         } catch (\Exception $e) {
             log_message('error', '更新密碼失敗: ' . $e->getMessage());
             return response_error('更新密碼失敗', 500);
@@ -692,7 +681,7 @@ class UserController extends ResourceController
             $managers = $this->model->getCompanyManagers($companyId, $page, $perPage);
 
             // 移除敏感資訊
-            $managers = array_map(function($userData) {
+            $managers = array_map(function ($userData) {
                 unset($userData['password_hash'], $userData['password_reset_token']);
                 return $userData;
             }, $managers);
@@ -701,7 +690,6 @@ class UserController extends ResourceController
                 'managers' => $managers,
                 'pager' => $this->model->pager->getDetails()
             ]);
-
         } catch (\Exception $e) {
             log_message('error', '取得企業管理者列表失敗: ' . $e->getMessage());
             return response_error('取得企業管理者列表失敗', 500);
@@ -747,7 +735,7 @@ class UserController extends ResourceController
             $users = $this->model->getCompanyUsers($companyId, $page, $perPage);
 
             // 移除敏感資訊
-            $users = array_map(function($userData) {
+            $users = array_map(function ($userData) {
                 unset($userData['password_hash'], $userData['password_reset_token']);
                 return $userData;
             }, $users);
@@ -756,7 +744,6 @@ class UserController extends ResourceController
                 'users' => $users,
                 'pager' => $this->model->pager->getDetails()
             ]);
-
         } catch (\Exception $e) {
             log_message('error', '取得企業使用者列表失敗: ' . $e->getMessage());
             return response_error('取得企業使用者列表失敗', 500);
@@ -802,7 +789,7 @@ class UserController extends ResourceController
             $members = $this->model->getAllCompanyMembers($companyId, $page, $perPage);
 
             // 移除敏感資訊
-            $members = array_map(function($userData) {
+            $members = array_map(function ($userData) {
                 unset($userData['password_hash'], $userData['password_reset_token']);
                 return $userData;
             }, $members);
@@ -811,7 +798,6 @@ class UserController extends ResourceController
                 'members' => $members,
                 'pager' => $this->model->pager->getDetails()
             ]);
-
         } catch (\Exception $e) {
             log_message('error', '取得企業成員列表失敗: ' . $e->getMessage());
             return response_error('取得企業成員列表失敗', 500);
@@ -878,7 +864,6 @@ class UserController extends ResourceController
             unset($updatedUser['password_hash'], $updatedUser['password_reset_token']);
 
             return response_success('已設定為企業使用者', $updatedUser);
-
         } catch (\Exception $e) {
             log_message('error', '設定企業使用者失敗: ' . $e->getMessage());
             return response_error('設定企業使用者失敗', 500);
@@ -940,10 +925,166 @@ class UserController extends ResourceController
             unset($updatedUser['password_hash'], $updatedUser['password_reset_token']);
 
             return response_success('已設定為企業管理者', $updatedUser);
-
         } catch (\Exception $e) {
             log_message('error', '設定企業管理者失敗: ' . $e->getMessage());
             return response_error('設定企業管理者失敗', 500);
+        }
+    }
+
+    /**
+     * 取得使用者統計
+     * GET /api/users/stats
+     */
+    public function stats()
+    {
+        try {
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            if (!$user) {
+                return response_unauthorized('未授權');
+            }
+
+            $userModel = new \App\Models\UserModel();
+
+            // Basic stats
+            $total = $userModel->countAllResults(false);
+            $active = $userModel->where('is_active', 1)->countAllResults(false);
+            $inactive = $userModel->where('is_active', 0)->countAllResults(false);
+
+            // Role statistics
+            $roleStats = [];
+            $roles = ['admin', 'chairman', 'member', 'observer'];
+            foreach ($roles as $role) {
+                $roleStats[$role] = $userModel->where('role', $role)->countAllResults(false);
+            }
+
+            // User type statistics
+            $generalUsers = $userModel->where('user_type', 'general')->countAllResults(false);
+            $enterpriseUsers = $userModel->where('user_type', 'enterprise')->countAllResults(false);
+
+            // Company managers count
+            $companyManagers = $userModel->where('is_company_manager', 1)->countAllResults(false);
+
+            return response_success('使用者統計', [
+                'total' => $total,
+                'active' => $active,
+                'inactive' => $inactive,
+                'by_role' => $roleStats,
+                'by_type' => [
+                    'general' => $generalUsers,
+                    'enterprise' => $enterpriseUsers
+                ],
+                'company_managers' => $companyManagers
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', '取得使用者統計失敗: ' . $e->getMessage());
+            return response_error('取得使用者統計失敗', 500);
+        }
+    }
+
+    /**
+     * 更新當前使用者資料
+     * PUT /api/users/profile
+     */
+    public function updateProfile()
+    {
+        try {
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            if (!$user) {
+                return response_unauthorized('未授權');
+            }
+
+            $data = $this->request->getJSON(true);
+            if (!$data) {
+                return response_validation_error('請提供要更新的資料');
+            }
+
+            $userId = $user['id'];
+            $userModel = new \App\Models\UserModel();
+
+            // Fields allowed for self-update
+            $allowedFields = ['nickname', 'email', 'phone', 'full_name', 'line_account', 'position'];
+            $updateData = [];
+
+            foreach ($allowedFields as $field) {
+                if (array_key_exists($field, $data)) {
+                    $updateData[$field] = $data[$field];
+                }
+            }
+
+            if (empty($updateData)) {
+                return response_validation_error('沒有可更新的欄位');
+            }
+
+            // Check email uniqueness if updating
+            if (isset($updateData['email'])) {
+                $existingUser = $userModel->where('email', $updateData['email'])
+                    ->where('id !=', $userId)
+                    ->first();
+                if ($existingUser) {
+                    return response_validation_error('此電子郵件已被使用');
+                }
+            }
+
+            $userModel->update($userId, $updateData);
+            $updatedUser = $userModel->find($userId);
+
+            // Remove sensitive fields
+            unset($updatedUser['password_hash'], $updatedUser['password_reset_token']);
+
+            return response_success('個人資料更新成功', $updatedUser);
+        } catch (\Exception $e) {
+            log_message('error', '更新個人資料失敗: ' . $e->getMessage());
+            return response_error('更新個人資料失敗', 500);
+        }
+    }
+
+    /**
+     * 變更指定使用者的密碼 (管理員用)
+     * PATCH /api/users/{id}/password
+     */
+    public function changePasswordAdmin($id = null)
+    {
+        try {
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            if (!$user) {
+                return response_unauthorized('未授權');
+            }
+
+            // Only admin can change other users' password
+            if ($user['role'] !== 'admin') {
+                return response_forbidden('權限不足');
+            }
+
+            if (!$id) {
+                return response_validation_error('請提供使用者 ID');
+            }
+
+            $userModel = new \App\Models\UserModel();
+            $targetUser = $userModel->find($id);
+
+            if (!$targetUser) {
+                return response_not_found('使用者不存在');
+            }
+
+            $data = $this->request->getJSON(true);
+            if (!$data || empty($data['new_password'])) {
+                return response_validation_error('請提供新密碼');
+            }
+
+            $newPassword = $data['new_password'];
+            if (strlen($newPassword) < 6) {
+                return response_validation_error('密碼長度至少需要 6 個字元');
+            }
+
+            // Update password
+            $userModel->update($id, [
+                'password_hash' => password_hash($newPassword, PASSWORD_DEFAULT)
+            ]);
+
+            return response_success('密碼已更新');
+        } catch (\Exception $e) {
+            log_message('error', '變更使用者密碼失敗: ' . $e->getMessage());
+            return response_error('變更使用者密碼失敗', 500);
         }
     }
 }

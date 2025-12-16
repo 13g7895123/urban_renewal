@@ -102,6 +102,8 @@ export const useUsers = () => {
     // Advanced operations - DISABLED: Endpoints not in API docs
     // restoreUser,
     // forceDeleteUser,
+
+    // Statistics
     getUserStats
   }
 }

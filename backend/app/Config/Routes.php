@@ -40,8 +40,11 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         $routes->post('(:num)/set-as-company-manager', 'UserController::setAsCompanyManager/$1'); // POST /api/users/{id}/set-as-company-manager
         $routes->get('search', 'UserController::search');                       // GET /api/users/search
         $routes->get('role-statistics', 'UserController::roleStatistics');      // GET /api/users/role-statistics
+        $routes->get('stats', 'UserController::stats');                         // GET /api/users/stats
         $routes->get('profile', 'UserController::profile');                     // GET /api/users/profile
+        $routes->put('profile', 'UserController::updateProfile');               // PUT /api/users/profile
         $routes->post('change-password', 'UserController::changePassword');     // POST /api/users/change-password
+        $routes->patch('(:num)/password', 'UserController::changePasswordAdmin/$1'); // PATCH /api/users/{id}/password
 
         // Handle OPTIONS for specific routes
         $routes->options('(:any)', 'UserController::options');
@@ -51,10 +54,14 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
     $routes->group('companies', function ($routes) {
         $routes->get('me', 'CompanyController::me');                  // GET /api/companies/me
         $routes->put('me', 'CompanyController::update');              // PUT /api/companies/me
-        $routes->get('me/renewals', 'CompanyController::getRenewals');// GET /api/companies/me/renewals
+        $routes->get('me/renewals', 'CompanyController::getRenewals'); // GET /api/companies/me/renewals
+        $routes->get('(:num)/managers', 'CompanyController::getManagers/$1'); // GET /api/companies/{id}/managers
+        $routes->get('(:num)/users', 'CompanyController::getUsers/$1');       // GET /api/companies/{id}/users
 
         // Handle OPTIONS for specific routes
         $routes->options('me', 'CompanyController::options');
+        $routes->options('(:num)/managers', 'CompanyController::options');
+        $routes->options('(:num)/users', 'CompanyController::options');
         $routes->options('me/renewals', 'CompanyController::options');
     });
 
@@ -296,4 +303,3 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         $routes->options('(:any)', 'JwtDebugController::options');
     });
 });
-
