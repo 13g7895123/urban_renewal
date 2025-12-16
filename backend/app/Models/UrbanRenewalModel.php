@@ -58,13 +58,13 @@ class UrbanRenewalModel extends Model
     public function getUrbanRenewals($page = 1, $perPage = 10, $urbanRenewalId = null)
     {
         $builder = $this->orderBy('created_at', 'DESC');
-        
+
         // Support both old parameter name (for backward compatibility) and new usage
         if ($urbanRenewalId !== null) {
             // If this looks like it's being used as company_id, use it that way
             $builder->where('company_id', $urbanRenewalId);
         }
-        
+
         return $builder->paginate($perPage, 'default', $page);
     }
 
@@ -110,13 +110,13 @@ class UrbanRenewalModel extends Model
     public function searchByName($name, $page = 1, $perPage = 10, $urbanRenewalId = null)
     {
         $builder = $this->like('name', $name)
-                        ->orderBy('created_at', 'DESC');
-        
+            ->orderBy('created_at', 'DESC');
+
         // Support both old parameter name (for backward compatibility)
         if ($urbanRenewalId !== null) {
             $builder->where('company_id', $urbanRenewalId);
         }
-        
+
         return $builder->paginate($perPage, 'default', $page);
     }
 
@@ -172,8 +172,8 @@ class UrbanRenewalModel extends Model
     public function getUrbanRenewalsWithAdmin($page = 1, $perPage = 10, $urbanRenewalId = null)
     {
         $builder = $this->select('urban_renewals.*, users.full_name as assigned_admin_name, users.email as assigned_admin_email')
-                        ->join('users', 'users.id = urban_renewals.assigned_admin_id', 'left')
-                        ->orderBy('urban_renewals.created_at', 'DESC');
+            ->join('users', 'users.id = urban_renewals.assigned_admin_id', 'left')
+            ->orderBy('urban_renewals.created_at', 'DESC');
 
         // Support both old parameter name (for backward compatibility)
         if ($urbanRenewalId !== null) {
@@ -205,7 +205,7 @@ class UrbanRenewalModel extends Model
         if (!$urbanRenewal) {
             return null;
         }
-        
+
         $urbanRenewal['member_count'] = $this->calculateMemberCount($id);
         $urbanRenewal['area'] = $this->calculateTotalLandArea($id);
         return $urbanRenewal;
@@ -221,20 +221,21 @@ class UrbanRenewalModel extends Model
     public function getUrbanRenewalsWithMemberCount($page = 1, $perPage = 10, $urbanRenewalId = null)
     {
         $urbanRenewals = $this->getUrbanRenewals($page, $perPage, $urbanRenewalId);
-        
+
         // Add calculated member count and land area to each record
         foreach ($urbanRenewals as &$renewal) {
             $renewal['member_count'] = $this->calculateMemberCount($renewal['id']);
             $renewal['area'] = $this->calculateTotalLandArea($renewal['id']);
         }
         unset($renewal);
-        
+
         return $urbanRenewals;
     }
 
     /**
      * Calculate total land area for an urban renewal
-     * Sums up all property owners' land area for this urban renewal
+     * First tries to sum up all property owners' land area
+     * If empty, falls back to summing land_plots table
      * 
      * @param int $urbanRenewalId
      * @return float
@@ -256,7 +257,31 @@ class UrbanRenewalModel extends Model
             $totalLandArea += $ownerTotals['total_land_area'] ?? 0;
         }
 
+        // If total is 0, fallback to land_plots table
+        if ($totalLandArea == 0) {
+            $totalLandArea = $this->calculateTotalLandAreaFromLandPlots($urbanRenewalId);
+        }
+
         return round($totalLandArea, 2);
+    }
+
+    /**
+     * Calculate total land area from land_plots table
+     * Used as fallback when property owners data is empty
+     * 
+     * @param int $urbanRenewalId
+     * @return float
+     */
+    public function calculateTotalLandAreaFromLandPlots(int $urbanRenewalId): float
+    {
+        $landPlotModel = new \App\Models\LandPlotModel();
+
+        $result = $landPlotModel
+            ->selectSum('land_area', 'total')
+            ->where('urban_renewal_id', $urbanRenewalId)
+            ->first();
+
+        return round((float)($result['total'] ?? 0), 2);
     }
 
     /**
@@ -271,7 +296,7 @@ class UrbanRenewalModel extends Model
         if (!$urbanRenewal) {
             return null;
         }
-        
+
         $urbanRenewal['area'] = $this->calculateTotalLandArea($id);
         return $urbanRenewal;
     }
@@ -287,13 +312,13 @@ class UrbanRenewalModel extends Model
     public function getUrbanRenewalsWithCalculatedArea($page = 1, $perPage = 10, $urbanRenewalId = null)
     {
         $urbanRenewals = $this->getUrbanRenewals($page, $perPage, $urbanRenewalId);
-        
+
         // Add calculated land area to each record
         foreach ($urbanRenewals as &$renewal) {
             $renewal['area'] = $this->calculateTotalLandArea($renewal['id']);
         }
         unset($renewal);
-        
+
         return $urbanRenewals;
     }
 }
