@@ -4,7 +4,7 @@ export default defineNuxtConfig({
   // Development server configuration
   devServer: {
     port: parseInt(process.env.FRONTEND_PORT || '4001'),
-    host: 'localhost'
+    host: '0.0.0.0'
   },
   ssr: true, // 改為 SPA 模式
   modules: [
@@ -70,9 +70,7 @@ export default defineNuxtConfig({
       exclude: []
     },
     server: {
-      allowedHosts: [
-        'urban.l'
-      ],
+      allowedHosts: 'all',
       hmr: {
         protocol: 'wss',  // 如果用 HTTPS，改成 'wss'；HTTP 用 'ws'
         host: 'urban.l',
