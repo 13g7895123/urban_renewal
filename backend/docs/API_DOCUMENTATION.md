@@ -1,7 +1,14 @@
 # Urban Renewal Management System - API 說明文件
 
-> 更新日期：2025-12-06  
-> 版本：1.0.0
+> 更新日期：2025-12-16  
+> 版本：1.1.0
+
+## 文件變更紀錄
+
+| 版本 | 日期 | 變更說明 |
+|------|------|----------|
+| 1.1.0 | 2025-12-16 | 新增詳細回應範例、錯誤處理說明、重新計算權重 API |
+| 1.0.0 | 2025-12-06 | 初版發布 |
 
 ## 目錄
 
@@ -22,6 +29,7 @@
 15. [系統設定 API (System Settings)](#系統設定-api-system-settings)
 16. [地區資料 API (Locations)](#地區資料-api-locations)
 17. [JWT 除錯 API (Admin)](#jwt-除錯-api-admin)
+18. [附錄](#附錄)
 
 ---
 
@@ -131,7 +139,7 @@ POST /api/auth/login
 | username | string | ✓ | 帳號（最大100字元） |
 | password | string | ✓ | 密碼（最少6字元） |
 
-**回應範例**
+**回應範例（成功）**
 ```json
 {
   "success": true,
@@ -141,13 +149,47 @@ POST /api/auth/login
       "username": "admin",
       "role": "admin",
       "full_name": "管理員",
-      "is_company_manager": 0
+      "nickname": "Admin",
+      "email": "admin@example.com",
+      "phone": "0912345678",
+      "is_company_manager": 0,
+      "company_id": null,
+      "user_type": "general",
+      "is_active": 1,
+      "last_login_at": "2025-12-16 10:00:00"
     },
     "expires_in": 86400
   },
   "message": "登入成功"
 }
 ```
+
+**錯誤回應範例（帳密錯誤）**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "帳號或密碼錯誤"
+  }
+}
+```
+
+**錯誤回應範例（帳號鎖定）**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "帳號已被鎖定，請稍後再試"
+  }
+}
+```
+
+**注意事項**:
+- 連續登入失敗 5 次後，帳號將被鎖定 30 分鐘
+- Token 存放於 httpOnly Cookie 中，自動設定
+- Token 有效期為 24 小時（86400 秒）
 
 ---
 
@@ -1284,6 +1326,62 @@ GET /api/voting/detailed/{topicId}
 
 **權限**: 已登入使用者
 
+**回應範例**
+```json
+{
+  "success": true,
+  "data": {
+    "topic": {
+      "id": 1,
+      "topic_title": "更新事業計畫案表決",
+      "voting_method": "simple_majority"
+    },
+    "votes": [
+      {
+        "property_owner_id": 1,
+        "owner_name": "王小明",
+        "choice": "agree",
+        "area_weight": 0.0523,
+        "voted_at": "2025-12-15 14:30:00"
+      }
+    ]
+  },
+  "message": "取得詳細投票記錄成功"
+}
+```
+
+---
+
+### 重新計算投票權重
+```
+POST /api/voting/recalculate-weights/{topicId}
+```
+
+**權限**: admin, chairman, 企業管理者
+
+**說明**: 當所有權人的土地持分資料更新後，可使用此 API 重新計算該議題的投票面積權重。
+
+**請求參數**: 無
+
+**回應範例**
+```json
+{
+  "success": true,
+  "data": {
+    "topic_id": 1,
+    "total_area": 5280.50,
+    "updated_votes": 25,
+    "recalculated_at": "2025-12-16 10:00:00"
+  },
+  "message": "投票權重重新計算成功"
+}
+```
+
+**注意事項**:
+- 僅能在投票未結束時重新計算
+- 會根據最新的土地持分資料重新計算每位投票者的面積權重
+- 計算完成後會自動更新投票統計
+
 ---
 
 ## 通知 API (Notifications)
@@ -1849,14 +1947,136 @@ POST /api/admin/jwt-debug/cleanup
 ```
 
 ### 常用錯誤代碼
-| 代碼 | 說明 |
+| 代碼 | HTTP 狀態碼 | 說明 |
+|------|-------------|------|
+| VALIDATION_ERROR | 422 | 資料驗證失敗 |
+| UNAUTHORIZED | 401 | 未授權或 Token 過期 |
+| FORBIDDEN | 403 | 權限不足 |
+| NOT_FOUND | 404 | 資源不存在 |
+| BUSINESS_LOGIC_ERROR | 400 | 業務邏輯錯誤 |
+| INTERNAL_ERROR | 500 | 伺服器內部錯誤 |
+| INVALID_TOKEN | 401 | Token 無效或已過期 |
+| EXPORT_ERROR | 500 | 匯出錯誤 |
+| FILE_NOT_FOUND | 404 | 檔案不存在 |
+
+### 使用者角色說明
+
+| 角色 | 權限範圍 |
+|------|----------|
+| admin | 系統管理員，擁有所有權限，可管理所有更新會 |
+| chairman | 主席，管理特定更新會的所有事務 |
+| member | 一般會員，可參與投票和出席會議 |
+| observer | 觀察員，只能查看資料 |
+
+### 使用者類型說明
+
+| 類型 | 說明 |
 |------|------|
-| VALIDATION_ERROR | 資料驗證失敗 |
-| UNAUTHORIZED | 未授權 |
-| FORBIDDEN | 權限不足 |
-| NOT_FOUND | 資源不存在 |
-| BUSINESS_LOGIC_ERROR | 業務邏輯錯誤 |
-| INTERNAL_ERROR | 伺服器內部錯誤 |
-| INVALID_TOKEN | Token 無效 |
-| EXPORT_ERROR | 匯出錯誤 |
-| FILE_NOT_FOUND | 檔案不存在 |
+| general | 一般個人使用者 |
+| enterprise | 企業使用者，關聯至特定企業 |
+
+### 會議狀態說明
+
+| 狀態 | 說明 |
+|------|------|
+| draft | 草稿，可自由編輯 |
+| scheduled | 已排程，等待開始 |
+| in_progress | 進行中 |
+| completed | 已完成，不可修改 |
+| cancelled | 已取消，可重新設為草稿 |
+
+### 投票議題狀態說明
+
+| 狀態 | 說明 |
+|------|------|
+| draft | 草稿，尚未開始投票 |
+| voting | 投票中，可接受投票 |
+| closed | 已結束，不可再投票 |
+
+### 出席類型說明
+
+| 類型 | 說明 |
+|------|------|
+| present | 本人親自出席 |
+| proxy | 委託代理人出席 |
+| absent | 缺席 |
+
+### 投票選項說明
+
+| 選項 | 說明 |
+|------|------|
+| agree | 同意 |
+| disagree | 不同意 |
+| abstain | 棄權 |
+
+### 所有權人排除類型說明
+
+| 類型 | 說明 |
+|------|------|
+| 法院囑託查封 | 遭法院囑託查封 |
+| 假扣押 | 遭假扣押 |
+| 假處分 | 遭假處分 |
+| 破產登記 | 已破產登記 |
+| 未經繼承 | 尚未完成繼承程序 |
+
+### API 使用範例 (cURL)
+
+**登入**
+```bash
+curl -X POST https://your-domain.com/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"your_password"}' \
+  -c cookies.txt
+```
+
+**取得會議列表（使用 Cookie）**
+```bash
+curl -X GET "https://your-domain.com/api/meetings?page=1&per_page=10" \
+  -b cookies.txt
+```
+
+**建立會議**
+```bash
+curl -X POST https://your-domain.com/api/meetings \
+  -H "Content-Type: application/json" \
+  -b cookies.txt \
+  -d '{
+    "urban_renewal_id": 1,
+    "meeting_name": "第一次會員大會",
+    "meeting_type": "會員大會",
+    "meeting_date": "2025-12-25",
+    "meeting_time": "14:00",
+    "meeting_location": "台北市中山區XX路XX號"
+  }'
+```
+
+### 日期時間格式
+
+| 欄位類型 | 格式 | 範例 |
+|----------|------|------|
+| 日期 | Y-m-d | 2025-12-16 |
+| 時間 | H:i | 14:00 |
+| 日期時間 | Y-m-d H:i:s | 2025-12-16 14:00:00 |
+
+### 檔案上傳限制
+
+| 項目 | 限制 |
+|------|------|
+| 單檔大小上限 | 10 MB |
+| 批量上傳數量上限 | 10 個檔案 |
+| 允許的檔案類型 | xlsx, xls, pdf, doc, docx, jpg, png |
+
+### CORS 設定
+
+所有 API 端點皆支援 CORS，預設允許以下設定：
+- **Access-Control-Allow-Origin**: 依據環境設定
+- **Access-Control-Allow-Methods**: GET, POST, PUT, DELETE, PATCH, OPTIONS
+- **Access-Control-Allow-Headers**: Content-Type, Authorization
+- **Access-Control-Allow-Credentials**: true
+
+### 速率限制（Rate Limiting）
+
+目前未啟用全域速率限制，但建議：
+- 一般 API：每分鐘不超過 100 次請求
+- 登入 API：每分鐘不超過 10 次請求
+- 匯出/匯入 API：每分鐘不超過 5 次請求
