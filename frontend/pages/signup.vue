@@ -35,31 +35,51 @@
     <div v-if="currentStep === 1" class="account-selection">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <!-- Personal Account -->
-        <div class="account-option" :class="{ 'selected': selectedAccountType === 'personal' }">
-          <button @click="selectAccountType('personal')" class="account-btn personal-btn w-full"
-            :class="{ 'active': selectedAccountType === 'personal' }">
+        <div 
+          class="account-option cursor-pointer" 
+          :class="{ 'selected': selectedAccountType === 'personal' }"
+          @click="selectAccountType('personal')"
+        >
+          <div class="account-card personal-card" :class="{ 'active': selectedAccountType === 'personal' }">
             <Icon name="heroicons:user" class="w-8 h-8 mb-2" />
             <div class="text-lg font-semibold">個人帳號</div>
-          </button>
+          </div>
           <div class="radio-container">
             <label class="radio-label">
-              <input type="radio" name="accountType" value="personal" :checked="selectedAccountType === 'personal'"
-                @change="selectAccountType('personal')" class="radio-btn" />
+              <input 
+                type="radio" 
+                name="accountType" 
+                value="personal" 
+                :checked="selectedAccountType === 'personal'"
+                @click.stop
+                @change="selectAccountType('personal')" 
+                class="radio-btn" 
+              />
             </label>
           </div>
         </div>
 
         <!-- Business Account -->
-        <div class="account-option" :class="{ 'selected': selectedAccountType === 'business' }">
-          <button @click="selectAccountType('business')" class="account-btn business-btn w-full"
-            :class="{ 'active': selectedAccountType === 'business' }">
+        <div 
+          class="account-option cursor-pointer" 
+          :class="{ 'selected': selectedAccountType === 'business' }"
+          @click="selectAccountType('business')"
+        >
+          <div class="account-card business-card" :class="{ 'active': selectedAccountType === 'business' }">
             <Icon name="heroicons:building-office" class="w-8 h-8 mb-2" />
             <div class="text-lg font-semibold">企業帳號</div>
-          </button>
+          </div>
           <div class="radio-container">
             <label class="radio-label">
-              <input type="radio" name="accountType" value="business" :checked="selectedAccountType === 'business'"
-                @change="selectAccountType('business')" class="radio-btn" />
+              <input 
+                type="radio" 
+                name="accountType" 
+                value="business" 
+                :checked="selectedAccountType === 'business'"
+                @click.stop
+                @change="selectAccountType('business')" 
+                class="radio-btn" 
+              />
             </label>
           </div>
         </div>
@@ -413,7 +433,7 @@ definePageMeta({
   text-align: center;
 }
 
-.account-btn {
+.account-card {
   background: white;
   border: 2px solid #d1d5db;
   border-radius: 12px;
@@ -427,22 +447,22 @@ definePageMeta({
   min-height: 120px;
 }
 
-.account-btn:hover {
+.account-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
-.personal-btn {
+.personal-card {
   color: #3b82f6;
   border-color: #e5e7eb;
 }
 
-.personal-btn:hover {
+.personal-card:hover {
   border-color: #3b82f6;
   background: #eff6ff;
 }
 
-.personal-btn.active {
+.personal-card.active {
   border-color: #3b82f6;
   background: #3b82f6;
   color: white;
@@ -450,17 +470,17 @@ definePageMeta({
   box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
 }
 
-.business-btn {
+.business-card {
   color: #22c55e;
   border-color: #e5e7eb;
 }
 
-.business-btn:hover {
+.business-card:hover {
   border-color: #22c55e;
   background: #f0fdf4;
 }
 
-.business-btn.active {
+.business-card.active {
   border-color: #22c55e;
   background: #22c55e;
   color: white;
@@ -493,24 +513,6 @@ definePageMeta({
 .account-option.selected .radio-btn {
   accent-color: #2FA633;
   background-color: white;
-}
-
-/* Personal account selected state */
-.account-option:has(.radio-btn[value="personal"]:checked) .personal-btn {
-  border-color: #3b82f6;
-  background: #3b82f6;
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
-}
-
-/* Business account selected state */
-.account-option:has(.radio-btn[value="business"]:checked) .business-btn {
-  border-color: #22c55e;
-  background: #22c55e;
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
 }
 
 /* Next Button */
