@@ -1,6 +1,15 @@
 #!/bin/bash
 set -e
 
+# Ensure writable directory permissions (for development with volume mounts)
+echo "Setting writable directory permissions..."
+mkdir -p /var/www/html/writable/cache
+mkdir -p /var/www/html/writable/logs
+mkdir -p /var/www/html/writable/session
+mkdir -p /var/www/html/writable/uploads
+mkdir -p /var/www/html/writable/debugbar
+chmod -R 777 /var/www/html/writable
+
 # Update .env file with environment variables if they're set
 if [ -f .env ]; then
     echo "Updating .env file with environment variables..."
