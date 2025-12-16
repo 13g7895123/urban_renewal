@@ -35,7 +35,7 @@ class PropertyOwnerModel extends Model
         'urban_renewal_id' => 'required|integer',
         'name' => 'required|max_length[100]',
         'id_number' => 'permit_empty|max_length[20]',
-        'owner_code' => 'permit_empty|max_length[20]|is_unique[property_owners.owner_code,id,{id}]',
+        'owner_code' => 'permit_empty|max_length[20]',
         'phone1' => 'permit_empty|max_length[20]',
         'phone2' => 'permit_empty|max_length[20]',
         'contact_address' => 'permit_empty',
@@ -144,18 +144,18 @@ class PropertyOwnerModel extends Model
         $countyModel = model('CountyModel');
         $districtModel = model('DistrictModel');
         $sectionModel = model('SectionModel');
-        
+
         foreach ($buildingOwnerships as $ownership) {
             $building = $buildingModel->find($ownership['building_id']);
             if ($building) {
                 $building['ownership_numerator'] = $ownership['ownership_numerator'];
                 $building['ownership_denominator'] = $ownership['ownership_denominator'];
-                
+
                 // 將代碼轉換為中文名稱
                 $countyName = $building['county'];
                 $districtName = $building['district'];
                 $sectionName = $building['section'];
-                
+
                 try {
                     if ($countyModel && !empty($building['county'])) {
                         $county = $countyModel->where('code', $building['county'])->first();
@@ -202,9 +202,9 @@ class PropertyOwnerModel extends Model
                 } catch (\Exception $e) {
                     log_message('warning', 'Failed to fetch section name: ' . $e->getMessage());
                 }
-                
+
                 $building['location'] = $countyName . '/' . $districtName . '/' . $sectionName;
-                
+
                 // 確保建號欄位格式正確（前端相容性）
                 $building['building_number_main'] = (string)($building['building_number_main'] ?? '');
                 $building['building_number_sub'] = (string)($building['building_number_sub'] ?? '');
@@ -249,8 +249,8 @@ class PropertyOwnerModel extends Model
     public function getByUrbanRenewalId(int $urbanRenewalId): array
     {
         return $this->where('urban_renewal_id', $urbanRenewalId)
-                    ->orderBy('created_at', 'DESC')
-                    ->findAll();
+            ->orderBy('created_at', 'DESC')
+            ->findAll();
     }
 
     /**
@@ -352,7 +352,6 @@ class PropertyOwnerModel extends Model
             }
 
             return $result;
-
         } catch (\Exception $e) {
             log_message('error', 'Exception in updateTotalAreas for owner ' . $ownerId . ': ' . $e->getMessage());
             return false; // Don't let this break the main operation
@@ -366,7 +365,7 @@ class PropertyOwnerModel extends Model
     {
         try {
             $urbanRenewalId = null;
-            
+
             // Get urban_renewal_id from different scenarios
             if (isset($data['data']['urban_renewal_id'])) {
                 $urbanRenewalId = $data['data']['urban_renewal_id'];
@@ -374,18 +373,18 @@ class PropertyOwnerModel extends Model
                 $owner = $this->find($data['id']);
                 $urbanRenewalId = $owner['urban_renewal_id'] ?? null;
             }
-            
+
             if ($urbanRenewalId) {
                 // Log the change for audit trail
                 log_message('info', 'Property owner record changed for urban_renewal_id: ' . $urbanRenewalId);
-                
+
                 // Optional: Trigger any additional business logic
                 // For example: notify administrators, update related records, etc.
             }
         } catch (\Exception $e) {
             log_message('error', 'Failed to process property owner change: ' . $e->getMessage());
         }
-        
+
         return $data;
     }
 }
