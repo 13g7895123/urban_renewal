@@ -144,7 +144,12 @@ class PropertyOwnerRepository implements PropertyOwnerRepositoryInterface
                 throw new \RuntimeException('儲存所有權人失敗');
             }
 
-            return $this->findById($id);
+            $saved = $this->findById($id);
+            if ($saved === null) {
+                throw new \RuntimeException('無法取得已儲存的所有權人資料');
+            }
+
+            return $saved;
         } catch (\Exception $e) {
             $db->transRollback();
             log_message('error', 'PropertyOwnerRepository::save 錯誤: ' . $e->getMessage());

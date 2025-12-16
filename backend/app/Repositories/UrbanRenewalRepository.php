@@ -86,7 +86,12 @@ class UrbanRenewalRepository implements UrbanRenewalRepositoryInterface
         $data = $this->dehydrate($entity);
 
         if ($entity->getId()) {
-            $this->urbanRenewalModel->update($entity->getId(), $data);
+            $result = $this->urbanRenewalModel->update($entity->getId(), $data);
+            if ($result === false) {
+                $errors = $this->urbanRenewalModel->errors();
+                log_message('error', 'UrbanRenewal update failed: ' . json_encode($errors));
+                throw new \RuntimeException('更新更新會失敗: ' . implode(', ', $errors));
+            }
             $id = $entity->getId();
         } else {
             $result = $this->urbanRenewalModel->insert($data);

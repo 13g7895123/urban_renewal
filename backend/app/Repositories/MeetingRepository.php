@@ -29,7 +29,7 @@ class MeetingRepository implements MeetingRepositoryInterface
     public function findById(int $id): ?Meeting
     {
         $data = $this->meetingModel->getMeetingWithDetails($id);
-        
+
         if (!$data) {
             return null;
         }
@@ -80,12 +80,20 @@ class MeetingRepository implements MeetingRepositoryInterface
     public function save(Meeting $entity): Meeting
     {
         $data = $this->dehydrate($entity);
-        
+
         if ($entity->getId()) {
-            $this->meetingModel->update($entity->getId(), $data);
+            $result = $this->meetingModel->update($entity->getId(), $data);
+            if ($result === false) {
+                $errors = $this->meetingModel->errors();
+                throw new \RuntimeException('更新會議失敗: ' . json_encode($errors, JSON_UNESCAPED_UNICODE));
+            }
             $id = $entity->getId();
         } else {
             $id = $this->meetingModel->insert($data);
+            if ($id === false) {
+                $errors = $this->meetingModel->errors();
+                throw new \RuntimeException('新增會議失敗: ' . json_encode($errors, JSON_UNESCAPED_UNICODE));
+            }
             $entity->setId($id);
         }
 
@@ -94,7 +102,12 @@ class MeetingRepository implements MeetingRepositoryInterface
             $this->syncObservers($id, $entity->getObservers());
         }
 
-        return $this->findById($id);
+        $saved = $this->findById($id);
+        if ($saved === null) {
+            throw new \RuntimeException('無法取得已儲存的會議資料');
+        }
+
+        return $saved;
     }
 
     /**
