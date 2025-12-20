@@ -81,7 +81,6 @@ export const useMeetings = () => {
   const exportMeetingNotice = async (id) => {
     try {
       const config = useRuntimeConfig()
-      const { getAuthToken } = useApi()
 
       // 使用 runtimeConfig 取得正確的後端 URL
       const backendUrl = config.public.backendUrl ||
@@ -90,24 +89,10 @@ export const useMeetings = () => {
 
       console.log('[Export] Using backend URL:', backendUrl)
 
-      // 使用 useApi 的 getAuthToken 方法取得 token
-      const token = getAuthToken()
-      console.log('[Export] Token status:', token ? 'Token exists' : 'No token')
-
-      if (!token) {
-        console.error('[Export] No authentication token found')
-        return {
-          success: false,
-          error: { message: '請先登入' }
-        }
-      }
-
-      // 使用完整的後端 URL 發送請求
+      // 使用 credentials: 'include' 發送 httpOnly cookies
       const response = await fetch(`${backendUrl}/api/meetings/${id}/export-notice`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        credentials: 'include'
       })
 
       if (!response.ok) {
@@ -165,7 +150,6 @@ export const useMeetings = () => {
   const exportSignatureBook = async (id, isAnonymous = false) => {
     try {
       const config = useRuntimeConfig()
-      const { getAuthToken } = useApi()
 
       // 使用 runtimeConfig 取得正確的後端 URL
       const backendUrl = config.public.backendUrl ||
@@ -174,22 +158,10 @@ export const useMeetings = () => {
 
       console.log('[Export] Using backend URL:', backendUrl)
 
-      // 使用 useApi 的 getAuthToken 方法取得 token
-      const token = getAuthToken()
-
-      if (!token) {
-        return {
-          success: false,
-          error: { message: '請先登入' }
-        }
-      }
-
-      // 使用完整的後端 URL 發送請求
+      // 使用 credentials: 'include' 發送 httpOnly cookies
       const response = await fetch(`${backendUrl}/api/meetings/${id}/export-signature-book?anonymous=${isAnonymous}`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        credentials: 'include'
       })
 
       if (!response.ok) {
