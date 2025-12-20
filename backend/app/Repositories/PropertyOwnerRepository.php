@@ -122,6 +122,7 @@ class PropertyOwnerRepository implements PropertyOwnerRepositoryInterface
                 if (empty($data['owner_code'])) {
                     $data['owner_code'] = $this->getNextOwnerCode($entity->getUrbanRenewalId());
                 }
+
                 $id = $this->propertyOwnerModel->insert($data);
                 if ($id === false) {
                     $errors = $this->propertyOwnerModel->errors();
@@ -235,15 +236,19 @@ class PropertyOwnerRepository implements PropertyOwnerRepositoryInterface
      */
     public function getNextOwnerCode(int $urbanRenewalId): string
     {
-        $maxCode = $this->propertyOwnerModel
-            ->where('urban_renewal_id', $urbanRenewalId)
-            ->selectMax('owner_code')
-            ->first();
+        // 使用 CAST 將 owner_code 轉為數字來找出真正的最大值
+        // 避免字串排序問題 (例如 '10' < '2')
+        $sql = "SELECT MAX(CAST(owner_code AS UNSIGNED)) as max_code 
+                FROM property_owners 
+                WHERE urban_renewal_id = ?";
+
+        $db = \Config\Database::connect();
+        $query = $db->query($sql, [$urbanRenewalId]);
+        $row = $query->getRow();
 
         $nextNumber = 1;
-        if ($maxCode && $maxCode['owner_code']) {
-            $currentMax = intval($maxCode['owner_code']);
-            $nextNumber = $currentMax + 1;
+        if ($row && $row->max_code) {
+            $nextNumber = intval($row->max_code) + 1;
         }
 
         return (string)$nextNumber;

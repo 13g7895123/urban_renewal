@@ -67,7 +67,7 @@ class PropertyOwnerModel extends Model
     protected $cleanValidationRules = true;
 
     protected $allowCallbacks = true;
-    protected $beforeInsert = ['generateOwnerCode'];
+    protected $beforeInsert = ['logPropertyOwnerChange']; // Removed generateOwnerCode
     protected $beforeUpdate = [];
     protected $afterInsert = ['logPropertyOwnerChange'];
     protected $afterUpdate = ['logPropertyOwnerChange'];
@@ -75,31 +75,6 @@ class PropertyOwnerModel extends Model
     protected $afterFind = ['loadRelatedData'];
     protected $beforeDelete = [];
     protected $afterDelete = ['logPropertyOwnerChange'];
-
-    /**
-     * Generate unique owner code before insert
-     */
-    protected function generateOwnerCode(array $data)
-    {
-        if (!isset($data['data']['owner_code']) || empty($data['data']['owner_code'])) {
-            $data['data']['owner_code'] = $this->generateUniqueOwnerCode();
-        }
-        return $data;
-    }
-
-    /**
-     * Generate unique owner code
-     */
-    private function generateUniqueOwnerCode(): string
-    {
-        do {
-            $timestamp = date('ymd');
-            $randomNum = str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
-            $code = 'OW' . $timestamp . $randomNum;
-        } while ($this->where('owner_code', $code)->first());
-
-        return $code;
-    }
 
     /**
      * Load related data after find
