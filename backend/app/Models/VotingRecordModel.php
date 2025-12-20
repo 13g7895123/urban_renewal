@@ -68,15 +68,15 @@ class VotingRecordModel extends Model
     public function getVotingRecords($topicId, $page = 1, $perPage = 10, $choice = null)
     {
         $builder = $this->select('voting_records.*, property_owners.name as owner_name, property_owners.id_number, property_owners.owner_code')
-                       ->join('property_owners', 'property_owners.id = voting_records.property_owner_id', 'left')
-                       ->where('voting_records.voting_topic_id', $topicId);
+            ->join('property_owners', 'property_owners.id = voting_records.property_owner_id', 'left')
+            ->where('voting_records.voting_topic_id', $topicId);
 
         if ($choice) {
             $builder->where('voting_records.vote_choice', $choice);
         }
 
         return $builder->orderBy('voting_records.vote_time', 'ASC')
-                       ->paginate($perPage, 'default', $page);
+            ->paginate($perPage, 'default', $page);
     }
 
     /**
@@ -87,9 +87,9 @@ class VotingRecordModel extends Model
         $records = $this->select('vote_choice, COUNT(*) as count,
                                 SUM(land_area_weight) as total_land_area,
                                 SUM(building_area_weight) as total_building_area')
-                      ->where('voting_topic_id', $topicId)
-                      ->groupBy('vote_choice')
-                      ->findAll();
+            ->where('voting_topic_id', $topicId)
+            ->groupBy('vote_choice')
+            ->findAll();
 
         $statistics = [
             'total_votes' => 0,
@@ -140,8 +140,8 @@ class VotingRecordModel extends Model
     {
         // 檢查是否已經投過票
         $existingVote = $this->where('voting_topic_id', $topicId)
-                            ->where('property_owner_id', $propertyOwnerId)
-                            ->first();
+            ->where('property_owner_id', $propertyOwnerId)
+            ->first();
 
         // 取得所有權人的土地和建物面積
         $propertyOwnerModel = model('PropertyOwnerModel');
@@ -161,7 +161,7 @@ class VotingRecordModel extends Model
             $totals = $propertyOwnerModel->calculateTotalAreas($propertyOwnerId);
             $landAreaWeight = $totals['total_land_area'] ?? 0;
             $buildingAreaWeight = $totals['total_building_area'] ?? 0;
-            
+
             // 更新資料庫中的快取值
             if ($landAreaWeight > 0 || $buildingAreaWeight > 0) {
                 $propertyOwnerModel->updateTotalAreas($propertyOwnerId);
@@ -204,8 +204,8 @@ class VotingRecordModel extends Model
     public function hasVoted($topicId, $propertyOwnerId)
     {
         return $this->where('voting_topic_id', $topicId)
-                   ->where('property_owner_id', $propertyOwnerId)
-                   ->countAllResults() > 0;
+            ->where('property_owner_id', $propertyOwnerId)
+            ->countAllResults() > 0;
     }
 
     /**
@@ -214,8 +214,8 @@ class VotingRecordModel extends Model
     public function getUserVote($topicId, $propertyOwnerId)
     {
         return $this->where('voting_topic_id', $topicId)
-                   ->where('property_owner_id', $propertyOwnerId)
-                   ->first();
+            ->where('property_owner_id', $propertyOwnerId)
+            ->first();
     }
 
     /**
@@ -248,14 +248,16 @@ class VotingRecordModel extends Model
         return $this->select('voting_records.*,
                             property_owners.name as owner_name,
                             property_owners.id_number,
-                            property_owners.phone,
-                            property_owners.total_land_area as land_area,
-                            property_owners.total_building_area as building_area')
-                   ->join('property_owners', 'property_owners.id = voting_records.property_owner_id', 'left')
-                   ->where('voting_records.voting_topic_id', $topicId)
-                   ->orderBy('voting_records.vote_time', 'ASC')
-                   ->findAll();
+                            property_owners.phone1 as phone,
+                            voting_records.land_area_weight as land_area,
+                            voting_records.building_area_weight as building_area')
+            ->join('property_owners', 'property_owners.id = voting_records.property_owner_id', 'left')
+            ->where('voting_records.voting_topic_id', $topicId)
+            ->orderBy('voting_records.vote_time', 'ASC')
+            ->findAll();
     }
+
+
 
     /**
      * 刪除投票記錄
@@ -263,8 +265,8 @@ class VotingRecordModel extends Model
     public function removeVote($topicId, $propertyOwnerId)
     {
         return $this->where('voting_topic_id', $topicId)
-                   ->where('property_owner_id', $propertyOwnerId)
-                   ->delete();
+            ->where('property_owner_id', $propertyOwnerId)
+            ->delete();
     }
 
     /**
@@ -344,7 +346,7 @@ class VotingRecordModel extends Model
     {
         $records = $this->where('voting_topic_id', $topicId)->findAll();
         $propertyOwnerModel = model('PropertyOwnerModel');
-        
+
         $updated = 0;
         $failed = 0;
         $errors = [];
@@ -360,7 +362,7 @@ class VotingRecordModel extends Model
 
                 // 取得計算後的面積
                 $totals = $propertyOwnerModel->calculateTotalAreas($record['property_owner_id']);
-                
+
                 // 更新投票記錄
                 $result = $this->update($record['id'], [
                     'land_area_weight' => $totals['total_land_area'] ?? 0,
