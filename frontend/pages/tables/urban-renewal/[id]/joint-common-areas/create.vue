@@ -145,7 +145,7 @@
                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
               >
                 <option value="">請選擇對應的建物</option>
-                <option v-for="building in filterCorrespondingBuildings" :key="building.id" :value="building.id">
+                <option v-for="building in filterCorrespondingBuildings" :key="building.building_id" :value="building.building_id">
                   {{ building.display_name }}
                 </option>
               </select>
@@ -342,6 +342,7 @@ const fetchAllBuildings = async () => {
       allBuildings.value.slice(0, 3).forEach((building, index) => {
         console.log(`  [建物 ${index + 1}]:`, {
           id: building.id,
+          building_id: building.building_id, // Check this
           county: building.county,
           district: building.district,
           section: building.section,
@@ -463,11 +464,23 @@ const fillTestData = async () => {
 }
 
 const onSubmit = async () => {
+  console.log('[Joint Common Areas Create] Submitting form data:', JSON.parse(JSON.stringify(formData)))
+
   // Basic validation
-  if (!formData.county || !formData.district || !formData.section ||
-      !formData.building_number_main || !formData.building_number_sub ||
-      !formData.building_total_area || !formData.corresponding_building_id ||
-      !formData.ownership_numerator || !formData.ownership_denominator) {
+  const requiredFields = [
+    'county', 'district', 'section',
+    'building_number_main', 'building_number_sub',
+    'building_total_area', 'corresponding_building_id',
+    'ownership_numerator', 'ownership_denominator'
+  ]
+
+  const missingFields = requiredFields.filter(field => {
+    const value = formData[field]
+    return value === '' || value === null || value === undefined
+  })
+
+  if (missingFields.length > 0) {
+    console.log('[Joint Common Areas Create] Missing fields:', missingFields)
     error.value = '請填寫所有必填項目'
     return
   }

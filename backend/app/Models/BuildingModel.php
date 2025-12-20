@@ -88,9 +88,9 @@ class BuildingModel extends Model
     public function getByUrbanRenewalId(int $urbanRenewalId): array
     {
         $result = $this->where('urban_renewal_id', $urbanRenewalId)
-                       ->where('deleted_at IS NULL')
-                       ->orderBy('created_at', 'DESC')
-                       ->findAll();
+            ->where('deleted_at IS NULL')
+            ->orderBy('created_at', 'DESC')
+            ->findAll();
 
         return $result !== false ? $result : [];
     }
@@ -101,11 +101,11 @@ class BuildingModel extends Model
     public function buildingNumberExists(string $county, string $district, string $section, string $main, string $sub, ?int $excludeId = null): bool
     {
         $builder = $this->where('county', $county)
-                        ->where('district', $district)
-                        ->where('section', $section)
-                        ->where('building_number_main', $main)
-                        ->where('building_number_sub', $sub)
-                        ->where('deleted_at IS NULL');
+            ->where('district', $district)
+            ->where('section', $section)
+            ->where('building_number_main', $main)
+            ->where('building_number_sub', $sub)
+            ->where('deleted_at IS NULL');
 
         if ($excludeId) {
             $builder->where('id !=', $excludeId);
@@ -121,12 +121,12 @@ class BuildingModel extends Model
     public function findByLocation(string $county, string $district, string $section, string $main, string $sub): ?array
     {
         $result = $this->where('county', $county)
-                       ->where('district', $district)
-                       ->where('section', $section)
-                       ->where('building_number_main', $main)
-                       ->where('building_number_sub', $sub)
-                       ->where('deleted_at IS NULL')
-                       ->first();
+            ->where('district', $district)
+            ->where('section', $section)
+            ->where('building_number_main', $main)
+            ->where('building_number_sub', $sub)
+            ->where('deleted_at IS NULL')
+            ->first();
 
         return $result !== false ? $result : null;
     }
@@ -180,5 +180,19 @@ class BuildingModel extends Model
     public function getLocationString(array $building): string
     {
         return $building['county'] . '/' . $building['district'] . '/' . $building['section'];
+    }
+
+    /**
+     * Format building number for display
+     */
+    public function formatBuildingNumber(array $building): string
+    {
+        $main = $building['building_number_main'] ?? '';
+        $sub = $building['building_number_sub'] ?? '';
+
+        if (empty($sub) || $sub === '0' || $sub === '000') {
+            return $main;
+        }
+        return "{$main}-{$sub}";
     }
 }

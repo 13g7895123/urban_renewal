@@ -147,8 +147,12 @@ const fetchJointAreas = async () => {
     const response = await get(`/urban-renewals/${urbanRenewalId.value}/joint-common-areas`)
 
     if (response.success && response.data.status === 'success') {
+      console.log('[Joint Common Areas] API Response Data:', response.data)
       jointAreas.value = response.data.data || []
       console.log('[Joint Common Areas] Data loaded:', jointAreas.value.length, 'records')
+      if (jointAreas.value.length > 0) {
+        console.log('[Joint Common Areas] First record:', jointAreas.value[0])
+      }
     } else {
       console.error('Failed to fetch joint common areas:', response.data?.message || response.error?.message)
       jointAreas.value = []

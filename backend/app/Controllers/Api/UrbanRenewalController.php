@@ -54,10 +54,10 @@ class UrbanRenewalController extends BaseController
     {
         try {
             $user = $_SERVER['AUTH_USER'] ?? null;
-            
+
             $page = (int)($this->request->getGet('page') ?? 1);
             $perPage = (int)($this->request->getGet('per_page') ?? 10);
-            
+
             $filters = [];
             if ($search = $this->request->getGet('search')) {
                 $filters['search'] = $search;
@@ -79,7 +79,6 @@ class UrbanRenewalController extends BaseController
                 'pagination' => $result['pagination'],
                 'message' => '取得更新會列表成功'
             ]);
-
         } catch (UnauthorizedException $e) {
             return $this->response->setStatusCode(401)->setJSON([
                 'status' => 'error',
@@ -107,7 +106,7 @@ class UrbanRenewalController extends BaseController
     {
         try {
             $user = $_SERVER['AUTH_USER'] ?? null;
-            
+
             $data = $this->urbanRenewalService->getDetail($user, (int)$id);
 
             // Add calculated statistics
@@ -119,7 +118,6 @@ class UrbanRenewalController extends BaseController
                 'data' => $data,
                 'message' => '取得更新會資料成功'
             ]);
-
         } catch (NotFoundException $e) {
             return $this->response->setStatusCode(404)->setJSON([
                 'status' => 'error',
@@ -168,7 +166,6 @@ class UrbanRenewalController extends BaseController
                 'data' => $result,
                 'message' => '更新會建立成功'
             ]);
-
         } catch (UnauthorizedException $e) {
             return $this->response->setStatusCode(401)->setJSON([
                 'status' => 'error',
@@ -211,7 +208,6 @@ class UrbanRenewalController extends BaseController
                 'data' => $result,
                 'message' => '更新會更新成功'
             ]);
-
         } catch (NotFoundException $e) {
             return $this->response->setStatusCode(404)->setJSON([
                 'status' => 'error',
@@ -257,7 +253,6 @@ class UrbanRenewalController extends BaseController
                 'status' => 'success',
                 'message' => '更新會刪除成功'
             ]);
-
         } catch (NotFoundException $e) {
             return $this->response->setStatusCode(404)->setJSON([
                 'status' => 'error',
@@ -295,7 +290,7 @@ class UrbanRenewalController extends BaseController
     {
         try {
             $user = $_SERVER['AUTH_USER'] ?? null;
-            
+
             $data = $this->urbanRenewalService->getStatistics($user, (int)$id);
 
             return $this->response->setJSON([
@@ -303,7 +298,6 @@ class UrbanRenewalController extends BaseController
                 'data' => $data,
                 'message' => '取得更新會統計成功'
             ]);
-
         } catch (NotFoundException $e) {
             return $this->response->setStatusCode(404)->setJSON([
                 'status' => 'error',
@@ -331,7 +325,7 @@ class UrbanRenewalController extends BaseController
     {
         try {
             $user = $_SERVER['AUTH_USER'] ?? null;
-            
+
             $data = $this->urbanRenewalService->getByCompany($user, (int)$companyId);
 
             return $this->response->setJSON([
@@ -339,7 +333,6 @@ class UrbanRenewalController extends BaseController
                 'data' => $data,
                 'message' => '取得企業更新會列表成功'
             ]);
-
         } catch (ForbiddenException $e) {
             return $this->response->setStatusCode(403)->setJSON([
                 'status' => 'error',
@@ -350,6 +343,114 @@ class UrbanRenewalController extends BaseController
             return $this->response->setStatusCode(500)->setJSON([
                 'status' => 'error',
                 'message' => '取得企業更新會列表失敗'
+            ]);
+        }
+    }
+
+    /**
+     * Get company managers for assignment dropdown
+     * GET /api/urban-renewals/company-managers
+     */
+    public function getCompanyManagers()
+    {
+        try {
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
+
+            // Only admin can access this endpoint
+            if (!$isAdmin) {
+                return $this->response->setStatusCode(403)->setJSON([
+                    'status' => 'error',
+                    'message' => '您沒有權限存取此功能'
+                ]);
+            }
+
+            // Get all company managers
+            $userModel = model('UserModel');
+            $managers = $userModel->where('is_company_manager', 1)
+                ->where('is_active', 1)
+                ->select('id, name, email, company_id')
+                ->findAll();
+
+            return $this->response->setJSON([
+                'status' => 'success',
+                'data' => $managers,
+                'message' => '取得企業管理員列表成功'
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Get company managers error: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON([
+                'status' => 'error',
+                'message' => '取得企業管理員列表失敗'
+            ]);
+        }
+    }
+
+    /**
+     * Batch assign urban renewals to managers
+     * POST /api/urban-renewals/batch-assign
+     */
+    public function batchAssign()
+    {
+        try {
+            $user = $_SERVER['AUTH_USER'] ?? null;
+            $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
+
+            // Only admin can access this endpoint
+            if (!$isAdmin) {
+                return $this->response->setStatusCode(403)->setJSON([
+                    'status' => 'error',
+                    'message' => '您沒有權限存取此功能'
+                ]);
+            }
+
+            $data = $this->request->getJSON(true);
+
+            if (empty($data['manager_id']) || empty($data['urban_renewal_ids'])) {
+                return $this->response->setStatusCode(400)->setJSON([
+                    'status' => 'error',
+                    'message' => '缺少必要參數'
+                ]);
+            }
+
+            $managerId = (int)$data['manager_id'];
+            $urbanRenewalIds = $data['urban_renewal_ids'];
+
+            // Get manager's company_id
+            $userModel = model('UserModel');
+            $manager = $userModel->find($managerId);
+
+            if (!$manager || $manager['is_company_manager'] != 1) {
+                return $this->response->setStatusCode(400)->setJSON([
+                    'status' => 'error',
+                    'message' => '指定的管理員無效'
+                ]);
+            }
+
+            $companyId = $manager['company_id'];
+
+            // Update urban renewals
+            $updatedCount = 0;
+            foreach ($urbanRenewalIds as $id) {
+                $result = $this->urbanRenewalModel->update($id, [
+                    'company_id' => $companyId,
+                    'manager_id' => $managerId
+                ]);
+                if ($result) {
+                    $updatedCount++;
+                }
+            }
+
+            return $this->response->setJSON([
+                'status' => 'success',
+                'data' => ['updated_count' => $updatedCount],
+                'message' => "成功指派 {$updatedCount} 個更新會給管理員"
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Batch assign error: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON([
+                'status' => 'error',
+                'message' => '批次指派失敗'
             ]);
         }
     }
