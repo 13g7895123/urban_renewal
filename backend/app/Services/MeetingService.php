@@ -59,7 +59,7 @@ class MeetingService
         }
 
         $result = $this->repository->getPaginated($page, $perPage, $filters);
-        
+
         return [
             'data' => array_map(fn($entity) => $entity->toArray(), $result['data']),
             'pagination' => $result['pagination']
@@ -74,7 +74,7 @@ class MeetingService
         $this->authService->assertCanAccessUrbanRenewal($user, $urbanRenewalId);
 
         $entities = $this->repository->findByUrbanRenewalId($urbanRenewalId, $status);
-        
+
         return array_map(fn($e) => $e->toArray(), $entities);
     }
 
@@ -84,7 +84,7 @@ class MeetingService
     public function getDetail(array $user, int $id): array
     {
         $entity = $this->repository->findById($id);
-        
+
         if (!$entity) {
             throw new NotFoundException('會議不存在');
         }
@@ -130,12 +130,23 @@ class MeetingService
             $entity->setMeetingLocation($data['meeting_location']);
         }
 
+        // 設定出席人數（來自更新會的所有權人數）
+        if (isset($data['attendee_count'])) {
+            $entity->setAttendeeCount((int)$data['attendee_count']);
+        }
+
+        // 設定列席者人數
+        if (isset($data['observer_count'])) {
+            $entity->setObserverCount((int)$data['observer_count']);
+        }
+
         if (!empty($data['observers'])) {
             $entity->setObservers($data['observers']);
         }
 
         // 儲存
         $saved = $this->repository->save($entity);
+
 
         // 建立合格投票人快照
         $snapshotResult = $this->eligibleVoterModel->createSnapshot(
@@ -168,7 +179,7 @@ class MeetingService
     public function update(array $user, int $id, array $data): array
     {
         $entity = $this->repository->findById($id);
-        
+
         if (!$entity) {
             throw new NotFoundException('會議不存在');
         }
@@ -206,22 +217,29 @@ class MeetingService
         if (array_key_exists('meeting_location', $data)) {
             $entity->setMeetingLocation($data['meeting_location']);
         }
+        if (isset($data['attendee_count'])) {
+            $entity->setAttendeeCount((int)$data['attendee_count']);
+        }
+        if (isset($data['observer_count'])) {
+            $entity->setObserverCount((int)$data['observer_count']);
+        }
         if (isset($data['observers'])) {
             $entity->setObservers($data['observers']);
         }
 
         $saved = $this->repository->save($entity);
 
+
         // 更新計算總人數
         if (isset($data['exclude_owner_from_count'])) {
             $snapshotStats = $this->eligibleVoterModel->getSnapshotStatistics($id);
             $baseCount = $snapshotStats['total_voters'];
-            
+
             $calculatedTotalCount = $baseCount;
             if ($data['exclude_owner_from_count']) {
                 $calculatedTotalCount = max(0, $baseCount - 1);
             }
-            
+
             $meetingModel = model('MeetingModel');
             $meetingModel->update($id, ['calculated_total_count' => $calculatedTotalCount]);
         }
@@ -235,7 +253,7 @@ class MeetingService
     public function delete(array $user, int $id): bool
     {
         $entity = $this->repository->findById($id);
-        
+
         if (!$entity) {
             throw new NotFoundException('會議不存在');
         }
@@ -262,7 +280,7 @@ class MeetingService
     public function updateStatus(array $user, int $id, string $newStatus): array
     {
         $entity = $this->repository->findById($id);
-        
+
         if (!$entity) {
             throw new NotFoundException('會議不存在');
         }
@@ -288,7 +306,7 @@ class MeetingService
     public function getStatistics(array $user, int $id): array
     {
         $entity = $this->repository->findById($id);
-        
+
         if (!$entity) {
             throw new NotFoundException('會議不存在');
         }
@@ -304,7 +322,7 @@ class MeetingService
     public function getEligibleVoters(array $user, int $id, int $page = 1, int $perPage = 100): array
     {
         $entity = $this->repository->findById($id);
-        
+
         if (!$entity) {
             throw new NotFoundException('會議不存在');
         }
@@ -348,7 +366,7 @@ class MeetingService
     public function refreshEligibleVoters(array $user, int $id): array
     {
         $entity = $this->repository->findById($id);
-        
+
         if (!$entity) {
             throw new NotFoundException('會議不存在');
         }
