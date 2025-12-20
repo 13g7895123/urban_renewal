@@ -35,14 +35,65 @@ if [ -f .env ]; then
     grep "database.default" .env | head -5
 fi
 
-# Install composer dependencies if needed
-echo "Checking composer dependencies..."
-if [ ! -d "vendor/phpoffice/phpword" ]; then
-    echo "Installing composer dependencies..."
-    composer install --no-interaction --optimize-autoloader
-else
-    echo "Composer dependencies already installed."
-fi
+# ============================================
+# Check and install composer dependencies
+# ============================================
+check_dependencies() {
+    echo "Checking composer dependencies..."
+    
+    # List of critical packages that must exist
+    REQUIRED_PACKAGES=(
+        "phpoffice/phpword"
+        "phpoffice/phpspreadsheet"
+        "firebase/php-jwt"
+        "codeigniter4/framework"
+    )
+    
+    MISSING_PACKAGES=()
+    
+    for package in "${REQUIRED_PACKAGES[@]}"; do
+        # Convert package name to directory path (e.g., phpoffice/phpword -> vendor/phpoffice/phpword)
+        PACKAGE_DIR="vendor/${package}"
+        if [ ! -d "$PACKAGE_DIR" ]; then
+            echo "  ⚠️  Missing package: $package"
+            MISSING_PACKAGES+=("$package")
+        else
+            echo "  ✓ Package found: $package"
+        fi
+    done
+    
+    # If any packages are missing, run composer install
+    if [ ${#MISSING_PACKAGES[@]} -gt 0 ]; then
+        echo ""
+        echo "⚠️  Missing ${#MISSING_PACKAGES[@]} required package(s). Running composer install..."
+        composer install --no-interaction --optimize-autoloader
+        
+        # Verify installation was successful
+        for package in "${MISSING_PACKAGES[@]}"; do
+            PACKAGE_DIR="vendor/${package}"
+            if [ ! -d "$PACKAGE_DIR" ]; then
+                echo "❌ CRITICAL ERROR: Failed to install $package"
+                echo "   Please check composer.json and try running 'composer install' manually."
+                exit 1
+            fi
+        done
+        echo "✓ All dependencies installed successfully."
+    else
+        echo "✓ All required packages are installed."
+    fi
+    
+    # Verify autoloader is valid
+    if [ ! -f "vendor/autoload.php" ]; then
+        echo "❌ CRITICAL ERROR: vendor/autoload.php not found"
+        echo "   Running composer dump-autoload..."
+        composer dump-autoload --optimize
+    fi
+    
+    echo ""
+}
+
+check_dependencies
+
 
 echo "Waiting for database to be ready..."
 # Wait for database to be ready

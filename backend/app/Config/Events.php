@@ -33,7 +33,7 @@ Events::on('pre_system', static function (): void {
             ob_end_flush();
         }
 
-        ob_start(static fn ($buffer) => $buffer);
+        ob_start(static fn($buffer) => $buffer);
     }
 
     /*
@@ -51,5 +51,62 @@ Events::on('pre_system', static function (): void {
                 (new HotReloader())->run();
             });
         }
+    }
+});
+
+/*
+ * --------------------------------------------------------------------
+ * Dependency Validation
+ * --------------------------------------------------------------------
+ * Validates that critical composer packages are installed.
+ * This prevents cryptic "class not found" errors in production.
+ */
+Events::on('pre_system', static function (): void {
+    // Skip validation in testing environment
+    if (ENVIRONMENT === 'testing') {
+        return;
+    }
+
+    // Only run validation once per request
+    static $validated = false;
+    if ($validated) {
+        return;
+    }
+    $validated = true;
+
+    // List of critical classes that must be available
+    $requiredClasses = [
+        'PhpOffice\PhpWord\TemplateProcessor' => 'phpoffice/phpword',
+        'PhpOffice\PhpSpreadsheet\Spreadsheet' => 'phpoffice/phpspreadsheet',
+        'Firebase\JWT\JWT' => 'firebase/php-jwt',
+    ];
+
+    $missingPackages = [];
+
+    foreach ($requiredClasses as $className => $packageName) {
+        if (!class_exists($className)) {
+            $missingPackages[] = $packageName;
+        }
+    }
+
+    if (!empty($missingPackages)) {
+        $message = "⚠️ Critical dependencies missing:\n\n";
+        $message .= "The following composer packages are not installed:\n";
+        foreach ($missingPackages as $package) {
+            $message .= "  • $package\n";
+        }
+        $message .= "\nPlease run: composer install\n";
+        $message .= "Or restart the Docker container to auto-install dependencies.";
+
+        // Log the error
+        log_message('critical', 'Missing required packages: ' . implode(', ', $missingPackages));
+
+        // In development, show detailed error
+        if (ENVIRONMENT === 'development') {
+            throw new \RuntimeException($message);
+        }
+
+        // In production, log and continue (allow health checks to work)
+        log_message('error', $message);
     }
 });
