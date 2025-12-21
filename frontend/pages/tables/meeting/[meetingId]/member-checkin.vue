@@ -385,12 +385,12 @@ const confirmAttendance = async () => {
   }
 
   const attendanceData = {
-    meeting_id: meetingId,
-    property_owner_id: selectedOwner.value.owner_id || selectedOwner.value.id,
     attendance_type: statusMap[selectedOwner.value.attendance_status] || selectedOwner.value.attendance_status
   }
 
-  console.log('[Member Checkin] Updating attendance:', attendanceData)
+  const ownerId = selectedOwner.value.owner_id || selectedOwner.value.id
+
+  console.log('[Member Checkin] Updating attendance:', { meetingId, ownerId, attendanceData })
 
   let response
   // Check if we have an attendance_id (meaning record exists)
@@ -418,11 +418,12 @@ const confirmAttendance = async () => {
     // "if ($existingAttendance) { ... update ... } else { ... insert ... }"
     
     // So we can just use checkIn for everything!
-    response = await checkIn(attendanceData)
+    response = await checkIn(meetingId, ownerId, attendanceData)
   } else {
     // Create new attendance record
-    response = await checkIn(attendanceData)
+    response = await checkIn(meetingId, ownerId, attendanceData)
   }
+
 
   isSaving.value = false
 
