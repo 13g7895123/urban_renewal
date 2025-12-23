@@ -28,9 +28,9 @@ export const useApi = () => {
     console.error('[API] No API base URL configured! Check environment variables.')
     throw new Error('API base URL not configured. Please set NUXT_PUBLIC_API_BASE_URL environment variable.')
   }
-  
+
   const baseURL = getBaseURL()
-  
+
   console.log('[API] Base URL resolved to:', baseURL)
 
   /**
@@ -64,12 +64,14 @@ export const useApi = () => {
       }
     } catch (error) {
       console.error(`[API] Error ${defaultOptions.method || 'GET'} ${baseURL}${endpoint}:`, error)
-      
+
       // Handle 401 authentication errors
       if ((error.status === 401 || error.statusCode === 401) && process.client) {
         const isAuthEndpoint = endpoint.includes('/auth/login') ||
-                               endpoint.includes('/auth/refresh') ||
-                               endpoint.includes('/auth/logout')
+          endpoint.includes('/auth/refresh') ||
+          endpoint.includes('/auth/logout') ||
+          endpoint.includes('/auth/me')
+
 
         if (!isAuthEndpoint) {
           console.log('[API] 401 error detected, attempting token refresh...')
@@ -122,7 +124,7 @@ export const useApi = () => {
           }
         }
       }
-      
+
       // 提供詳細錯誤資訊
       const errorDetails = {
         message: error.data?.message || error.message || '請求失敗',
@@ -132,7 +134,7 @@ export const useApi = () => {
         method: defaultOptions.method || 'GET',
         errors: error.data?.errors || null
       }
-      
+
       if (errorDetails.status === 404) {
         errorDetails.message = `API endpoint not found: ${errorDetails.url}`
       } else if (errorDetails.status === 401) {
@@ -144,7 +146,7 @@ export const useApi = () => {
       } else if (errorDetails.status >= 500) {
         errorDetails.message = error.data?.message || '伺服器錯誤，請稍後再試'
       }
-      
+
       return {
         success: false,
         data: null,
@@ -201,7 +203,7 @@ export const useApi = () => {
       method: 'DELETE'
     })
   }
-  
+
   return {
     get,
     post,

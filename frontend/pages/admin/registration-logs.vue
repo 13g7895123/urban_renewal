@@ -1,5 +1,5 @@
 <template>
-    <NuxtLayout name="main">
+    <NuxtLayout name="admin-public">
         <template #title>註冊日誌紀錄</template>
 
         <div class="space-y-6">
@@ -149,7 +149,7 @@
 </template>
 
 <script setup>
-const { $api } = useNuxtApp()
+const { get } = useApi()
 const loading = ref(false)
 const showDetailModal = ref(false)
 const selectedLog = ref(null)
@@ -200,7 +200,7 @@ const formatDate = (dateString) => {
 // 取得統計資料
 const fetchStatistics = async () => {
     try {
-        const res = await $api.get('/admin/registration-logs/statistics')
+        const res = await get('/admin/registration-logs/statistics')
         if (res.status === 'success') {
             statistics.value = res.data
         }
@@ -226,7 +226,7 @@ const fetchLogs = async (page = 1) => {
             }
         })
 
-        const res = await $api.get('/admin/registration-logs', { params })
+        const res = await get('/admin/registration-logs', params)
 
         if (res.status === 'success') {
             logs.value = res.data
