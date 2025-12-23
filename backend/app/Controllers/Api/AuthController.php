@@ -37,13 +37,13 @@ class AuthController extends ResourceController
             'http://localhost:9128',
             'http://localhost:3000'
         ];
-        
+
         $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-        
+
         if (in_array($origin, $allowedOrigins)) {
             header("Access-Control-Allow-Origin: {$origin}");
         }
-        
+
         header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
         header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
         header('Access-Control-Allow-Credentials: true');
@@ -79,8 +79,8 @@ class AuthController extends ResourceController
 
             // 查找使用者
             $user = $this->userModel->where('username', $username)
-                                   ->where('is_active', 1)
-                                   ->first();
+                ->where('is_active', 1)
+                ->first();
 
             if (!$user) {
                 // 記錄失敗登入事件（使用者不存在）
@@ -144,7 +144,7 @@ class AuthController extends ResourceController
             unset($user['password_hash'], $user['password_reset_token'], $user['login_attempts']);
 
             $this->setCorsHeaders();
-            
+
             return $this->respond([
                 'success' => true,
                 'data' => [
@@ -153,7 +153,6 @@ class AuthController extends ResourceController
                 ],
                 'message' => '登入成功'
             ]);
-
         } catch (\Exception $e) {
             log_message('error', 'Login error: ' . $e->getMessage());
             return response_error('登入處理失敗', 500);
@@ -171,7 +170,7 @@ class AuthController extends ResourceController
             if (!$token) {
                 $token = $this->getTokenFromHeader(); // fallback
             }
-            
+
             if ($token) {
                 // 使 session 失效
                 $sessionModel = model('UserSessionModel');
@@ -192,7 +191,6 @@ class AuthController extends ResourceController
                 'success' => true,
                 'message' => '登出成功'
             ]);
-
         } catch (\Exception $e) {
             log_message('error', 'Logout error: ' . $e->getMessage());
             return $this->fail([
@@ -220,9 +218,9 @@ class AuthController extends ResourceController
 
             $sessionModel = model('UserSessionModel');
             $session = $sessionModel->where('refresh_token', $refreshToken)
-                                   ->where('is_active', 1)
-                                   ->where('refresh_expires_at >', date('Y-m-d H:i:s'))
-                                   ->first();
+                ->where('is_active', 1)
+                ->where('refresh_expires_at >', date('Y-m-d H:i:s'))
+                ->first();
 
             if (!$session) {
                 $this->clearAuthCookies();
@@ -267,7 +265,7 @@ class AuthController extends ResourceController
             log_auth_event('token_refresh', $user['id']);
 
             $this->setCorsHeaders();
-            
+
             return $this->respond([
                 'success' => true,
                 'data' => [
@@ -275,7 +273,6 @@ class AuthController extends ResourceController
                 ],
                 'message' => 'Token 刷新成功'
             ]);
-
         } catch (\Exception $e) {
             log_message('error', 'Token refresh error: ' . $e->getMessage());
             return $this->fail([
@@ -296,7 +293,7 @@ class AuthController extends ResourceController
     {
         try {
             $this->setCorsHeaders();
-            
+
             $user = $this->getCurrentUser();
             if (!$user) {
                 return $this->fail([
@@ -316,7 +313,6 @@ class AuthController extends ResourceController
                 'data' => $user, // 包含 is_company_manager, user_type 等所有使用者欄位
                 'message' => '取得使用者資訊成功'
             ]);
-
         } catch (\Exception $e) {
             log_message('error', 'Get user info error: ' . $e->getMessage());
             return $this->fail([
@@ -335,8 +331,19 @@ class AuthController extends ResourceController
      */
     public function register()
     {
+        // 初始化日誌
+        $registrationLogModel = model('RegistrationLogModel');
+        $logId = null;
+
         try {
             $data = $this->request->getJSON(true);
+
+            // 記錄請求
+            $logId = $registrationLogModel->logRequest(
+                $data ?? [],
+                $this->request->getIPAddress(),
+                $this->request->getServer('HTTP_USER_AGENT') ?? ''
+            );
 
             // 基本驗證規則
             $rules = [
@@ -356,7 +363,11 @@ class AuthController extends ResourceController
             }
 
             if (!$this->validate($rules)) {
-                return response_validation_error('驗證失敗', $this->validator->getErrors());
+                $errors = $this->validator->getErrors();
+                if ($logId) {
+                    $registrationLogModel->markAsError($logId, 422, '驗證失敗', $errors);
+                }
+                return response_validation_error('驗證失敗', $errors);
             }
 
             $db = \Config\Database::connect();
@@ -381,7 +392,11 @@ class AuthController extends ResourceController
                 if (!$companyId) {
                     $db->transRollback();
                     $errors = $companyModel->errors();
-                    return response_error('企業資料建立失敗: ' . implode(', ', $errors), 500);
+                    $errorMessage = '企業資料建立失敗: ' . implode(', ', $errors);
+                    if ($logId) {
+                        $registrationLogModel->markAsError($logId, 500, $errorMessage, $errors);
+                    }
+                    return response_error($errorMessage, 500);
                 }
             }
 
@@ -407,13 +422,26 @@ class AuthController extends ResourceController
 
             if (!$userId) {
                 $db->transRollback();
-                return response_error('使用者建立失敗: ' . implode(', ', $this->userModel->errors()), 500);
+                $errors = $this->userModel->errors();
+                $errorMessage = '使用者建立失敗: ' . implode(', ', $errors);
+                if ($logId) {
+                    $registrationLogModel->markAsError($logId, 500, $errorMessage, $errors);
+                }
+                return response_error($errorMessage, 500);
             }
 
             $db->transComplete();
 
             if ($db->transStatus() === false) {
+                if ($logId) {
+                    $registrationLogModel->markAsError($logId, 500, '註冊失敗，請稍後再試');
+                }
                 return response_error('註冊失敗，請稍後再試', 500);
+            }
+
+            // 記錄成功
+            if ($logId) {
+                $registrationLogModel->markAsSuccess($logId, $userId, '註冊成功');
             }
 
             // 記錄註冊事件
@@ -431,9 +459,14 @@ class AuthController extends ResourceController
                 ],
                 'message' => '註冊成功'
             ], 201);
-
         } catch (\Exception $e) {
             log_message('error', 'Registration error: ' . $e->getMessage());
+            if ($logId) {
+                $registrationLogModel->markAsError($logId, 500, '註冊處理失敗: ' . $e->getMessage(), [
+                    'exception' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
             return response_error('註冊處理失敗: ' . $e->getMessage(), 500);
         }
     }
@@ -487,7 +520,6 @@ class AuthController extends ResourceController
                 'success' => true,
                 'message' => '如果該信箱存在，我們已發送重設密碼連結'
             ]);
-
         } catch (\Exception $e) {
             log_message('error', 'Forgot password error: ' . $e->getMessage());
             return $this->fail([
@@ -528,9 +560,9 @@ class AuthController extends ResourceController
             $password = $this->request->getJSON()->password;
 
             $user = $this->userModel->where('password_reset_token', $token)
-                                   ->where('password_reset_expires >', date('Y-m-d H:i:s'))
-                                   ->where('is_active', 1)
-                                   ->first();
+                ->where('password_reset_expires >', date('Y-m-d H:i:s'))
+                ->where('is_active', 1)
+                ->first();
 
             if (!$user) {
                 return $this->fail([
@@ -555,7 +587,6 @@ class AuthController extends ResourceController
                 'success' => true,
                 'message' => '密碼重設成功'
             ]);
-
         } catch (\Exception $e) {
             log_message('error', 'Reset password error: ' . $e->getMessage());
             return $this->fail([
@@ -574,7 +605,7 @@ class AuthController extends ResourceController
     private function generateJWT($user)
     {
         $jwtConfig = config('JWT');
-        
+
         $payload = [
             'iss' => $jwtConfig->issuer,
             'aud' => $jwtConfig->audience,
@@ -635,7 +666,7 @@ class AuthController extends ResourceController
         $httponly = true;
         $samesite = 'Strict';
         $path = '/';
-        
+
         // Auth token cookie (24 小時)
         setcookie(
             self::TOKEN_COOKIE_NAME,
@@ -648,7 +679,7 @@ class AuthController extends ResourceController
                 'samesite' => $samesite
             ]
         );
-        
+
         // Refresh token cookie (7 天)
         setcookie(
             self::REFRESH_COOKIE_NAME,
@@ -669,7 +700,7 @@ class AuthController extends ResourceController
     private function clearAuthCookies()
     {
         $path = '/';
-        
+
         setcookie(self::TOKEN_COOKIE_NAME, '', [
             'expires' => time() - 3600,
             'path' => $path,
@@ -677,7 +708,7 @@ class AuthController extends ResourceController
             'httponly' => true,
             'samesite' => 'Strict'
         ]);
-        
+
         setcookie(self::REFRESH_COOKIE_NAME, '', [
             'expires' => time() - 3600,
             'path' => $path,
@@ -725,7 +756,7 @@ class AuthController extends ResourceController
         if (!$token) {
             $token = $this->getTokenFromHeader(); // fallback
         }
-        
+
         if (!$token) {
             return null;
         }

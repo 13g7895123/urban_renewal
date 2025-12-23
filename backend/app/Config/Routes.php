@@ -302,4 +302,14 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         // Handle OPTIONS for specific routes
         $routes->options('(:any)', 'JwtDebugController::options');
     });
+
+    // Registration Logs API (Admin only)
+    $routes->group('admin/registration-logs', ['namespace' => 'App\Controllers\Api\Admin'], function ($routes) {
+        $routes->get('/', 'RegistrationLogController::index');                                  // GET /api/admin/registration-logs
+        $routes->get('statistics', 'RegistrationLogController::statistics');                    // GET /api/admin/registration-logs/statistics
+        $routes->get('(:num)', 'RegistrationLogController::show/$1');                           // GET /api/admin/registration-logs/{id}
+        $routes->delete('(:num)', 'RegistrationLogController::delete/$1');                      // DELETE /api/admin/registration-logs/{id}
+
+        $routes->options('(:any)', 'RegistrationLogController::options');
+    });
 });
