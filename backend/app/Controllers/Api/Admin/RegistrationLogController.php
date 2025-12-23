@@ -22,11 +22,11 @@ class RegistrationLogController extends ResourceController
     public function index()
     {
         try {
-            // 驗證管理員權限
-            $user = auth_validate_request();
-            if (!$user || $user['role'] !== 'admin') {
-                return response_error('您沒有權限存取此功能', 403);
-            }
+            // 移除身分驗證，公開存取
+            // $user = auth_validate_request();
+            // if (!$user || $user['role'] !== 'admin') {
+            //     return response_error('您沒有權限存取此功能', 403);
+            // }
 
             $page = (int)($this->request->getGet('page') ?? 1);
             $perPage = (int)($this->request->getGet('per_page') ?? 20);
@@ -75,11 +75,11 @@ class RegistrationLogController extends ResourceController
     public function show($id = null)
     {
         try {
-            // 驗證管理員權限
-            $user = auth_validate_request();
-            if (!$user || $user['role'] !== 'admin') {
-                return response_error('您沒有權限存取此功能', 403);
-            }
+            // 移除身分驗證，公開存取
+            // $user = auth_validate_request();
+            // if (!$user || $user['role'] !== 'admin') {
+            //     return response_error('您沒有權限存取此功能', 403);
+            // }
 
             if (!$id) {
                 return response_error('日誌 ID 為必填', 400);
@@ -109,11 +109,11 @@ class RegistrationLogController extends ResourceController
     public function delete($id = null)
     {
         try {
-            // 驗證管理員權限
-            $user = auth_validate_request();
-            if (!$user || $user['role'] !== 'admin') {
-                return response_error('您沒有權限存取此功能', 403);
-            }
+            // 移除身分驗證，公開存取
+            // $user = auth_validate_request();
+            // if (!$user || $user['role'] !== 'admin') {
+            //     return response_error('您沒有權限存取此功能', 403);
+            // }
 
             if (!$id) {
                 return response_error('日誌 ID 為必填', 400);
@@ -144,11 +144,11 @@ class RegistrationLogController extends ResourceController
     public function statistics()
     {
         try {
-            // 驗證管理員權限
-            $user = auth_validate_request();
-            if (!$user || $user['role'] !== 'admin') {
-                return response_error('您沒有權限存取此功能', 403);
-            }
+            // 移除身分驗證，公開存取
+            // $user = auth_validate_request();
+            // if (!$user || $user['role'] !== 'admin') {
+            //     return response_error('您沒有權限存取此功能', 403);
+            // }
 
             $builder = $this->registrationLogModel->builder();
 
