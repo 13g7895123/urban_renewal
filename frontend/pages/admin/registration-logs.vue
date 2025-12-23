@@ -109,7 +109,7 @@
                                 <div
                                     :class="selectedLog.response_status === 'success' ? 'text-green-600' : 'text-red-600'">
                                     {{ selectedLog.response_status === 'success' ? '成功' : '失敗' }} ({{
-                                    selectedLog.response_code
+                                        selectedLog.response_code
                                     }})
                                 </div>
                             </div>
@@ -267,7 +267,7 @@ onMounted(() => {
 })
 
 definePageMeta({
-    middleware: ['auth'],
+    // middleware: ['auth'],
     // 可以在這裡加入權限檢查 middleware
     // middleware: ['auth', 'admin-only'] 
 })
