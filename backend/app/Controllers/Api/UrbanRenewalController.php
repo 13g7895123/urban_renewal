@@ -355,10 +355,12 @@ class UrbanRenewalController extends BaseController
     {
         try {
             $user = $_SERVER['AUTH_USER'] ?? null;
-            $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
+            $userRole = $user['role'] ?? '';
 
-            // Only admin can access this endpoint
-            if (!$isAdmin) {
+            // Allow admin and land_owner to access this endpoint
+            $allowedRoles = ['admin', 'land_owner'];
+
+            if (!$user || !in_array($userRole, $allowedRoles)) {
                 return $this->response->setStatusCode(403)->setJSON([
                     'status' => 'error',
                     'message' => '您沒有權限存取此功能'
