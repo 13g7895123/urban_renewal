@@ -229,7 +229,9 @@ const fetchLogs = async (page = 1) => {
         const res = await get('/admin/registration-logs', params)
 
         if (res.status === 'success') {
+            console.log('Registration Logs API Response:', res)
             logs.value = res.data
+            console.log('Logs Value:', logs.value)
             pagination.value = {
                 ...pagination.value,
                 ...res.pagination
