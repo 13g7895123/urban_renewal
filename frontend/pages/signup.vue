@@ -35,51 +35,31 @@
     <div v-if="currentStep === 1" class="account-selection">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <!-- Personal Account -->
-        <div 
-          class="account-option cursor-pointer" 
-          :class="{ 'selected': selectedAccountType === 'personal' }"
-          @click="selectAccountType('personal')"
-        >
+        <div class="account-option cursor-pointer" :class="{ 'selected': selectedAccountType === 'personal' }"
+          @click="selectAccountType('personal')">
           <div class="account-card personal-card" :class="{ 'active': selectedAccountType === 'personal' }">
             <Icon name="heroicons:user" class="w-8 h-8 mb-2" />
             <div class="text-lg font-semibold">個人帳號</div>
           </div>
           <div class="radio-container">
             <label class="radio-label">
-              <input 
-                type="radio" 
-                name="accountType" 
-                value="personal" 
-                :checked="selectedAccountType === 'personal'"
-                @click.stop
-                @change="selectAccountType('personal')" 
-                class="radio-btn" 
-              />
+              <input type="radio" name="accountType" value="personal" :checked="selectedAccountType === 'personal'"
+                @click.stop @change="selectAccountType('personal')" class="radio-btn" />
             </label>
           </div>
         </div>
 
         <!-- Business Account -->
-        <div 
-          class="account-option cursor-pointer" 
-          :class="{ 'selected': selectedAccountType === 'business' }"
-          @click="selectAccountType('business')"
-        >
+        <div class="account-option cursor-pointer" :class="{ 'selected': selectedAccountType === 'business' }"
+          @click="selectAccountType('business')">
           <div class="account-card business-card" :class="{ 'active': selectedAccountType === 'business' }">
             <Icon name="heroicons:building-office" class="w-8 h-8 mb-2" />
             <div class="text-lg font-semibold">企業帳號</div>
           </div>
           <div class="radio-container">
             <label class="radio-label">
-              <input 
-                type="radio" 
-                name="accountType" 
-                value="business" 
-                :checked="selectedAccountType === 'business'"
-                @click.stop
-                @change="selectAccountType('business')" 
-                class="radio-btn" 
-              />
+              <input type="radio" name="accountType" value="business" :checked="selectedAccountType === 'business'"
+                @click.stop @change="selectAccountType('business')" class="radio-btn" />
             </label>
           </div>
         </div>
@@ -311,8 +291,69 @@ const handleRegister = async () => {
     }
   } catch (error) {
     console.error('Registration error:', error)
-    const errorMessage = error.response?.data?.message || error.message || '請稍後再試'
-    await showError('註冊失敗', errorMessage)
+
+    let errorMessage = '請稍後再試'
+    let errorDetail = ''
+
+    // 處理後端回應的錯誤
+    if (error.response?.data) {
+      const data = error.response.data
+
+      // 1. 處理 CodeIgniter 驗證錯誤 (messages 物件)
+      if (data.messages && typeof data.messages === 'object') {
+        const messages = []
+        const fieldMap = {
+          account: '帳號',
+          email: '信箱',
+          password: '密碼',
+          nickname: '暱稱',
+          phone: '手機號碼',
+          taxId: '統一編號',
+          businessName: '企業名稱'
+        }
+
+        for (const [key, msg] of Object.entries(data.messages)) {
+          let translatedMsg = msg
+
+          // 簡易翻譯常見錯誤
+          if (msg.includes('unique value')) {
+            translatedMsg = '已被使用'
+          } else if (msg.includes('is required')) {
+            translatedMsg = '為必填'
+          } else if (msg.includes('at least')) {
+            translatedMsg = '長度不足'
+          }
+
+          const fieldName = fieldMap[key] || key
+          messages.push(`${fieldName}: ${translatedMsg}`)
+        }
+
+        if (messages.length > 0) {
+          errorMessage = '資料驗證失敗'
+          errorDetail = messages.join('\n')
+        }
+      }
+      // 2. 處理單一錯誤訊息
+      else if (data.message) {
+        errorMessage = data.message
+      }
+      // 3. 處理 error 屬性 (有時是字串)
+      else if (data.error && typeof data.error === 'string') {
+        errorMessage = data.error
+      }
+    } else {
+      // 處理網路或其他錯誤
+      errorMessage = error.message || '無法連接伺服器'
+    }
+
+    // 顯示錯誤 Assert
+    // 如果有詳細條列，組合顯示
+    const finalMessage = errorDetail ? errorDetail : errorMessage
+
+    // 如果是驗證失敗，標題顯示明確一點
+    const title = errorDetail ? '註冊失敗' : '發生錯誤'
+
+    await showError(title, finalMessage)
   } finally {
     loading.value = false
   }
