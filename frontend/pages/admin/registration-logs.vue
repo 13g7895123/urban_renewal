@@ -201,8 +201,8 @@ const formatDate = (dateString) => {
 const fetchStatistics = async () => {
     try {
         const res = await get('/admin/registration-logs/statistics')
-        if (res.status === 'success') {
-            statistics.value = res.data
+        if (res.success && res.data.status === 'success') {
+            statistics.value = res.data.data
         }
     } catch (error) {
         console.error('Fetch statistics failed:', error)
@@ -228,13 +228,14 @@ const fetchLogs = async (page = 1) => {
 
         const res = await get('/admin/registration-logs', params)
 
-        if (res.status === 'success') {
-            console.log('Registration Logs API Response:', res)
-            logs.value = res.data
+        if (res.success && res.data.status === 'success') {
+            const apiData = res.data
+            console.log('Registration Logs API Response:', apiData)
+            logs.value = apiData.data
             console.log('Logs Value:', logs.value)
             pagination.value = {
                 ...pagination.value,
-                ...res.pagination
+                ...apiData.pagination
             }
         }
     } catch (error) {
