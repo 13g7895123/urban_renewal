@@ -1,8 +1,8 @@
 FROM php:8.2-cli-alpine
 
-# Install system dependencies and cron
+# Install system dependencies (without dcron)
 RUN apk add --no-cache \
-    dcron \
+    supercronic \
     curl \
     libzip-dev \
     icu-dev \
@@ -30,4 +30,4 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Start with entrypoint
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["crond", "-f", "-d", "8"]
+CMD ["supercronic", "/etc/crontabs/root"]
