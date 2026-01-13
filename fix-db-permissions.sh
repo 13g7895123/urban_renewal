@@ -47,7 +47,7 @@ echo "🔧 修復資料庫權限..."
 echo ""
 
 # 執行權限修復 SQL
-docker exec urban_renewal_db_prod mysql -uroot -p"${DB_ROOT_PASSWORD}" <<EOF
+docker exec urban_renewal_db_prod mariadb -uroot -p"${DB_ROOT_PASSWORD}" <<EOF
 -- 修復 root 用戶權限
 DROP USER IF EXISTS 'root'@'%';
 CREATE USER 'root'@'%' IDENTIFIED BY '${DB_ROOT_PASSWORD}';
