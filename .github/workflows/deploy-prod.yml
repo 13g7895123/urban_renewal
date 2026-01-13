@@ -18,10 +18,10 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             # Navigate to project directory
-            /home/jarvis/project/bonus/urban_renewal
+            cd /home/jarvis/project/bonus/urban_renewal
             
             # Pull latest code
-            git pull origin main
+            git pull origin master
             
             # Rebuild and Restart services
             ./start-prod.sh
