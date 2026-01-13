@@ -57,22 +57,56 @@ case $choice in
         
         # 啟動容器（skip-grant-tables 模式）
         echo "步驟 2: 以 skip-grant-tables 模式啟動..."
-        docker run -d \
+        TEMP_CONTAINER=$(docker run -d \
             --name urban_renewal_db_temp \
             --network urban_renewal_urban_renewal_network \
             -v urban_renewal_db_data:/var/lib/mysql \
             -e MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=yes \
             mariadb:11.4 \
             --skip-grant-tables \
-            --skip-networking=0
+            --skip-networking=0)
         
         # 等待啟動
         echo "步驟 3: 等待資料庫啟動..."
-        sleep 10
+        sleep 5
+        
+        # 檢查容器狀態
+        if ! docker ps | grep -q urban_renewal_db_temp; then
+            echo "❌ 容器啟動失敗！查看日誌："
+            docker logs urban_renewal_db_temp
+            echo ""
+            echo "清理並重試..."
+            docker rm urban_renewal_db_temp 2>/dev/null || true
+            
+            # 方法 2: 使用 mysqld_safe
+            echo "嘗試方法 2: 直接在原容器上執行..."
+            docker start urban_renewal_db_prod
+            sleep 3
+            
+            # 在運行中的容器內執行 skip-grant-tables
+            docker exec urban_renewal_db_prod bash -c "mysqladmin -u root shutdown" 2>/dev/null || true
+            sleep 2
+            
+            docker exec -d urban_renewal_db_prod bash -c "mysqld --skip-grant-tables --skip-networking=0 &"
+            sleep 8
+            
+            USE_ORIGINAL_CONTAINER=true
+        else
+            echo "✅ 臨時容器啟動成功"
+            sleep 5
+            USE_ORIGINAL_CONTAINER=false
+        fi
         
         # 重置密碼
         echo "步驟 4: 重置 root 密碼..."
-        docker exec urban_renewal_db_temp mariadb -u root <<EOF
+        
+        if [ "$USE_ORIGINAL_CONTAINER" = true ]; then
+            CONTAINER_NAME="urban_renewal_db_prod"
+        else
+            CONTAINER_NAME="urban_renewal_db_temp"
+        fi
+        
+        docker exec $CONTAINER_NAME mariadb -u root <<EOF
 FLUSH PRIVILEGES;
 ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASSWORD}';
 ALTER USER 'root'@'%' IDENTIFIED BY '${DB_ROOT_PASSWORD}';
@@ -83,24 +117,29 @@ EOF
         
         # 重置 urban_user 密碼
         echo "步驟 5: 重置 urban_user 密碼..."
-        docker exec urban_renewal_db_temp mariadb -u root <<EOF
+        docker exec $CONTAINER_NAME mariadb -u root <<EOF
 CREATE USER IF NOT EXISTS '${DB_USERNAME}'@'%' IDENTIFIED BY '${DB_PASSWORD}';
 ALTER USER '${DB_USERNAME}'@'%' IDENTIFIED BY '${DB_PASSWORD}';
 GRANT ALL PRIVILEGES ON ${DB_DATABASE}.* TO '${DB_USERNAME}'@'%';
 FLUSH PRIVILEGES;
 EOF
         
-        # 停止臨時容器
-        echo "步驟 6: 清理臨時容器..."
-        docker stop urban_renewal_db_temp
-        docker rm urban_renewal_db_temp
-        
-        # 啟動正常容器
-        echo "步驟 7: 啟動正常的 MariaDB 容器..."
-        docker start urban_renewal_db_prod
-        
-        # 等待啟動
-        sleep 5
+        # 停止臨時容器或重啟服務
+        if [ "$USE_ORIGINAL_CONTAINER" = true ]; then
+            echo "步驟 6: 重啟 MariaDB 服務（正常模式）..."
+            docker exec urban_renewal_db_prod bash -c "mysqladmin -u root -p${DB_ROOT_PASSWORD} shutdown" 2>/dev/null || \
+            docker restart urban_renewal_db_prod
+            sleep 8
+        else
+            echo "步驟 6: 清理臨時容器..."
+            docker stop urban_renewal_db_temp
+            docker rm urban_renewal_db_temp
+            
+            # 啟動正常容器
+            echo "步驟 7: 啟動正常的 MariaDB 容器..."
+            docker start urban_renewal_db_prod
+            sleep 8
+        fi
         
         # 測試連接
         echo "步驟 8: 測試新密碼..."
