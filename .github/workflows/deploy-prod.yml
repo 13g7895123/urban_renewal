@@ -1,0 +1,27 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+  release:
+    types: [published]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Prod Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            # Navigate to project directory
+            cd ~/project/bonus/urban_renewal
+            
+            # Pull latest code
+            git pull origin main
+            
+            # Rebuild and Restart services
+            ./start-prod.sh
