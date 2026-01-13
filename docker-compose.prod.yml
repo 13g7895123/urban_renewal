@@ -63,7 +63,7 @@ services:
     ports:
       - "${DB_PORT}:3306"
     volumes:
-      - mariadb_prod_data:/var/lib/mysql
+      - ./mariadb_prod_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       timeout: 10s
