@@ -2,7 +2,7 @@ name: Deploy to Production
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   release:
     types: [published]
 
@@ -18,7 +18,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             # Navigate to project directory
-            cd ~/project/bonus/urban_renewal
+            /home/jarvis/project/bonus/urban_renewal
             
             # Pull latest code
             git pull origin main
