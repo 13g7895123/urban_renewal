@@ -30,4 +30,4 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Start with entrypoint
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["crond", "-f", "-l", "2"]
+CMD ["crond", "-f", "-d", "8"]

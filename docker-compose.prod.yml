@@ -105,6 +105,10 @@ services:
     restart: unless-stopped
     networks:
       - urban_renewal_network
+    cap_add:
+      - SYS_NICE
+      - SETGID
+      - SETUID
 
 volumes:
   mariadb_prod_data:
