@@ -46,8 +46,27 @@ fi
 echo "🔧 修復資料庫權限..."
 echo ""
 
+# 嘗試不使用密碼或使用容器環境變數中的密碼
+echo "📋 檢查資料庫容器環境變數..."
+CONTAINER_ROOT_PWD=$(docker exec urban_renewal_db_prod printenv MYSQL_ROOT_PASSWORD 2>/dev/null || echo "")
+if [ -z "$CONTAINER_ROOT_PWD" ]; then
+    echo "⚠️  警告：無法從容器取得 MYSQL_ROOT_PASSWORD"
+    echo "嘗試使用 .env.production 中的密碼..."
+    CONTAINER_ROOT_PWD="${DB_ROOT_PASSWORD}"
+else
+    echo "✅ 容器 root 密碼: ${CONTAINER_ROOT_PWD}"
+    if [ "$CONTAINER_ROOT_PWD" != "${DB_ROOT_PASSWORD}" ]; then
+        echo "⚠️  警告：容器密碼與 .env.production 不一致！"
+        echo "   容器密碼: ${CONTAINER_ROOT_PWD}"
+        echo "   .env 密碼: ${DB_ROOT_PASSWORD}"
+    fi
+fi
+
+echo ""
+echo "🔄 嘗試使用容器密碼連接..."
+
 # 執行權限修復 SQL
-docker exec urban_renewal_db_prod mariadb -uroot -p"${DB_ROOT_PASSWORD}" <<EOF
+docker exec urban_renewal_db_prod mariadb -uroot -p"${CONTAINER_ROOT_PWD}" <<EOF
 -- 修復 root 用戶權限
 DROP USER IF EXISTS 'root'@'%';
 CREATE USER 'root'@'%' IDENTIFIED BY '${DB_ROOT_PASSWORD}';
@@ -68,11 +87,16 @@ EOF
 echo ""
 echo "✅ 資料庫權限修復完成！"
 echo ""
+echo "📋 實際使用的 root 密碼: ${CONTAINER_ROOT_PWD}"
+echo ""
+echo "⚠️  注意：如果容器密碼與 .env.production 不一致，請更新 .env.production："
+echo "   DB_ROOT_PASSWORD=${CONTAINER_ROOT_PWD}"
+echo ""
 echo "📋 現在可以使用以下帳號登入 phpMyAdmin："
 echo ""
 echo "  方法 1 - Root 帳號："
 echo "    用戶名: root"
-echo "    密碼: ${DB_ROOT_PASSWORD}"
+echo "    密碼: ${CONTAINER_ROOT_PWD}"
 echo ""
 echo "  方法 2 - 應用帳號："
 echo "    用戶名: ${DB_USERNAME}"
