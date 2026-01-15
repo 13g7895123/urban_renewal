@@ -21,22 +21,41 @@ services:
       - PORT=3000
       - NUXT_PUBLIC_API_BASE_URL=${BACKEND_API_URL}
       - NUXT_PUBLIC_BACKEND_URL=${BACKEND_URL}
-      - NUXT_PUBLIC_BACKEND_HOST=backend
+      - NUXT_PUBLIC_BACKEND_HOST=backend-nginx
       - NUXT_PUBLIC_BACKEND_PORT=${BACKEND_PORT}
     depends_on:
-      backend:
+      backend-nginx:
         condition: service_started
     restart: unless-stopped
     networks:
       - urban_renewal_network
 
-  backend:
+  # Nginx 服務（後端 Web 伺服器）
+  backend-nginx:
+    image: nginx:alpine
+    container_name: urban_renewal_backend_nginx_prod
+    ports:
+      - "${BACKEND_PORT}:80"
+    volumes:
+      - ../backend:/var/www/html:ro
+      - ./nginx-backend.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend-php
+    restart: unless-stopped
+    networks:
+      - urban_renewal_network
+    healthcheck:
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # PHP-FPM 服務（後端應用）
+  backend-php:
     build:
       context: ../backend
       dockerfile: Dockerfile
-    container_name: urban_renewal_backend_prod
-    ports:
-      - "${BACKEND_PORT}:8000"
+    container_name: urban_renewal_backend_php_prod
     environment:
       - CI_ENVIRONMENT=production
       - CI_DEBUG=4
@@ -54,6 +73,11 @@ services:
     restart: unless-stopped
     networks:
       - urban_renewal_network
+    healthcheck:
+      test: [ "CMD-SHELL", "php-fpm -t || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   mariadb:
     image: mariadb:11.4
