@@ -203,7 +203,12 @@ sleep 5
 
 # 執行資料庫遷移
 echo -e "${BLUE}🔄 執行資料庫遷移...${NC}"
-BACKEND_CONTAINER="urban_renewal_backend_${ENV}"
+# 後端容器名稱已改為 backend-php
+if [ "$ENV" = "production" ]; then
+    BACKEND_CONTAINER="urban_renewal_backend_php_prod"
+else
+    BACKEND_CONTAINER="urban_renewal_backend_php_dev"
+fi
 
 # 檢查容器是否存在且正在運行
 if docker ps --format '{{.Names}}' | grep -q "^${BACKEND_CONTAINER}$"; then
@@ -237,4 +242,10 @@ echo -e "  查看日誌: ${YELLOW}docker compose -f $COMPOSE_FILE logs -f${NC}"
 echo -e "  停止服務: ${YELLOW}docker compose -f $COMPOSE_FILE down${NC}"
 echo -e "  重啟服務: ${YELLOW}./scripts/deploy.sh $ENV${NC}"
 echo -e "  執行遷移: ${YELLOW}docker exec ${BACKEND_CONTAINER} php spark migrate --all${NC}"
+echo -e "  查看後端日誌: ${YELLOW}docker logs -f ${BACKEND_CONTAINER}${NC}"
+if [ "$ENV" = "production" ]; then
+    echo -e "  查看 Nginx 日誌: ${YELLOW}docker logs -f urban_renewal_nginx_prod${NC}"
+else
+    echo -e "  查看 Nginx 日誌: ${YELLOW}docker logs -f urban_renewal_nginx_dev${NC}"
+fi
 echo ""

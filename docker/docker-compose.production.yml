@@ -8,47 +8,49 @@
 #   或使用：docker compose -f docker/docker-compose.production.yml --env-file docker/.env up -d
 
 services:
+  # 統一的 Nginx（處理前端和後端）
+  nginx:
+    image: nginx:alpine
+    container_name: urban_renewal_nginx_prod
+    ports:
+      - "${FRONTEND_PORT}:80" # 統一入口：前端和後端都通過這個端口
+    volumes:
+      - ./nginx-unified.conf:/etc/nginx/nginx.conf:ro
+      - ../backend:/var/www/html/backend:ro
+    depends_on:
+      - frontend
+      - backend-php
+    restart: unless-stopped
+    networks:
+      - urban_renewal_network
+    healthcheck:
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   frontend:
     build:
       context: ../frontend
       dockerfile: Dockerfile
     container_name: urban_renewal_frontend_prod
-    ports:
-      - "${FRONTEND_PORT}:3000"
+    # 不對外暴露端口，只通過 Nginx 訪問
+    expose:
+      - "3000"
     environment:
       - NODE_ENV=production
       - HOST=0.0.0.0
       - PORT=3000
       - NUXT_PUBLIC_API_BASE_URL=${BACKEND_API_URL}
       - NUXT_PUBLIC_BACKEND_URL=${BACKEND_URL}
-      - NUXT_PUBLIC_BACKEND_HOST=backend-nginx
+      - NUXT_PUBLIC_BACKEND_HOST=nginx
       - NUXT_PUBLIC_BACKEND_PORT=${BACKEND_PORT}
     depends_on:
-      backend-nginx:
+      backend-php:
         condition: service_started
     restart: unless-stopped
     networks:
       - urban_renewal_network
-
-  # Nginx 服務（後端 Web 伺服器）
-  backend-nginx:
-    image: nginx:alpine
-    container_name: urban_renewal_backend_nginx_prod
-    ports:
-      - "${BACKEND_PORT}:80"
-    volumes:
-      - ../backend:/var/www/html:ro
-      - ./nginx-backend.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      - backend-php
-    restart: unless-stopped
-    networks:
-      - urban_renewal_network
-    healthcheck:
-      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/" ]
-      interval: 10s
-      timeout: 5s
-      retries: 3
 
   # PHP-FPM 服務（後端應用）
   backend-php:
@@ -56,6 +58,9 @@ services:
       context: ../backend
       dockerfile: Dockerfile
     container_name: urban_renewal_backend_php_prod
+    # 不對外暴露端口，只通過 Nginx 訪問
+    expose:
+      - "9000"
     environment:
       - CI_ENVIRONMENT=production
       - CI_DEBUG=4
