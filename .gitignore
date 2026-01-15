@@ -82,3 +82,7 @@ test-results/
 # Worktrees and exports
 worktree/
 backend/writable/exports/
+
+# Deployment optimization
+.frontend_build_hash
+.backend_build_hash

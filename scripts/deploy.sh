@@ -148,12 +148,48 @@ fi
 
 echo ""
 
-# 啟動 Docker Compose
-echo -e "${BLUE}🚀 啟動 Docker 服務...${NC}"
-echo -e "${YELLOW}執行指令: docker compose -f $COMPOSE_FILE --env-file docker/.env up -d --build${NC}"
+# 檢查前端是否有變更
+check_frontend_changes() {
+    # 檢查是否存在前端 image
+    FRONTEND_IMAGE=$(docker images -q docker-frontend 2>/dev/null)
+    
+    if [ -z "$FRONTEND_IMAGE" ]; then
+        echo -e "${YELLOW}⚠️  前端 image 不存在，需要 build${NC}"
+        return 0  # 需要 build
+    fi
+    
+    # 檢查前端檔案是否有變更（與上次 build 比較）
+    FRONTEND_HASH_FILE=".frontend_build_hash"
+    CURRENT_HASH=$(find frontend -type f \( -name "*.vue" -o -name "*.ts" -o -name "*.js" -o -name "package.json" \) -exec md5sum {} \; 2>/dev/null | sort | md5sum | cut -d' ' -f1)
+    
+    if [ -f "$FRONTEND_HASH_FILE" ]; then
+        LAST_HASH=$(cat "$FRONTEND_HASH_FILE")
+        if [ "$CURRENT_HASH" = "$LAST_HASH" ]; then
+            echo -e "${GREEN}✓ 前端無變更，跳過 build${NC}"
+            return 1  # 不需要 build
+        fi
+    fi
+    
+    echo -e "${YELLOW}⚠️  前端有變更，需要 build${NC}"
+    echo "$CURRENT_HASH" > "$FRONTEND_HASH_FILE"
+    return 0  # 需要 build
+}
+
+# 智能檢測前端變更
+echo -e "${BLUE}🔍 檢查前端變更...${NC}"
+if check_frontend_changes; then
+    echo -e "${BLUE}🔨 Build 前端 image...${NC}"
+    docker compose -f "$COMPOSE_FILE" build frontend
+    echo -e "${GREEN}✓ 前端 build 完成${NC}"
+fi
 echo ""
 
-docker compose -f "$COMPOSE_FILE" --env-file docker/.env up -d --build
+# 啟動 Docker Compose
+echo -e "${BLUE}🚀 啟動 Docker 服務...${NC}"
+echo -e "${YELLOW}執行指令: docker compose -f $COMPOSE_FILE --env-file docker/.env up -d${NC}"
+echo ""
+
+docker compose -f "$COMPOSE_FILE" --env-file docker/.env up -d
 
 echo ""
 echo -e "${GREEN}========================================${NC}"
