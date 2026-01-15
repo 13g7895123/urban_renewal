@@ -6,7 +6,7 @@
 #
 # 使用方式：
 #   啟動：./scripts/deploy.sh dev
-#   或使用：docker-compose -f docker/docker-compose.dev.yml --env-file docker/.env up -d
+#   或使用：docker compose -f docker/docker-compose.dev.yml --env-file docker/.env up -d
 
 services:
   backend:

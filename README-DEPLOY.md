@@ -19,20 +19,20 @@
 
 ```bash
 # 停止開發環境
-docker-compose -f docker/docker-compose.dev.yml down
+docker compose -f docker/docker-compose.dev.yml down
 
 # 停止正式環境
-docker-compose -f docker/docker-compose.production.yml down
+docker compose -f docker/docker-compose.production.yml down
 ```
 
 ### 查看日誌
 
 ```bash
 # 開發環境
-docker-compose -f docker/docker-compose.dev.yml logs -f
+docker compose -f docker/docker-compose.dev.yml logs -f
 
 # 正式環境
-docker-compose -f docker/docker-compose.production.yml logs -f
+docker compose -f docker/docker-compose.production.yml logs -f
 ```
 
 ---

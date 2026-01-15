@@ -105,10 +105,10 @@ echo ""
 
 # 啟動 Docker Compose
 echo -e "${BLUE}🚀 啟動 Docker 服務...${NC}"
-echo -e "${YELLOW}執行指令: docker-compose -f $COMPOSE_FILE --env-file docker/.env up -d --build${NC}"
+echo -e "${YELLOW}執行指令: docker compose -f $COMPOSE_FILE --env-file docker/.env up -d --build${NC}"
 echo ""
 
-docker-compose -f "$COMPOSE_FILE" --env-file docker/.env up -d --build
+docker compose -f "$COMPOSE_FILE" --env-file docker/.env up -d --build
 
 echo ""
 echo -e "${GREEN}========================================${NC}"
@@ -118,11 +118,11 @@ echo ""
 
 # 顯示服務狀態
 echo -e "${BLUE}📋 服務狀態：${NC}"
-docker-compose -f "$COMPOSE_FILE" --env-file docker/.env ps
+docker compose -f "$COMPOSE_FILE" --env-file docker/.env ps
 
 echo ""
 echo -e "${BLUE}💡 常用指令：${NC}"
-echo -e "  查看日誌: ${YELLOW}docker-compose -f $COMPOSE_FILE logs -f${NC}"
-echo -e "  停止服務: ${YELLOW}docker-compose -f $COMPOSE_FILE down${NC}"
+echo -e "  查看日誌: ${YELLOW}docker compose -f $COMPOSE_FILE logs -f${NC}"
+echo -e "  停止服務: ${YELLOW}docker compose -f $COMPOSE_FILE down${NC}"
 echo -e "  重啟服務: ${YELLOW}./scripts/deploy.sh $ENV${NC}"
 echo ""

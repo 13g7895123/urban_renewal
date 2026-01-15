@@ -94,7 +94,7 @@ backend:
 ./scripts/deploy.sh production
 
 # 日常重啟（程式碼已通過 git pull 更新）
-docker-compose -f docker/docker-compose.production.yml restart backend
+docker compose -f docker/docker-compose.production.yml restart backend
 ```
 
 ### **開發流程**

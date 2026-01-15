@@ -39,7 +39,7 @@ fi
 
 # 停止服務
 echo -e "${BLUE}🛑 停止 Docker 服務...${NC}"
-docker-compose -f "$COMPOSE_FILE" down
+docker compose -f "$COMPOSE_FILE" down
 
 echo ""
 echo -e "${GREEN}========================================${NC}"
