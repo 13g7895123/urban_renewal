@@ -103,6 +103,29 @@ fi
 echo -e "${GREEN}✓ 找到 Docker Compose 檔案: $COMPOSE_FILE${NC}"
 echo ""
 
+# 檢查並清理舊容器
+echo -e "${BLUE}🔍 檢查舊容器...${NC}"
+EXISTING_CONTAINERS=$(docker compose -f "$COMPOSE_FILE" ps -aq 2>/dev/null)
+
+if [ -n "$EXISTING_CONTAINERS" ]; then
+    echo -e "${YELLOW}⚠️  發現舊容器，正在清理...${NC}"
+    
+    # 停止並移除舊容器
+    docker compose -f "$COMPOSE_FILE" down 2>/dev/null || true
+    
+    # 額外檢查是否有殘留的容器（使用相同名稱）
+    ORPHAN_CONTAINERS=$(docker ps -aq --filter "name=urban_renewal_.*_${ENV}" 2>/dev/null)
+    if [ -n "$ORPHAN_CONTAINERS" ]; then
+        echo -e "${YELLOW}⚠️  發現殘留容器，正在強制移除...${NC}"
+        docker rm -f $ORPHAN_CONTAINERS 2>/dev/null || true
+    fi
+    
+    echo -e "${GREEN}✓ 舊容器已清理${NC}"
+else
+    echo -e "${GREEN}✓ 無舊容器${NC}"
+fi
+echo ""
+
 # 啟動 Docker Compose
 echo -e "${BLUE}🚀 啟動 Docker 服務...${NC}"
 echo -e "${YELLOW}執行指令: docker compose -f $COMPOSE_FILE --env-file docker/.env up -d --build${NC}"
