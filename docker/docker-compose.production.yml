@@ -16,7 +16,7 @@ services:
       - "${FRONTEND_PORT}:80" # 統一入口：前端和後端都通過這個端口
     volumes:
       - ./nginx-unified.conf:/etc/nginx/nginx.conf:ro
-      - ../backend:/var/www/html/backend:ro
+      - ../backend:/var/www/html:ro
     depends_on:
       - frontend
       - backend-php
