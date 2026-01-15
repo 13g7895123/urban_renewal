@@ -161,6 +161,36 @@ echo -e "${GREEN}  ✓ 啟動完成！${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
 
+# 等待後端容器完全啟動
+echo -e "${BLUE}⏳ 等待後端容器啟動...${NC}"
+sleep 5
+
+# 執行資料庫遷移
+echo -e "${BLUE}🔄 執行資料庫遷移...${NC}"
+BACKEND_CONTAINER="urban_renewal_backend_${ENV}"
+
+# 檢查容器是否存在且正在運行
+if docker ps --format '{{.Names}}' | grep -q "^${BACKEND_CONTAINER}$"; then
+    echo -e "${YELLOW}   執行指令: docker exec ${BACKEND_CONTAINER} php spark migrate --all${NC}"
+    
+    # 執行 migrate
+    if docker exec "$BACKEND_CONTAINER" php spark migrate --all 2>&1 | tee /tmp/migrate_output.log; then
+        echo -e "${GREEN}✓ 資料庫遷移完成${NC}"
+    else
+        # 檢查是否是 "沒有新的遷移" 的情況
+        if grep -q "Nothing to migrate" /tmp/migrate_output.log 2>/dev/null; then
+            echo -e "${GREEN}✓ 資料庫已是最新版本${NC}"
+        else
+            echo -e "${YELLOW}⚠️  資料庫遷移有警告，請檢查日誌${NC}"
+        fi
+    fi
+    rm -f /tmp/migrate_output.log 2>/dev/null || true
+else
+    echo -e "${RED}⚠️  找不到後端容器: ${BACKEND_CONTAINER}${NC}"
+    echo -e "${YELLOW}   請手動執行: docker exec ${BACKEND_CONTAINER} php spark migrate --all${NC}"
+fi
+echo ""
+
 # 顯示服務狀態
 echo -e "${BLUE}📋 服務狀態：${NC}"
 docker compose -f "$COMPOSE_FILE" --env-file docker/.env ps
@@ -170,4 +200,5 @@ echo -e "${BLUE}💡 常用指令：${NC}"
 echo -e "  查看日誌: ${YELLOW}docker compose -f $COMPOSE_FILE logs -f${NC}"
 echo -e "  停止服務: ${YELLOW}docker compose -f $COMPOSE_FILE down${NC}"
 echo -e "  重啟服務: ${YELLOW}./scripts/deploy.sh $ENV${NC}"
+echo -e "  執行遷移: ${YELLOW}docker exec ${BACKEND_CONTAINER} php spark migrate --all${NC}"
 echo ""
