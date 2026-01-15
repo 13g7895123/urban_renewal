@@ -39,7 +39,7 @@
 
     <div class="flex flex-1 overflow-hidden">
       <!-- Sidebar -->
-      <aside class="w-64 bg-gray-800 text-white flex-shrink-0 overflow-y-auto">
+      <aside v-if="showSidebar" class="w-64 bg-gray-800 text-white flex-shrink-0 overflow-y-auto">
         <div class="p-4">
           <div class="flex items-center space-x-3 mb-8">
             <div class="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center">
@@ -86,6 +86,16 @@
 <script setup>
 const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute()
+
+// 判斷是否顯示側邊欄
+const showSidebar = computed(() => {
+  // 如果在商城頁面且未登入，隱藏側邊欄
+  if (route.path === '/pages/shopping' && !authStore.user) {
+    return false
+  }
+  return true
+})
 
 // Watch for user state changes - redirect if user becomes null AND current route is protected
 watchEffect(() => {

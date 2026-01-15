@@ -153,7 +153,7 @@
       </div>
 
       <!-- Cart Preview Modal -->
-      <UModal v-model="showCartPreview">
+      <UModal v-model="showCartPreview" :ui="{ overlay: { background: 'bg-black/0 backdrop-blur-none' } }">
         <UCard>
           <template #header>
             <div class="flex items-center justify-between">
