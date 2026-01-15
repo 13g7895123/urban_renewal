@@ -105,25 +105,47 @@ echo ""
 
 # 檢查並清理舊容器
 echo -e "${BLUE}🔍 檢查舊容器...${NC}"
-EXISTING_CONTAINERS=$(docker compose -f "$COMPOSE_FILE" ps -aq 2>/dev/null)
+
+# 根據環境設定容器名稱模式
+if [ "$ENV" = "production" ]; then
+    CONTAINER_PATTERN="urban_renewal_.*_prod"
+else
+    CONTAINER_PATTERN="urban_renewal_.*_dev"
+fi
+
+# 檢查是否存在相關容器（包含已停止的）
+EXISTING_CONTAINERS=$(docker ps -aq --filter "name=${CONTAINER_PATTERN}" 2>/dev/null)
 
 if [ -n "$EXISTING_CONTAINERS" ]; then
     echo -e "${YELLOW}⚠️  發現舊容器，正在清理...${NC}"
     
-    # 停止並移除舊容器
-    docker compose -f "$COMPOSE_FILE" down 2>/dev/null || true
+    # 顯示要清理的容器
+    echo -e "${YELLOW}   容器列表:${NC}"
+    docker ps -a --filter "name=${CONTAINER_PATTERN}" --format "   - {{.Names}} ({{.Status}})" 2>/dev/null || true
     
-    # 額外檢查是否有殘留的容器（使用相同名稱）
-    ORPHAN_CONTAINERS=$(docker ps -aq --filter "name=urban_renewal_.*_${ENV}" 2>/dev/null)
-    if [ -n "$ORPHAN_CONTAINERS" ]; then
-        echo -e "${YELLOW}⚠️  發現殘留容器，正在強制移除...${NC}"
-        docker rm -f $ORPHAN_CONTAINERS 2>/dev/null || true
+    # 停止並移除所有相關容器
+    echo -e "${YELLOW}   正在停止並移除...${NC}"
+    docker rm -f $EXISTING_CONTAINERS 2>/dev/null || true
+    
+    # 再次檢查是否清理乾淨
+    REMAINING=$(docker ps -aq --filter "name=${CONTAINER_PATTERN}" 2>/dev/null)
+    if [ -n "$REMAINING" ]; then
+        echo -e "${RED}⚠️  部分容器清理失敗，嘗試強制清理...${NC}"
+        docker rm -f $REMAINING 2>/dev/null || true
     fi
     
     echo -e "${GREEN}✓ 舊容器已清理${NC}"
 else
     echo -e "${GREEN}✓ 無舊容器${NC}"
 fi
+
+# 清理舊的網路（如果存在）
+OLD_NETWORK=$(docker network ls --filter "name=docker_urban_renewal_network" -q 2>/dev/null)
+if [ -n "$OLD_NETWORK" ]; then
+    echo -e "${YELLOW}⚠️  發現舊網路，正在清理...${NC}"
+    docker network rm docker_urban_renewal_network 2>/dev/null || true
+fi
+
 echo ""
 
 # 啟動 Docker Compose
