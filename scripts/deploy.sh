@@ -203,11 +203,11 @@ sleep 5
 
 # 執行資料庫遷移
 echo -e "${BLUE}🔄 執行資料庫遷移...${NC}"
-# 後端容器名稱已改為 backend-php
+# 後端容器名稱：production 使用 backend-php，dev 使用 backend
 if [ "$ENV" = "production" ]; then
     BACKEND_CONTAINER="urban_renewal_backend_php_prod"
 else
-    BACKEND_CONTAINER="urban_renewal_backend_php_dev"
+    BACKEND_CONTAINER="urban_renewal_backend_dev"
 fi
 
 # 檢查容器是否存在且正在運行

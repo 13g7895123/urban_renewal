@@ -35,6 +35,7 @@ class Cors extends BaseConfig
          *   - ['https://www.example.com']
          */
         'allowedOrigins' => [
+            'https://urban-renewal.mercylife.cc', // Production domain
             'https://urban.l',         // Local domain with SSL
             'http://localhost:4357',   // Local npm dev server (start-local-npm.sh)
             'http://localhost:9128',   // Frontend Docker container
