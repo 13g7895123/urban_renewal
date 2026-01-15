@@ -5,7 +5,7 @@
 # 前端使用 npm run dev 在本地執行
 #
 # 使用方式：
-#   啟動：./develop.sh dev
+#   啟動：./scripts/deploy.sh dev
 #   或使用：docker-compose -f docker/docker-compose.dev.yml --env-file docker/.env up -d
 
 services:

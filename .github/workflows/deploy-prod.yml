@@ -23,5 +23,5 @@ jobs:
             # Pull latest code
             git pull origin master
             
-            # Rebuild and Restart services using new develop.sh
-            ./develop.sh production
+            # Rebuild and Restart services using scripts/deploy.sh
+            ./scripts/deploy.sh production
