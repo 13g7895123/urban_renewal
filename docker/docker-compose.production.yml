@@ -4,14 +4,13 @@
 # 包含完整的前後端部署：Frontend + Backend + Database + phpMyAdmin + Cron
 #
 # 使用方式：
-#   啟動：./start-prod.sh
-#   停止：./stop-prod.sh
-#   或使用：docker-compose -f docker-compose.prod.yml --env-file .env up -d
+#   啟動：./develop.sh production
+#   或使用：docker-compose -f docker/docker-compose.production.yml --env-file docker/.env up -d
 
 services:
   frontend:
     build:
-      context: ./frontend
+      context: ../frontend
       dockerfile: Dockerfile
     container_name: urban_renewal_frontend_prod
     ports:
@@ -33,7 +32,7 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: ../backend
       dockerfile: Dockerfile
     container_name: urban_renewal_backend_prod
     ports:
@@ -64,7 +63,7 @@ services:
     ports:
       - "${DB_PORT}:3306"
     volumes:
-      - ./mariadb_prod_data:/var/lib/mysql
+      - ../mariadb_prod_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       timeout: 10s
@@ -94,11 +93,11 @@ services:
 
   cron:
     build:
-      context: ./cron
+      context: ../cron
       dockerfile: Dockerfile
     container_name: urban_renewal_cron_prod
     volumes:
-      - ./backend:/var/www/html/backend
+      - ../backend:/var/www/html/backend
       - cron_logs:/var/log/cron
     depends_on:
       - backend
