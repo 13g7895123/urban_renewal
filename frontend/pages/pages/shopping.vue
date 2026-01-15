@@ -303,6 +303,23 @@ const toggleCartPreview = () => {
 }
 
 const goToCheckout = () => {
+  const authStore = useAuthStore()
+  if (!authStore.isLoggedIn) {
+    Swal.fire({
+      icon: 'info',
+      title: '請先登入',
+      text: '結帳前請先登入您的帳號',
+      showCancelButton: true,
+      confirmButtonText: '前往登入',
+      cancelButtonText: '繼續看看',
+      confirmButtonColor: '#22c55e'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        router.push('/login?redirect=/checkout')
+      }
+    })
+    return
+  }
   router.push('/checkout')
 }
 </script>

@@ -72,17 +72,25 @@ const handleLogin = async () => {
     // 使用 nextTick 確保狀態更新完成後再導航
     await nextTick()
 
-    // Redirect based on user role
-    const userRole = authStore.user?.role
-    if (userRole === 'admin') {
-      // Admin goes to urban renewal management
-      await navigateTo('/tables/urban-renewal')
-    } else if (userRole === 'chairman' || userRole === 'member') {
-      // Chairman and members go to meeting list
-      await navigateTo('/tables/meeting')
+    // Redirect logic: Priority to redirect query param, then fallback to role-based
+    const route = useRoute()
+    const redirectPath = route.query.redirect
+
+    if (redirectPath) {
+      await navigateTo(redirectPath)
     } else {
-      // Default to home page
-      await navigateTo('/')
+      // Redirect based on user role
+      const userRole = authStore.user?.role
+      if (userRole === 'admin') {
+        // Admin goes to urban renewal management
+        await navigateTo('/tables/urban-renewal')
+      } else if (userRole === 'chairman' || userRole === 'member') {
+        // Chairman and members go to meeting list
+        await navigateTo('/tables/meeting')
+      } else {
+        // Default to home page
+        await navigateTo('/')
+      }
     }
   } catch (error) {
     console.error('Login error:', error)

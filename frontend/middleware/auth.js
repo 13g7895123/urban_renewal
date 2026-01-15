@@ -25,6 +25,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // 檢查是否已登入
   if (!authStore.isLoggedIn) {
     console.log('[Auth Middleware] User not authenticated, redirecting to login')
-    return navigateTo('/login')
+    return navigateTo(`/login?redirect=${to.fullPath}`)
   }
 })

@@ -9,18 +9,31 @@
       </h1>
 
       <div class="flex-1 flex justify-end items-center space-x-4">
-        <span class="text-white text-sm">{{ userName }}</span>
-        
-        <UButton
-          variant="ghost"
-          color="white"
-          size="sm"
-          class="text-white hover:bg-green-600"
-          @click="handleLogout"
-        >
-          <Icon name="heroicons:arrow-right-on-rectangle" class="w-5 h-5 mr-2" />
-          登出
-        </UButton>
+        <template v-if="authStore.user">
+          <span class="text-white text-sm">{{ userName }}</span>
+          <UButton
+            variant="ghost"
+            color="white"
+            size="sm"
+            class="text-white hover:bg-green-600"
+            @click="handleLogout"
+          >
+            <Icon name="heroicons:arrow-right-on-rectangle" class="w-5 h-5 mr-2" />
+            登出
+          </UButton>
+        </template>
+        <template v-else>
+          <UButton
+            to="/login"
+            variant="solid"
+            color="white"
+            size="sm"
+            class="text-green-700 hover:bg-gray-100"
+          >
+            <Icon name="heroicons:user" class="w-5 h-5 mr-2" />
+            登入 / 註冊
+          </UButton>
+        </template>
       </div>
     </header>
 
@@ -32,9 +45,13 @@
             <div class="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center">
               <Icon name="heroicons:user" class="w-8 h-8 text-white" />
             </div>
-            <div>
+            <div v-if="authStore.user">
               <div class="text-white font-medium">{{ userName }}</div>
               <div class="text-gray-400 text-sm">{{ roleLabel }}</div>
+            </div>
+            <div v-else>
+              <div class="text-white font-medium">訪客</div>
+              <div class="text-gray-400 text-sm">尚未登入</div>
             </div>
           </div>
           
@@ -70,10 +87,13 @@
 const authStore = useAuthStore()
 const router = useRouter()
 
-// Watch for user state changes - redirect if user becomes null
+// Watch for user state changes - redirect if user becomes null AND current route is protected
 watchEffect(() => {
-  if (process.client && !authStore.user && !authStore.isLoading) {
-    console.warn('[Main Layout] User state is null, redirecting to login')
+  const route = useRoute()
+  const isProtectedRoute = route.meta.middleware === 'auth' || (Array.isArray(route.meta.middleware) && route.meta.middleware.includes('auth'))
+  
+  if (process.client && !authStore.user && !authStore.isLoading && isProtectedRoute) {
+    console.warn('[Main Layout] User state is null on protected route, redirecting to login')
     navigateTo('/login')
   }
 })
@@ -138,7 +158,8 @@ const menuItems = [
     path: '/pages/shopping',
     icon: 'heroicons:shopping-bag',
     label: '商城',
-    roles: ['admin', 'chairman', 'member']
+    roles: [],
+    isPublic: true
   },
   {
     path: '/tables/order',
@@ -170,7 +191,11 @@ const menuItems = [
 // Filter menu items based on user role and custom checks
 const visibleMenuItems = computed(() => {
   const currentUser = authStore.user
-  if (!currentUser) return []
+  
+  // 如果沒有登入，只顯示標記為 public 的項目（或沒有 role 限制的項目）
+  if (!currentUser) {
+    return menuItems.filter(item => !item.roles || item.roles.length === 0 || item.isPublic)
+  }
 
   return menuItems.filter(item => {
     // 如果有自訂檢查函數，優先使用
