@@ -127,7 +127,7 @@ services:
       - ../backend:/var/www/html/backend
       - cron_logs:/var/log/cron
     depends_on:
-      - backend
+      - backend-php
       - mariadb
     restart: unless-stopped
     networks:
