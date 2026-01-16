@@ -19,10 +19,17 @@ class User
     private bool $isCompanyManager = false;
     private ?string $displayName = null;
     private ?string $phone = null;
-    
+
     private ?\DateTime $createdAt = null;
     private ?\DateTime $updatedAt = null;
     private ?\DateTime $lastLoginAt = null;
+
+    // 審核與實質性帳號相關
+    private ?string $companyInviteCode = null;
+    private string $approvalStatus = 'pending';
+    private ?\DateTime $approvedAt = null;
+    private ?int $approvedBy = null;
+    private bool $isSubstantive = false;
 
     // 關聯資料
     private ?string $urbanRenewalName = null;
@@ -81,7 +88,7 @@ class User
     }
 
     // === Getters ===
-    
+
     public function getId(): ?int
     {
         return $this->id;
@@ -140,6 +147,31 @@ class User
     public function getCompanyName(): ?string
     {
         return $this->companyName;
+    }
+
+    public function getCompanyInviteCode(): ?string
+    {
+        return $this->companyInviteCode;
+    }
+
+    public function getApprovalStatus(): string
+    {
+        return $this->approvalStatus;
+    }
+
+    public function getApprovedAt(): ?\DateTime
+    {
+        return $this->approvedAt;
+    }
+
+    public function getApprovedBy(): ?int
+    {
+        return $this->approvedBy;
+    }
+
+    public function isSubstantive(): bool
+    {
+        return $this->isSubstantive;
     }
 
     // === Setters ===
@@ -247,6 +279,40 @@ class User
         return $this;
     }
 
+    public function setCompanyInviteCode(?string $code): self
+    {
+        $this->companyInviteCode = $code;
+        return $this;
+    }
+
+    public function setApprovalStatus(string $status): self
+    {
+        $validStatuses = ['pending', 'approved', 'rejected'];
+        if (!in_array($status, $validStatuses)) {
+            throw new \InvalidArgumentException('無效的審核狀態');
+        }
+        $this->approvalStatus = $status;
+        return $this;
+    }
+
+    public function setApprovedAt(?\DateTime $date): self
+    {
+        $this->approvedAt = $date;
+        return $this;
+    }
+
+    public function setApprovedBy(?int $userId): self
+    {
+        $this->approvedBy = $userId;
+        return $this;
+    }
+
+    public function setIsSubstantive(bool $isSubstantive): self
+    {
+        $this->isSubstantive = $isSubstantive;
+        return $this;
+    }
+
     public function setLastLoginAt(?\DateTime $lastLoginAt): self
     {
         $this->lastLoginAt = $lastLoginAt;
@@ -276,6 +342,11 @@ class User
             'created_at' => $this->createdAt?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updatedAt?->format('Y-m-d H:i:s'),
             'last_login_at' => $this->lastLoginAt?->format('Y-m-d H:i:s'),
+            'company_invite_code' => $this->companyInviteCode,
+            'approval_status' => $this->approvalStatus,
+            'approved_at' => $this->approvedAt?->format('Y-m-d H:i:s'),
+            'approved_by' => $this->approvedBy,
+            'is_substantive' => $this->isSubstantive,
         ];
     }
 
@@ -285,9 +356,9 @@ class User
     public static function fromArray(array $data): self
     {
         $entity = new self($data['username']);
-        
+
         if (isset($data['id'])) $entity->setId((int)$data['id']);
-        
+
         $entity->setEmail($data['email'] ?? null);
         if (isset($data['role'])) $entity->setRole($data['role']);
         if (isset($data['urban_renewal_id'])) $entity->setUrbanRenewalId((int)$data['urban_renewal_id']);
@@ -295,17 +366,24 @@ class User
         if (isset($data['property_owner_id'])) $entity->setPropertyOwnerId((int)$data['property_owner_id']);
         if (isset($data['is_active'])) $entity->setIsActive((bool)$data['is_active']);
         if (isset($data['is_company_manager'])) $entity->setIsCompanyManager((bool)$data['is_company_manager']);
-        
+
         $entity->setDisplayName($data['display_name'] ?? null);
         $entity->setPhone($data['phone'] ?? null);
-        
+
         if (isset($data['urban_renewal_name'])) $entity->setUrbanRenewalName($data['urban_renewal_name']);
         if (isset($data['company_name'])) $entity->setCompanyName($data['company_name']);
-        
+
         if (isset($data['created_at'])) $entity->setCreatedAt(new \DateTime($data['created_at']));
         if (isset($data['updated_at'])) $entity->setUpdatedAt(new \DateTime($data['updated_at']));
         if (isset($data['last_login_at'])) $entity->setLastLoginAt(new \DateTime($data['last_login_at']));
-        
+
+        // 審核欄位
+        if (isset($data['company_invite_code'])) $entity->setCompanyInviteCode($data['company_invite_code']);
+        if (isset($data['approval_status'])) $entity->setApprovalStatus($data['approval_status']);
+        if (isset($data['approved_at'])) $entity->setApprovedAt(new \DateTime($data['approved_at']));
+        if (isset($data['approved_by'])) $entity->setApprovedBy((int)$data['approved_by']);
+        if (isset($data['is_substantive'])) $entity->setIsSubstantive((bool)$data['is_substantive']);
+
         return $entity;
     }
 }

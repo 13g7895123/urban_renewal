@@ -18,7 +18,9 @@ class CompanyModel extends Model
         'tax_id',
         'company_phone',
         'max_renewal_count',
-        'max_issue_count'
+        'max_issue_count',
+        'invite_code',
+        'invite_code_active'
     ];
 
     protected $useTimestamps = true;
@@ -72,11 +74,11 @@ class CompanyModel extends Model
         // During transition: find the company that manages this urban_renewal
         $urbanRenewalModel = new \App\Models\UrbanRenewalModel();
         $urbanRenewal = $urbanRenewalModel->find($urbanRenewalId);
-        
+
         if (!$urbanRenewal || !$urbanRenewal['company_id']) {
             return null;
         }
-        
+
         return $this->find($urbanRenewal['company_id']);
     }
 
@@ -92,17 +94,17 @@ class CompanyModel extends Model
         if (!$company) {
             return null;
         }
-        
+
         // Get first urban renewal managed by this company
         $urbanRenewalModel = new \App\Models\UrbanRenewalModel();
         $urbanRenewal = $urbanRenewalModel->where('company_id', $id)->first();
-        
+
         if ($urbanRenewal) {
             $company['urban_renewal_name'] = $urbanRenewal['name'];
             $company['chairman_name'] = $urbanRenewal['chairman_name'];
             $company['chairman_phone'] = $urbanRenewal['chairman_phone'];
         }
-        
+
         return $company;
     }
 
@@ -135,8 +137,8 @@ class CompanyModel extends Model
     {
         $urbanRenewalModel = new \App\Models\UrbanRenewalModel();
         return $urbanRenewalModel->where('company_id', $companyId)
-                                  ->orderBy('created_at', 'DESC')
-                                  ->paginate($perPage, 'default', $page);
+            ->orderBy('created_at', 'DESC')
+            ->paginate($perPage, 'default', $page);
     }
 
     /**

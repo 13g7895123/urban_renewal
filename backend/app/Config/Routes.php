@@ -55,6 +55,17 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         $routes->get('me', 'CompanyController::me');                  // GET /api/companies/me
         $routes->put('me', 'CompanyController::update');              // PUT /api/companies/me
         $routes->get('me/renewals', 'CompanyController::getRenewals'); // GET /api/companies/me/renewals
+        $routes->get('me/pending-users', 'CompanyController::getPendingUsers'); // GET /api/companies/me/pending-users
+        $routes->post('me/approve-user/(:num)', 'CompanyController::approveUser/$1'); // POST /api/companies/me/approve-user/{id}
+        $routes->get('me/invite-code', 'CompanyController::getInviteCode'); // GET /api/companies/me/invite-code
+        $routes->post('me/generate-invite-code', 'CompanyController::generateInviteCode'); // POST /api/companies/me/generate-invite-code
+
+        // Members assignment to renewals
+        $routes->get('me/renewals/(:num)/members', 'CompanyController::getRenewalMembers/$1'); // GET /api/companies/me/renewals/{id}/members
+        $routes->post('me/renewals/(:num)/assign', 'CompanyController::assignMemberToRenewal/$1'); // POST /api/companies/me/renewals/{id}/assign
+        $routes->delete('me/renewals/(:num)/members/(:num)', 'CompanyController::unassignMemberFromRenewal/$1/$2'); // DELETE /api/companies/me/renewals/{id}/members/{userId}
+        $routes->get('me/available-members', 'CompanyController::getAvailableMembers'); // GET /api/companies/me/available-members
+
         $routes->get('(:num)/managers', 'CompanyController::getManagers/$1'); // GET /api/companies/{id}/managers
         $routes->get('(:num)/users', 'CompanyController::getUsers/$1');       // GET /api/companies/{id}/users
 

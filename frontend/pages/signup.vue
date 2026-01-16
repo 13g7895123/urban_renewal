@@ -119,7 +119,8 @@
             <UInput v-model="formData.lineId" placeholder="Line ID (選填)" />
           </div>
           <div class="form-field">
-            <UInput v-model="formData.companyName" placeholder="公司名稱" />
+            <UInput v-model="formData.companyInviteCode" placeholder="公司邀請碼 (必填)" />
+            <p class="text-xs text-gray-500 mt-1 pl-1">請向您的公司管理者索取邀請編號</p>
           </div>
           <div class="form-field">
             <UInput v-model="formData.jobTitle" placeholder="職稱 (選填)" />
@@ -201,11 +202,14 @@
       </div>
     </div>
 
-    <!-- Step 3: Completion -->
     <div v-if="currentStep === 3" class="completion-section text-center">
       <Icon name="heroicons:check-circle" class="w-16 h-16 text-green-500 mx-auto mb-4" />
-      <h3 class="text-2xl font-bold mb-4 text-gray-800">註冊完成！</h3>
-      <p class="text-gray-600 mb-6">您的帳號已成功建立</p>
+      <h3 class="text-2xl font-bold mb-4 text-gray-800">註冊申請已送出！</h3>
+      <p v-if="selectedAccountType === 'personal'" class="text-gray-600 mb-6">
+        您的帳號已成功建立，目前為「待審核」狀態。<br>
+        請聯繫您的公司管理者進行審核。內容通過後即可登入。
+      </p>
+      <p v-else class="text-gray-600 mb-6">您的企業帳號已成功建立</p>
       <UButton @click="$router.push('/login')" size="lg" class="login-btn">
         前往登入
       </UButton>
@@ -231,7 +235,7 @@ const formData = ref({
   email: '',
   phone: '',
   lineId: '',
-  companyName: '',
+  companyInviteCode: '',
   jobTitle: '',
   businessName: '',
   taxId: '',
@@ -271,7 +275,8 @@ const handleRegister = async () => {
       phone: formData.value.phone,
       lineId: formData.value.lineId,
       jobTitle: formData.value.jobTitle,
-      accountType: selectedAccountType.value
+      accountType: selectedAccountType.value,
+      companyInviteCode: formData.value.companyInviteCode
     }
 
     // 如果是企業帳號，加入企業相關欄位
@@ -378,6 +383,14 @@ const validateForm = async () => {
   if (selectedAccountType.value === 'business') {
     if (!formData.value.businessName || !formData.value.taxId) {
       await showWarning('企業資料未完整', '請填寫企業相關資料')
+      return false
+    }
+  }
+
+  // Additional validation for personal accounts
+  if (selectedAccountType.value === 'personal') {
+    if (!formData.value.companyInviteCode) {
+      await showWarning('邀請碼未填寫', '請輸入公司提供的邀請編號')
       return false
     }
   }

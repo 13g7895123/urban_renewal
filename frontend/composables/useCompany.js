@@ -72,6 +72,71 @@ export const useCompany = () => {
     return await del(`/users/${userId}`)
   }
 
+  /**
+   * Get pending approval users
+   */
+  const getPendingUsers = async (params = {}) => {
+    return await get('/companies/me/pending-users', params)
+  }
+
+  /**
+   * Approve or reject a user application
+   * @param {number} userId 
+   * @param {string} action 'approve' or 'reject'
+   */
+  const approveUser = async (userId, action = 'approve') => {
+    return await post(`/companies/me/approve-user/${userId}`, { action })
+  }
+
+  /**
+   * Get company invite code
+   */
+  const getInviteCode = async () => {
+    return await get('/companies/me/invite-code')
+  }
+
+  /**
+   * Generate or reset company invite code
+   */
+  const generateInviteCode = async () => {
+    return await post('/companies/me/generate-invite-code')
+  }
+
+  /**
+   * Get urban renewals belonging to the company
+   */
+  const getCompanyRenewals = async (params = {}) => {
+    return await get('/companies/me/renewals', params)
+  }
+
+  /**
+   * Get members assigned to a specific renewal
+   */
+  const getRenewalMembers = async (renewalId) => {
+    return await get(`/companies/me/renewals/${renewalId}/members`)
+  }
+
+  /**
+   * Assign a member to a renewal
+   */
+  const assignMemberToRenewal = async (renewalId, userId, permissions = []) => {
+    return await post(`/companies/me/renewals/${renewalId}/assign`, { user_id: userId, permissions })
+  }
+
+  /**
+   * Unassign a member from a renewal
+   */
+  const unassignMemberFromRenewal = async (renewalId, userId) => {
+    return await del(`/companies/me/renewals/${renewalId}/members/${userId}`)
+  }
+
+  /**
+   * Get available members (approved company members)
+   */
+  const getAvailableMembers = async () => {
+    return await get('/companies/me/available-members')
+  }
+
   return {
     getCompanyProfile,
     updateCompanyProfile,
@@ -81,6 +146,15 @@ export const useCompany = () => {
     setAsCompanyUser,
     setAsCompanyManager,
     createUser,
-    deleteUser
+    deleteUser,
+    getPendingUsers,
+    approveUser,
+    getInviteCode,
+    generateInviteCode,
+    getCompanyRenewals,
+    getRenewalMembers,
+    assignMemberToRenewal,
+    unassignMemberFromRenewal,
+    getAvailableMembers
   }
 }

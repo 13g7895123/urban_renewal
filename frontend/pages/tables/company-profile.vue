@@ -1,187 +1,280 @@
 <template>
   <NuxtLayout name="main">
-    <template #title>企業基本資料</template>
+    <template #title>企業與成員管理</template>
     
-    <div class="p-8">
-      <!-- Header with green background -->
-      <div class="bg-green-500 text-white p-4 rounded-t-lg">
-        <h2 class="text-xl font-semibold">企業基本資料</h2>
+    <div class="p-6 max-w-7xl mx-auto">
+      <div class="mb-6 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800">企業與成員管理</h1>
+        <div class="flex gap-3">
+          <UButton
+            v-if="currentTab === 'members'"
+            color="green"
+            @click="addNewManager"
+          >
+            <Icon name="heroicons:plus" class="w-5 h-5 mr-1" />
+            新增核心成員
+          </UButton>
+          <UButton
+            v-if="currentTab === 'approval'"
+            color="blue"
+            variant="outline"
+            @click="fetchPendingUsers"
+            :loading="loadingPending"
+          >
+            <Icon name="heroicons:arrow-path" class="w-4 h-4 mr-1" />
+            重新整理列表
+          </UButton>
+        </div>
+      </div>
+
+      <!-- Tabs Navigation -->
+      <div class="flex border-b border-gray-200 mb-6 bg-white rounded-t-lg px-4 pt-4 shadow-sm">
+        <button 
+          v-for="tab in tabs" 
+          :key="tab.id"
+          @click="currentTab = tab.id"
+          class="px-6 py-3 text-sm font-medium transition-colors relative"
+          :class="currentTab === tab.id ? 'text-green-600' : 'text-gray-500 hover:text-gray-700'"
+        >
+          <div class="flex items-center gap-2">
+            <Icon :name="tab.icon" class="w-5 h-5" />
+            {{ tab.label }}
+          </div>
+          <div v-if="currentTab === tab.id" class="absolute bottom-0 left-0 right-0 h-0.5 bg-green-500"></div>
+          <span v-if="tab.id === 'approval' && pendingUsers.length > 0" class="absolute -top-1 -right-1 flex h-4 w-4">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-4 w-4 bg-red-500 text-[10px] text-white items-center justify-center font-bold">
+              {{ pendingUsers.length }}
+            </span>
+          </span>
+        </button>
       </div>
       
-      <!-- Form Content -->
-      <UCard class="rounded-t-none">
-        <form @submit.prevent="saveCompanyProfile" class="space-y-6">
-          <!-- Company Name and ID -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">企業名稱</label>
-              <UInput 
-                v-model="form.companyName" 
-                placeholder="中華開發建築經理股份有限公司"
-                class="w-full"
-              />
+      <!-- Tab Contents -->
+      <div class="bg-white rounded-b-lg shadow-lg border border-gray-200 border-t-0 p-6 min-h-[500px]">
+        
+        <!-- Tab 1: 企業資料 -->
+        <div v-if="currentTab === 'profile'" class="max-w-4xl mx-auto">
+          <form @submit.prevent="saveCompanyProfile" class="space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <UFormGroup label="企業名稱" required>
+                <UInput v-model="form.companyName" placeholder="請輸入企業名稱" size="lg" />
+              </UFormGroup>
+              
+              <UFormGroup label="統一編號">
+                <UInput v-model="form.taxId" placeholder="請輸入統一編號" size="lg" />
+              </UFormGroup>
             </div>
             
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">統一編號</label>
-              <UInput 
-                v-model="form.taxId" 
-                placeholder="94070886"
-                class="w-full"
-              />
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <UFormGroup label="企業電話">
+                <UInput v-model="form.companyPhone" placeholder="02-xxxx-xxxx" size="lg" />
+              </UFormGroup>
+              
+              <UFormGroup label="最大案場配額">
+                <UInput v-model="form.maxRenewalCount" type="number" size="lg" />
+              </UFormGroup>
             </div>
-          </div>
-          
-          <!-- Company Phone and Max Updates -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">企業電話</label>
-              <UInput 
-                v-model="form.companyPhone" 
-                placeholder="02-6604-3889"
-                class="w-full"
-              />
+
+            <div class="flex justify-end pt-6 border-t border-gray-100">
+              <UButton 
+                type="submit"
+                color="green" 
+                size="xl"
+                class="px-8 shadow-md"
+                :loading="loading"
+              >
+                儲存設定
+              </UButton>
             </div>
-            
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">最大更新會數量</label>
-              <UInput 
-                v-model="form.maxRenewalCount" 
-                type="number"
-                placeholder="1"
-                class="w-full"
-              />
+          </form>
+        </div>
+
+        <!-- Tab 2: 成員管理 -->
+        <div v-if="currentTab === 'members'" class="space-y-8">
+          <section>
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-bold text-gray-700 flex items-center gap-2">
+                <Icon name="heroicons:shield-check" class="text-blue-500" />
+                企業核心管理者
+              </h3>
             </div>
-          </div>
-          
-          <!-- Max Vote Count -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">最大議題數量</label>
-              <UInput 
-                v-model="form.maxIssueCount" 
-                type="number"
-                placeholder="8"
-                class="w-full"
-              />
-            </div>
-          </div>
-          
-          <!-- New Manager Section -->
-          <div class="mt-8 flex items-end justify-end gap-4">
-            <UButton
-              color="primary"
-              size="sm"
-              variant="outline"
-              @click="reloadMembers"
-              :loading="loading"
-            >
-              <Icon name="heroicons:arrow-path" class="w-4 h-4 mr-1" />
-              重新載入
-            </UButton>
-            <UButton
-              color="green"
-              size="sm"
-              @click="addNewManager"
-            >
-              <Icon name="heroicons:plus" class="w-4 h-4 mr-1" />
-              新增使用者
-            </UButton>
-          </div>
-          
-          <!-- Managers Table -->
-          <div class="mt-6">
-            <h3 class="text-lg font-medium text-gray-700 mb-4">企業管理者</h3>
-            <div v-if="managers.length === 0" class="border rounded-lg p-8 text-center text-gray-500">
-              尚無企業管理者
-            </div>
-            <div v-else class="border rounded-lg overflow-hidden">
-              <table class="w-full">
-                <thead class="bg-gray-50">
-                  <tr>
-                    <th class="p-4 text-left text-gray-700 font-medium">使用者名稱</th>
-                    <th class="p-4 text-left text-gray-700 font-medium">姓名</th>
-                    <th class="p-4 text-right text-gray-700 font-medium">操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(manager, index) in managers" :key="manager.id" class="border-b">
-                    <td class="p-4 text-gray-700">{{ manager.username }}</td>
-                    <td class="p-4 text-gray-700">{{ manager.name }}</td>
-                    <td class="p-4 text-right space-x-2">
-                      <UButton
-                        color="blue"
-                        size="xs"
-                        @click="setAsUser(manager)"
-                      >
-                        設為使用者
-                      </UButton>
-                      <UButton
-                        color="red"
-                        size="xs"
-                        @click="deleteManager(index)"
-                      >
-                        刪除
-                      </UButton>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <UTable :columns="memberColumns" :rows="managers">
+              <template #name-data="{ row }">
+                <div class="font-medium text-gray-900">{{ row.name }}</div>
+                <div class="text-xs text-gray-500">@{{ row.username }}</div>
+              </template>
+              <template #actions-data="{ row }">
+                <div class="flex justify-end gap-2">
+                  <UButton size="xs" color="gray" variant="ghost" @click="setAsUser(row)">降級為一般用戶</UButton>
+                  <UButton size="xs" color="red" variant="ghost" @click="deleteManager(row.id)">刪除</UButton>
+                </div>
+              </template>
+            </UTable>
+          </section>
+
+          <section class="pt-8 border-t border-gray-100">
+            <h3 class="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2">
+              <Icon name="heroicons:users" class="text-green-500" />
+              已核准一般使用者
+            </h3>
+            <UTable :columns="memberColumns" :rows="users">
+              <template #name-data="{ row }">
+                <div class="font-medium text-gray-900">{{ row.name }}</div>
+                <div class="text-xs text-gray-500">@{{ row.username }}</div>
+              </template>
+              <template #actions-data="{ row }">
+                <div class="flex justify-end gap-2">
+                  <UButton size="xs" color="blue" variant="ghost" @click="setAsManager(row)">提升為管理者</UButton>
+                  <UButton size="xs" color="red" variant="ghost" @click="deleteUser(row.id)">刪除</UButton>
+                </div>
+              </template>
+            </UTable>
+          </section>
+        </div>
+
+        <!-- Tab 3: 帳號審核與邀請 -->
+        <div v-if="currentTab === 'approval'" class="space-y-10">
+          <!-- 邀請碼管理 -->
+          <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <h3 class="text-lg font-bold text-gray-800 mb-1">企業邀請編號</h3>
+                <p class="text-sm text-gray-600">將此編號提供給欲加入企業的個人，註冊時填入即可申請。</p>
+              </div>
+              <div class="flex items-center gap-4 bg-white p-2 rounded-lg border border-gray-200 shadow-inner">
+                <code class="text-2xl font-mono font-bold text-green-600 tracking-wider px-4">
+                  {{ inviteCodeData.code || '------' }}
+                </code>
+                <UButton
+                  color="gray"
+                  variant="ghost"
+                  @click="copyInviteCode"
+                  v-if="inviteCodeData.code"
+                  title="複製編號"
+                >
+                  <Icon name="heroicons:document-duplicate" class="w-5 h-5" />
+                </UButton>
+              </div>
+              <UButton 
+                color="blue" 
+                @click="handleGenerateInviteCode"
+                :loading="loadingInviteCode"
+              >
+                {{ inviteCodeData.code ? '重新產生編號' : '產生邀請編號' }}
+              </UButton>
             </div>
           </div>
 
-          <div class="mt-6">
-            <h3 class="text-lg font-medium text-gray-700 mb-4">企業使用者</h3>
-            <div v-if="users.length === 0" class="border rounded-lg p-8 text-center text-gray-500">
-              尚無企業使用者，請從企業管理者中點擊「設為使用者」來新增使用者
+          <!-- 待審核清單 -->
+          <div>
+            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <Icon name="heroicons:clock" class="text-orange-500" />
+              等待審核中的申請 ({{ pendingUsers.length }})
+            </h3>
+            
+            <div v-if="pendingUsers.length === 0" class="text-center py-20 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
+              <Icon name="heroicons:user-plus" class="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p class="text-gray-500">目前沒有待審核的申請</p>
             </div>
-            <div v-else class="border rounded-lg overflow-hidden">
-              <table class="w-full">
-                <thead class="bg-gray-50">
-                  <tr>
-                    <th class="p-4 text-left text-gray-700 font-medium">使用者名稱</th>
-                    <th class="p-4 text-left text-gray-700 font-medium">姓名</th>
-                    <th class="p-4 text-right text-gray-700 font-medium">操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(user, index) in users" :key="user.id" class="border-b">
-                    <td class="p-4 text-gray-700">{{ user.username }}</td>
-                    <td class="p-4 text-gray-700">{{ user.name }}</td>
-                    <td class="p-4 text-right space-x-2">
+
+            <UTable v-else :columns="pendingColumns" :rows="pendingUsers" class="border border-gray-200 rounded-xl overflow-hidden">
+              <template #actions-data="{ row }">
+                <div class="flex gap-2">
+                  <UButton
+                    size="sm"
+                    color="green"
+                    @click="handleApproval(row.id, 'approve')"
+                  >
+                    核准加入
+                  </UButton>
+                  <UButton
+                    size="sm"
+                    color="red"
+                    variant="soft"
+                    @click="handleApproval(row.id, 'reject')"
+                  >
+                    拒絕
+                  </UButton>
+                </div>
+              </template>
+            </UTable>
+          </div>
+        <!-- Tab 4: 案場指派管理 -->
+        <div v-if="currentTab === 'renewals'" class="space-y-6">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left: Renewal Projects List -->
+            <div class="lg:col-span-1 space-y-4">
+              <h3 class="font-bold text-gray-700 flex items-center gap-2">
+                <Icon name="heroicons:list-bullet" class="text-blue-500" />
+                案場列表
+              </h3>
+              <div class="space-y-2 max-h-[600px] overflow-y-auto pr-2">
+                <div 
+                  v-for="renewal in renewals" 
+                  :key="renewal.id"
+                  @click="selectRenewal(renewal)"
+                  class="p-4 rounded-xl border-2 transition-all cursor-pointer hover:shadow-md"
+                  :class="selectedRenewal?.id === renewal.id ? 'border-green-500 bg-green-50 shadow-sm' : 'border-gray-100 bg-white hover:border-gray-300'"
+                >
+                  <div class="font-bold text-gray-800">{{ renewal.name }}</div>
+                  <div class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                    <Icon name="heroicons:user-group" class="w-3 h-3" />
+                    指派人數: {{ renewal.member_count || 0 }}
+                  </div>
+                </div>
+                <div v-if="renewals.length === 0" class="text-center py-10 bg-gray-50 rounded-xl border border-dashed text-gray-400">
+                  尚無案場資料
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Assigned Members and Assignment Actions -->
+            <div class="lg:col-span-2 space-y-6">
+              <div v-if="selectedRenewal" class="bg-gray-50 rounded-2xl p-6 border border-gray-200">
+                <div class="flex justify-between items-center mb-6">
+                  <div>
+                    <h2 class="text-xl font-bold text-gray-900">{{ selectedRenewal.name }}</h2>
+                    <p class="text-sm text-gray-500">管理此案場的指派成員與權限</p>
+                  </div>
+                  <UButton color="green" @click="openAssignMemberModal">
+                    <Icon name="heroicons:user-plus" class="w-5 h-5 mr-1" />
+                    指派新成員
+                  </UButton>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                  <UTable :columns="assignmentColumns" :rows="renewalMembers">
+                    <template #name-data="{ row }">
+                      <div class="font-medium text-gray-900">{{ row.name }}</div>
+                      <div class="text-xs text-gray-500">@{{ row.username }}</div>
+                    </template>
+                    <template #actions-data="{ row }">
                       <UButton
-                        color="green"
                         size="xs"
-                        @click="setAsManager(user)"
-                      >
-                        設為管理者
-                      </UButton>
-                      <UButton
                         color="red"
-                        size="xs"
-                        @click="deleteUser(index)"
+                        variant="ghost"
+                        @click="handleUnassign(row.user_id)"
                       >
-                        刪除
+                        移除指派
                       </UButton>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                    </template>
+                  </UTable>
+                  <div v-if="renewalMembers.length === 0" class="text-center py-12 text-gray-500">
+                    目前此案場尚未指派任何工作人員
+                  </div>
+                </div>
+              </div>
+
+              <div v-else class="flex flex-col items-center justify-center py-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 text-gray-400">
+                <Icon name="heroicons:cursor-arrow-rays" class="w-16 h-16 mb-4 opacity-20" />
+                <p>請從左側選擇一個案場以進行管理</p>
+              </div>
             </div>
           </div>
-          
-          <!-- Save Button -->
-          <div class="flex justify-end pt-4">
-            <UButton 
-              type="submit"
-              color="green" 
-              size="lg"
-            >
-              儲存
-            </UButton>
-          </div>
-        </form>
-      </UCard>
+        </div>
+
+      </div>
     </div>
   </NuxtLayout>
 </template>
@@ -194,12 +287,37 @@ definePageMeta({
   middleware: ['auth', 'company-manager']
 })
 
-const { getCompanyProfile, updateCompanyProfile, getAllCompanyMembers, setAsCompanyUser, setAsCompanyManager, deleteUser: deleteUserApi } = useCompany()
+const { 
+  getCompanyProfile, 
+  updateCompanyProfile, 
+  getAllCompanyMembers, 
+  setAsCompanyUser, 
+  setAsCompanyManager, 
+  deleteUser: deleteUserApi,
+  getPendingUsers,
+  approveUser,
+  getInviteCode,
+  generateInviteCode,
+  getCompanyRenewals,
+  getRenewalMembers,
+  assignMemberToRenewal,
+  unassignMemberFromRenewal,
+  getAvailableMembers
+} = useCompany()
+
 const { $swal } = useNuxtApp()
 const { showSuccess, showError, showConfirm, showDeleteConfirm, showCustom } = useSweetAlert()
 const authStore = useAuthStore()
 
-// 從登入使用者取得企業 ID (用於成員管理)
+// Tab state
+const currentTab = ref('profile')
+const tabs = [
+  { id: 'profile', label: '企業資料', icon: 'heroicons:building-office' },
+  { id: 'members', label: '成員管理', icon: 'heroicons:user-group' },
+  { id: 'approval', label: '帳號審核與邀請', icon: 'heroicons:finger-print' },
+  { id: 'renewals', label: '案場指派管理', icon: 'heroicons:map-pin' }
+]
+
 const companyId = computed(() => authStore.companyId)
 const hasCompanyAccess = computed(() => authStore.user?.is_company_manager)
 
@@ -213,29 +331,52 @@ const form = ref({
 
 const managers = ref([])
 const users = ref([])
+const pendingUsers = ref([])
+const inviteCodeData = ref({ code: '', active: false })
 const loading = ref(false)
+const loadingPending = ref(false)
+const loadingInviteCode = ref(false)
+const renewals = ref([])
+const selectedRenewal = ref(null)
+const renewalMembers = ref([])
+const loadingRenewals = ref(false)
+
+const assignmentColumns = [
+  { key: 'name', label: '姓名' },
+  { key: 'email', label: '電子郵件' },
+  { key: 'actions', label: '' }
+]
+
+const memberColumns = [
+  { key: 'name', label: '使用者' },
+  { key: 'company', label: '案場' },
+  { key: 'actions', label: '' }
+]
+
+const pendingColumns = [
+  { key: 'username', label: '帳號' },
+  { key: 'full_name', label: '姓名' },
+  { key: 'phone', label: '電話' },
+  { key: 'created_at', label: '申請時間' },
+  { key: 'actions', label: '操作' }
+]
 
 // Load company profile and members
 const loadCompanyData = async () => {
-  // 檢查使用者是否有企業權限
   if (!hasCompanyAccess.value) {
     await showCustom({
       title: '無法存取',
       text: '您的帳號未關聯任何企業，無法使用此功能',
       icon: 'warning',
-      timer: null,
       showConfirmButton: true,
-      confirmButtonText: '關閉',
-      toast: false,
-      position: 'center'
+      confirmButtonText: '關閉'
     })
-    navigateTo('/dashboard')
+    navigateTo('/')
     return
   }
 
   loading.value = true
   try {
-    // Load company profile (使用新的 /companies/me API，不需要傳入 companyId)
     const profileResult = await getCompanyProfile()
     if (profileResult.success && profileResult.data?.data) {
       const data = profileResult.data.data
@@ -246,83 +387,126 @@ const loadCompanyData = async () => {
         maxRenewalCount: data.max_renewal_count || 1,
         maxIssueCount: data.max_issue_count || 8
       }
-    } else {
-      throw new Error(profileResult.error?.message || '載入企業資料失敗')
     }
 
-    // Load company members
-    await loadMembers()
+    await Promise.all([
+      loadMembers(),
+      fetchPendingUsers(),
+      fetchInviteCode(),
+      loadRenewals()
+    ])
   } catch (error) {
     console.error('Failed to load company data:', error)
-    await showError('錯誤', error.message || '載入企業資料失敗')
   } finally {
     loading.value = false
   }
 }
 
-// Load company members (managers and users)
+// Load company members
 const loadMembers = async () => {
   try {
     const membersResult = await getAllCompanyMembers(companyId.value, { per_page: 100 })
     if (membersResult.success && membersResult.data?.data) {
-      // API 返回格式: { users: [...], pager: {...} }
       const members = membersResult.data.data.users || []
 
-      // Separate managers and users based on is_company_manager field
-      // 確保正確處理 is_company_manager 的各種可能值 (可能是數字、字串或布林值)
-      managers.value = members.filter(m => {
-        const isManager = m.is_company_manager
-        // 明確檢查管理者的條件
-        return isManager == 1 || isManager === '1' || isManager === true || isManager === 'true'
-      }).map(m => ({
+      managers.value = members.filter(m => m.is_company_manager == 1).map(m => ({
         id: m.id,
         username: m.username,
         name: m.full_name || m.username,
-        company: m.urban_renewal_name || ''
+        company: m.urban_renewal_name || '未指派'
       }))
 
-      users.value = members.filter(m => {
-        const isManager = m.is_company_manager
-        // 明確檢查非管理者的條件 (包含 null, undefined, 0, '0', false 等)
-        return isManager == 0 || isManager === '0' || isManager === false || isManager === 'false' ||
-               isManager === null || isManager === undefined || isManager === ''
-      }).map(m => ({
+      users.value = members.filter(m => m.is_company_manager == 0).map(m => ({
         id: m.id,
         username: m.username,
         name: m.full_name || m.username,
-        company: m.urban_renewal_name || ''
+        company: m.urban_renewal_name || '未指派'
       }))
-
-      console.log('[Company Profile] Loaded members:', {
-        total: members.length,
-        managers: managers.value.length,
-        users: users.value.length,
-        rawData: members // 輸出原始資料以便調試
-      })
     }
   } catch (error) {
     console.error('Failed to load members:', error)
   }
 }
 
-// 重新載入成員資料
-const reloadMembers = async () => {
-  loading.value = true
+const fetchPendingUsers = async () => {
+  loadingPending.value = true
   try {
-    await loadMembers()
-    await showSuccess('成功', '已重新載入企業成員資料')
+    const result = await getPendingUsers()
+    if (result.success) {
+      pendingUsers.value = result.data.data || []
+    }
   } catch (error) {
-    console.error('Failed to reload members:', error)
-    await showError('錯誤', '重新載入失敗，請稍後再試')
+    console.error('Failed to fetch pending users:', error)
   } finally {
-    loading.value = false
+    loadingPending.value = false
+  }
+}
+
+const handleApproval = async (userId, action) => {
+  const confirmText = action === 'approve' ? '核准此使用者的加入申請？' : '拒絕此使用者的加入申請？'
+  const result = await showConfirm(
+    action === 'approve' ? '核准確認' : '拒絕確認',
+    confirmText,
+    action === 'approve' ? '確認核准' : '確認拒絕'
+  )
+
+  if (result.isConfirmed) {
+    try {
+      const res = await approveUser(userId, action)
+      if (res.success) {
+        await showSuccess('已完成', res.data.message || '操作成功')
+        await Promise.all([fetchPendingUsers(), loadMembers()])
+      } else {
+        throw new Error(res.error?.message || '操作失敗')
+      }
+    } catch (error) {
+      showError('錯誤', error.message)
+    }
+  }
+}
+
+const fetchInviteCode = async () => {
+  try {
+    const result = await getInviteCode()
+    if (result.success) {
+      inviteCodeData.value = {
+        code: result.data.data.invite_code,
+        active: result.data.data.invite_code_active == 1
+      }
+    }
+  } catch (error) {
+    console.error('Failed to fetch invite code:', error)
+  }
+}
+
+const handleGenerateInviteCode = async () => {
+  const result = await showConfirm('更換邀請碼', '更新後舊的邀請碼將立即失效，確認要執行嗎？', '確認更新')
+  if (result.isConfirmed) {
+    loadingInviteCode.value = true
+    try {
+      const res = await generateInviteCode()
+      if (res.success) {
+        inviteCodeData.value.code = res.data.data.invite_code
+        showSuccess('成功', '邀請碼已更新')
+      }
+    } catch (error) {
+      showError('錯誤', '產生邀請碼失敗')
+    } finally {
+      loadingInviteCode.value = false
+    }
+  }
+}
+
+const copyInviteCode = () => {
+  if (inviteCodeData.value.code) {
+    navigator.clipboard.writeText(inviteCodeData.value.code)
+    showSuccess('已複製', '邀請碼已複製到剪貼簿', 1000)
   }
 }
 
 const saveCompanyProfile = async () => {
   loading.value = true
   try {
-    // 使用新的 /companies/me API，不需要傳入 companyId
     const result = await updateCompanyProfile({
       name: form.value.companyName,
       tax_id: form.value.taxId,
@@ -337,362 +521,65 @@ const saveCompanyProfile = async () => {
       throw new Error(result.error?.message || '儲存失敗')
     }
   } catch (error) {
-    console.error('Failed to save company profile:', error)
-    showError('錯誤', error.message || '儲存企業資料失敗')
+    showError('錯誤', error.message)
   } finally {
     loading.value = false
   }
 }
 
 const addNewManager = async () => {
+  // 這裡延用原有的新增使用者邏輯，但改為彈窗填寫
   const { value: formValues } = await $swal.fire({
-    title: '<div style="color: #000000; font-size: 24px; font-weight: 600; position: relative;">新增使用者<button type="button" id="fill-test-data-btn" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.2s; font-weight: 500;">📝 填入測試資料</button></div>',
+    title: '新增核心成員',
     html: `
-      <style>
-        #fill-test-data-btn:hover {
-          background: #2563eb;
-          transform: translateY(-50%) scale(1.05);
-        }
-        .user-form-container {
-          padding: 20px;
-          padding-bottom: 40px;
-          text-align: left;
-        }
-        .form-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 16px;
-        }
-        .form-field {
-          display: flex;
-          flex-direction: column;
-        }
-        .form-field.full-width {
-          grid-column: span 2;
-        }
-        .form-label {
-          font-size: 14px;
-          font-weight: 500;
-          color: #4b5563;
-          margin-bottom: 6px;
-          display: flex;
-          align-items: center;
-        }
-        .required-mark {
-          color: #ef4444;
-          margin-left: 4px;
-          font-weight: 600;
-        }
-        .password-wrapper {
-          position: relative;
-          display: flex;
-          align-items: center;
-        }
-        .form-input {
-          width: 100%;
-          padding: 10px 12px;
-          border: 1.5px solid #d1d5db;
-          border-radius: 8px;
-          font-size: 14px;
-          transition: all 0.2s;
-          background: white;
-        }
-        .form-input.with-icon {
-          padding-right: 40px;
-        }
-        .form-input:focus {
-          outline: none;
-          border-color: #10b981;
-          box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-        }
-        .form-input:disabled,
-        .form-input:read-only {
-          background: #f3f4f6;
-          color: #6b7280;
-          cursor: not-allowed;
-        }
-        .form-input::placeholder {
-          color: #9ca3af;
-        }
-        .password-toggle {
-          position: absolute;
-          right: 12px;
-          top: 50%;
-          transform: translateY(-50%);
-          background: none;
-          border: none;
-          cursor: pointer;
-          padding: 4px;
-          color: #6b7280;
-          font-size: 18px;
-          line-height: 1;
-          transition: color 0.2s;
-        }
-        .password-toggle:hover {
-          color: #10b981;
-        }
-        .info-badge {
-          display: inline-block;
-          background: #dbeafe;
-          color: #1e40af;
-          padding: 2px 8px;
-          border-radius: 4px;
-          font-size: 12px;
-          margin-left: 8px;
-          font-weight: 500;
-        }
-      </style>
-      <div class="user-form-container">
-        <div class="form-grid">
-          <!-- 帳號 -->
-          <div class="form-field full-width">
-            <label class="form-label">
-              帳號<span class="required-mark">*</span>
-            </label>
-            <input id="swal-username" class="form-input" placeholder="請輸入登入帳號">
-          </div>
-
-          <!-- 姓名 -->
-          <div class="form-field">
-            <label class="form-label">
-              姓名<span class="required-mark">*</span>
-            </label>
-            <input id="swal-fullname" class="form-input" placeholder="請輸入真實姓名">
-          </div>
-
-          <!-- 暱稱 -->
-          <div class="form-field">
-            <label class="form-label">
-              暱稱
-            </label>
-            <input id="swal-nickname" class="form-input" placeholder="選填，顯示用暱稱">
-          </div>
-
-          <!-- 密碼 -->
-          <div class="form-field">
-            <label class="form-label">
-              密碼<span class="required-mark">*</span>
-              <span class="info-badge">至少6個字元</span>
-            </label>
-            <div class="password-wrapper">
-              <input id="swal-password" type="password" class="form-input with-icon" placeholder="••••••••">
-              <button type="button" class="password-toggle" onclick="
-                const input = document.getElementById('swal-password');
-                const icon = this;
-                if (input.type === 'password') {
-                  input.type = 'text';
-                  icon.textContent = '👁️';
-                } else {
-                  input.type = 'password';
-                  icon.textContent = '👁️‍🗨️';
-                }
-              ">👁️‍🗨️</button>
-            </div>
-          </div>
-
-          <!-- 確認密碼 -->
-          <div class="form-field">
-            <label class="form-label">
-              確認密碼<span class="required-mark">*</span>
-            </label>
-            <div class="password-wrapper">
-              <input id="swal-password-confirm" type="password" class="form-input with-icon" placeholder="••••••••">
-              <button type="button" class="password-toggle" onclick="
-                const input = document.getElementById('swal-password-confirm');
-                const icon = this;
-                if (input.type === 'password') {
-                  input.type = 'text';
-                  icon.textContent = '👁️';
-                } else {
-                  input.type = 'password';
-                  icon.textContent = '👁️‍🗨️';
-                }
-              ">👁️‍🗨️</button>
-            </div>
-          </div>
-
-          <!-- 信箱 -->
-          <div class="form-field">
-            <label class="form-label">
-              信箱
-            </label>
-            <input id="swal-email" type="email" class="form-input" placeholder="example@email.com">
-          </div>
-
-          <!-- 手機號碼 -->
-          <div class="form-field">
-            <label class="form-label">
-              手機號碼
-            </label>
-            <input id="swal-phone" class="form-input" placeholder="0912-345-678">
-          </div>
-
-          <!-- LINE 帳號 -->
-          <div class="form-field">
-            <label class="form-label">
-              LINE 帳號
-            </label>
-            <input id="swal-line" class="form-input" placeholder="@example">
-          </div>
-
-          <!-- 職稱 -->
-          <div class="form-field">
-            <label class="form-label">
-              職稱
-            </label>
-            <input id="swal-position" class="form-input" placeholder="例：經理、專員">
-          </div>
-
-          <!-- 公司名稱 -->
-          <div class="form-field full-width">
-            <label class="form-label">
-              所屬企業
-              <span class="info-badge">自動帶入</span>
-            </label>
-            <input id="swal-company" class="form-input" value="${form.value.companyName || '未設定'}" readonly>
-          </div>
+      <div class="space-y-4 text-left p-4">
+        <div>
+          <label class="block text-sm font-medium gray-700">帳號*</label>
+          <input id="swal-username" class="w-full border p-2 rounded" placeholder="帳號">
+        </div>
+        <div>
+          <label class="block text-sm font-medium gray-700">姓名*</label>
+          <input id="swal-fullname" class="w-full border p-2 rounded" placeholder="姓名">
+        </div>
+        <div>
+          <label class="block text-sm font-medium gray-700">密碼* (至少6位)</label>
+          <input id="swal-password" type="password" class="w-full border p-2 rounded" placeholder="密碼">
         </div>
       </div>
     `,
-    didOpen: () => {
-      // 填入測試資料的功能
-      const fillTestDataBtn = document.getElementById('fill-test-data-btn')
-      if (fillTestDataBtn) {
-        fillTestDataBtn.addEventListener('click', () => {
-          // 生成隨機資料
-          const randomNum = Math.floor(Math.random() * 1000)
-          const randomNames = ['張小明', '李小華', '王大同', '陳小美', '林建國', '黃志明', '劉佳玲', '吳文德']
-          const randomNicknames = ['小明', '小華', '阿同', '小美', '阿國', '志明', '佳玲', '阿德']
-          const randomPositions = ['經理', '專員', '主任', '副理', '組長', '襄理', '課長', '部長']
-          const randomName = randomNames[Math.floor(Math.random() * randomNames.length)]
-          const randomNickname = randomNicknames[Math.floor(Math.random() * randomNicknames.length)]
-          const randomPosition = randomPositions[Math.floor(Math.random() * randomPositions.length)]
-
-          // 填入表單
-          document.getElementById('swal-username').value = `user${randomNum}`
-          document.getElementById('swal-fullname').value = randomName
-          document.getElementById('swal-nickname').value = randomNickname
-          document.getElementById('swal-password').value = 'Test123456'
-          document.getElementById('swal-password-confirm').value = 'Test123456'
-          document.getElementById('swal-email').value = `user${randomNum}@example.com`
-          document.getElementById('swal-phone').value = `09${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`
-          document.getElementById('swal-line').value = `@user${randomNum}`
-          document.getElementById('swal-position').value = randomPosition
-
-          // 顯示提示
-          const toast = document.createElement('div')
-          toast.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 12px 20px; border-radius: 8px; font-size: 14px; z-index: 99999; animation: slideIn 0.3s ease-out;'
-          toast.textContent = '✓ 已填入測試資料'
-          document.body.appendChild(toast)
-          setTimeout(() => {
-            toast.style.animation = 'slideOut 0.3s ease-out'
-            setTimeout(() => toast.remove(), 300)
-          }, 2000)
-        })
-      }
-    },
-    focusConfirm: false,
     showCancelButton: true,
-    confirmButtonText: '✓ 確認新增',
-    cancelButtonText: '✕ 取消',
-    confirmButtonColor: '#10b981',
-    cancelButtonColor: '#6b7280',
-    width: '800px',
-    padding: '0 0 30px 0',
-    customClass: {
-      popup: 'rounded-xl',
-      confirmButton: 'px-6 py-2.5 rounded-lg font-medium',
-      cancelButton: 'px-6 py-2.5 rounded-lg font-medium',
-      actions: 'mt-6'
-    },
+    confirmButtonText: '新增',
     preConfirm: () => {
       const username = document.getElementById('swal-username').value
       const fullName = document.getElementById('swal-fullname').value
-      const nickname = document.getElementById('swal-nickname').value
       const password = document.getElementById('swal-password').value
-      const passwordConfirm = document.getElementById('swal-password-confirm').value
-      const email = document.getElementById('swal-email').value
-      const phone = document.getElementById('swal-phone').value
-      const lineAccount = document.getElementById('swal-line').value
-      const position = document.getElementById('swal-position').value
-
-      // 驗證必填欄位
-      if (!username) {
-        $swal.showValidationMessage('請輸入帳號')
+      if (!username || !fullName || !password) {
+        $swal.showValidationMessage('請填寫所有必填欄位')
         return false
       }
-      if (!fullName) {
-        $swal.showValidationMessage('請輸入姓名')
-        return false
-      }
-      if (!password) {
-        $swal.showValidationMessage('請輸入密碼')
-        return false
-      }
-      if (password.length < 6) {
-        $swal.showValidationMessage('密碼至少需要6個字元')
-        return false
-      }
-      if (!passwordConfirm) {
-        $swal.showValidationMessage('請輸入確認密碼')
-        return false
-      }
-      if (password !== passwordConfirm) {
-        $swal.showValidationMessage('密碼與確認密碼不相符')
-        return false
-      }
-
-      // 驗證信箱格式（如有填寫）
-      if (email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-        if (!emailRegex.test(email)) {
-          $swal.showValidationMessage('信箱格式不正確')
-          return false
-        }
-      }
-
-      return {
-        username,
-        full_name: fullName,
-        nickname,
-        password,
-        email,
-        phone,
-        line_account: lineAccount,
-        position
-      }
+      return { username, full_name: fullName, password }
     }
   })
 
   if (formValues) {
     try {
-      loading.value = true
-
-      // 新增系統欄位
       const userData = {
         ...formValues,
         role: 'member',
-        company_id: companyId.value,    // 使用 Store 的 company_id
-        is_company_manager: 1           // 新註冊的企業帳號預設為企業管理者
+        company_id: companyId.value,
+        is_company_manager: 1, // 核心成員預設為管理者
+        is_active: 1,
+        approval_status: 'approved'
       }
-
-      const { createUser } = useCompany()
       const result = await createUser(userData)
-
       if (result.success) {
-        // 重新載入成員列表
         await loadMembers()
-
-        // 顯示成功訊息 1.5 秒後自動關閉
-        await showSuccess('成功', '使用者已成功新增')
+        showSuccess('成功', '核心成員已新增')
       } else {
         throw new Error(result.error?.message || '新增失敗')
       }
     } catch (error) {
-      console.error('Failed to create user:', error)
-      await showError('新增失敗', error.message || '新增使用者失敗')
-    } finally {
-      loading.value = false
+      showError('錯誤', error.message)
     }
   }
 }
@@ -700,100 +587,155 @@ const addNewManager = async () => {
 const setAsUser = async (manager) => {
   try {
     const result = await setAsCompanyUser(manager.id)
-
     if (result.success) {
-      // Reload members list
       await loadMembers()
-
-      // 顯示成功訊息 1.5 秒後自動關閉
-      await showSuccess('成功', `已將 ${manager.name || manager.username} 設為企業使用者`)
-    } else {
-      throw new Error(result.error?.message || '設定失敗')
+      showSuccess('成功', '已降級為一般用戶')
     }
   } catch (error) {
-    console.error('Failed to set as user:', error)
-    showError('錯誤', error.message || '設定企業使用者失敗')
+    showError('錯誤', '操作失敗')
   }
 }
 
 const setAsManager = async (user) => {
   try {
     const result = await setAsCompanyManager(user.id)
-
     if (result.success) {
-      // Reload members list
       await loadMembers()
-
-      // 顯示成功訊息 1.5 秒後自動關閉
-      await showSuccess('成功', `已將 ${user.name || user.username} 設為企業管理者`)
-    } else {
-      throw new Error(result.error?.message || '設定失敗')
+      showSuccess('成功', '已提升為管理者')
     }
   } catch (error) {
-    console.error('Failed to set as manager:', error)
-    showError('錯誤', error.message || '設定企業管理者失敗')
+    showError('錯誤', '操作失敗')
   }
 }
 
-const deleteManager = async (index) => {
-  const manager = managers.value[index]
-  const result = await showDeleteConfirm(
-    '確認刪除',
-    `確定要刪除管理者 ${manager.name || manager.username} 嗎？`,
-    '刪除',
-    '取消'
-  )
-
+const deleteManager = async (id) => {
+  const result = await showDeleteConfirm('確認刪除', '確定要刪除此成員嗎？')
   if (result.isConfirmed) {
     try {
-      const deleteResult = await deleteUserApi(manager.id)
-
-      if (deleteResult.success) {
-        // Reload members list
+      const res = await deleteUserApi(id)
+      if (res.success) {
         await loadMembers()
-
-        // 顯示成功訊息 1.5 秒後自動關閉
-        showSuccess('已刪除', '管理者已被刪除')
-      } else {
-        throw new Error(deleteResult.error?.message || '刪除失敗')
+        showSuccess('已刪除', '成員已移除')
       }
     } catch (error) {
-      console.error('Failed to delete manager:', error)
-      showError('錯誤', error.message || '刪除管理者失敗')
+      showError('錯誤', '刪除失敗')
     }
   }
 }
 
-const deleteUser = async (index) => {
-  const user = users.value[index]
-  const result = await showDeleteConfirm(
-    '確認刪除',
-    `確定要刪除使用者 ${user.name || user.username} 嗎？`,
-    '刪除',
-    '取消'
+const deleteUser = deleteManager
+
+// Renewal Management Logic
+const loadRenewals = async () => {
+  loadingRenewals.value = true
+  try {
+    const result = await getCompanyRenewals()
+    if (result.success) {
+      renewals.value = result.data.data || []
+      // If none selected and have renewals, select first one
+      if (!selectedRenewal.value && renewals.value.length > 0) {
+        selectRenewal(renewals.value[0])
+      } else if (selectedRenewal.value) {
+        // Refresh selected renewal data
+        const updated = renewals.value.find(r => r.id === selectedRenewal.value.id)
+        if (updated) selectedRenewal.value = updated
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load renewals:', error)
+  } finally {
+    loadingRenewals.value = false
+  }
+}
+
+const selectRenewal = async (renewal) => {
+  selectedRenewal.value = renewal
+  await fetchRenewalMembers(renewal.id)
+}
+
+const fetchRenewalMembers = async (renewalId) => {
+  try {
+    const result = await getRenewalMembers(renewalId)
+    if (result.success) {
+      renewalMembers.value = result.data.data || []
+    }
+  } catch (error) {
+    console.error('Failed to fetch renewal members:', error)
+  }
+}
+
+const openAssignMemberModal = async () => {
+  if (!selectedRenewal.value) return
+
+  // Fetch available members (approved company members)
+  const availableRes = await getAvailableMembers()
+  const availableUsers = availableRes.success ? availableRes.data.data : []
+  
+  // Filter out already assigned members
+  const unassignedUsers = availableUsers.filter(u => 
+    !renewalMembers.value.some(m => m.user_id === u.id)
   )
 
-  if (result.isConfirmed) {
+  if (unassignedUsers.length === 0) {
+    await showCustom({
+      title: '無可用人員',
+      text: '所有公司成員皆已指派至此案件，或目前無已核准的成員。',
+      icon: 'info'
+    })
+    return
+  }
+
+  const { value: userId } = await $swal.fire({
+    title: '指派人員至案場',
+    text: `正在指派人員至：${selectedRenewal.value.name}`,
+    input: 'select',
+    inputOptions: unassignedUsers.reduce((acc, user) => {
+      acc[user.id] = `${user.full_name || user.username} (@${user.username})`
+      return acc
+    }, {}),
+    inputPlaceholder: '請選擇要指派的成員',
+    showCancelButton: true,
+    confirmButtonText: '確認指派',
+    cancelButtonText: '取消',
+    inputValidator: (value) => {
+      if (!value) return '請選擇成員'
+    }
+  })
+
+  if (userId) {
     try {
-      const deleteResult = await deleteUserApi(user.id)
-
-      if (deleteResult.success) {
-        // Reload members list
-        await loadMembers()
-
-        // 顯示成功訊息 1.5 秒後自動關閉
-        showSuccess('已刪除', '使用者已被刪除')
+      const res = await assignMemberToRenewal(selectedRenewal.value.id, userId)
+      if (res.success) {
+        showSuccess('成功', '人員指派成功')
+        await fetchRenewalMembers(selectedRenewal.value.id)
+        await loadRenewals() // Refresh count
       } else {
-        throw new Error(deleteResult.error?.message || '刪除失敗')
+        throw new Error(res.error?.message || '指派失敗')
       }
     } catch (error) {
-      console.error('Failed to delete user:', error)
-      showError('錯誤', error.message || '刪除使用者失敗')
+      showError('錯誤', error.message)
     }
   }
 }
 
-// Load data on mount
+const handleUnassign = async (userId) => {
+  const result = await showConfirm('取消指派', '確定要將此成員從案場中移除嗎？', '確認移除')
+  if (result.isConfirmed) {
+    try {
+      const res = await unassignMemberFromRenewal(selectedRenewal.value.id, userId)
+      if (res.success) {
+        showSuccess('成功', '指派已移除')
+        await fetchRenewalMembers(selectedRenewal.value.id)
+        await loadRenewals() // Refresh count
+      } else {
+        throw new Error(res.error?.message || '移除失敗')
+      }
+    } catch (error) {
+      showError('錯誤', error.message)
+    }
+  }
+}
+
 onMounted(() => {
   loadCompanyData()
 })

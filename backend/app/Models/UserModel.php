@@ -28,6 +28,11 @@ class UserModel extends Model
         'phone',
         'line_account',
         'position',
+        'company_invite_code',
+        'approval_status',
+        'approved_at',
+        'approved_by',
+        'is_substantive',
         'is_active',
         'last_login_at',
         'login_attempts',
@@ -127,10 +132,10 @@ class UserModel extends Model
 
         if (!empty($filters['search'])) {
             $builder->groupStart()
-                   ->like('users.username', $filters['search'])
-                   ->orLike('users.full_name', $filters['search'])
-                   ->orLike('users.email', $filters['search'])
-                   ->groupEnd();
+                ->like('users.username', $filters['search'])
+                ->orLike('users.full_name', $filters['search'])
+                ->orLike('users.email', $filters['search'])
+                ->groupEnd();
         }
 
         return $builder->paginate($perPage, 'default', $page);
@@ -142,8 +147,8 @@ class UserModel extends Model
     public function getUsersByUrbanRenewal($urbanRenewalId, $page = 1, $perPage = 10)
     {
         return $this->where('urban_renewal_id', $urbanRenewalId)
-                   ->where('is_active', 1)
-                   ->paginate($perPage, 'default', $page);
+            ->where('is_active', 1)
+            ->paginate($perPage, 'default', $page);
     }
 
     /**
@@ -152,13 +157,13 @@ class UserModel extends Model
     public function searchUsers($keyword, $page = 1, $perPage = 10)
     {
         return $this->select('users.*, urban_renewals.name as urban_renewal_name')
-                   ->join('urban_renewals', 'urban_renewals.id = users.urban_renewal_id', 'left')
-                   ->groupStart()
-                   ->like('users.username', $keyword)
-                   ->orLike('users.full_name', $keyword)
-                   ->orLike('users.email', $keyword)
-                   ->groupEnd()
-                   ->paginate($perPage, 'default', $page);
+            ->join('urban_renewals', 'urban_renewals.id = users.urban_renewal_id', 'left')
+            ->groupStart()
+            ->like('users.username', $keyword)
+            ->orLike('users.full_name', $keyword)
+            ->orLike('users.email', $keyword)
+            ->groupEnd()
+            ->paginate($perPage, 'default', $page);
     }
 
     /**
@@ -217,9 +222,9 @@ class UserModel extends Model
     public function getRoleStatistics()
     {
         return $this->select('role, COUNT(*) as count')
-                   ->where('is_active', 1)
-                   ->groupBy('role')
-                   ->findAll();
+            ->where('is_active', 1)
+            ->groupBy('role')
+            ->findAll();
     }
 
     /**
@@ -312,11 +317,11 @@ class UserModel extends Model
     public function getCompanyManagers($urbanRenewalId, $page = 1, $perPage = 10)
     {
         return $this->select('users.*')
-                   ->where('urban_renewal_id', $urbanRenewalId)
-                   ->where('user_type', 'enterprise')
-                   ->where('is_company_manager', 1)
-                   ->where('is_active', 1)
-                   ->paginate($perPage, 'default', $page);
+            ->where('urban_renewal_id', $urbanRenewalId)
+            ->where('user_type', 'enterprise')
+            ->where('is_company_manager', 1)
+            ->where('is_active', 1)
+            ->paginate($perPage, 'default', $page);
     }
 
     /**
@@ -325,11 +330,11 @@ class UserModel extends Model
     public function getCompanyUsers($urbanRenewalId, $page = 1, $perPage = 10)
     {
         return $this->select('users.*')
-                   ->where('urban_renewal_id', $urbanRenewalId)
-                   ->where('user_type', 'enterprise')
-                   ->where('is_company_manager', 0)
-                   ->where('is_active', 1)
-                   ->paginate($perPage, 'default', $page);
+            ->where('urban_renewal_id', $urbanRenewalId)
+            ->where('user_type', 'enterprise')
+            ->where('is_company_manager', 0)
+            ->where('is_active', 1)
+            ->paginate($perPage, 'default', $page);
     }
 
     /**
@@ -338,12 +343,12 @@ class UserModel extends Model
     public function getAllCompanyMembers($urbanRenewalId, $page = 1, $perPage = 10)
     {
         return $this->select('users.*')
-                   ->where('urban_renewal_id', $urbanRenewalId)
-                   ->where('user_type', 'enterprise')
-                   ->where('is_active', 1)
-                   ->orderBy('is_company_manager', 'DESC')
-                   ->orderBy('created_at', 'DESC')
-                   ->paginate($perPage, 'default', $page);
+            ->where('urban_renewal_id', $urbanRenewalId)
+            ->where('user_type', 'enterprise')
+            ->where('is_active', 1)
+            ->orderBy('is_company_manager', 'DESC')
+            ->orderBy('created_at', 'DESC')
+            ->paginate($perPage, 'default', $page);
     }
 
     /**
@@ -418,5 +423,53 @@ class UserModel extends Model
         return $user['user_type'] === 'enterprise'
             && $user['is_company_manager'] == 1
             && $user['urban_renewal_id'] == $urbanRenewalId;
+    }
+
+    /**
+     * 取得待審核使用者列表
+     */
+    public function getPendingApprovalUsers($companyId, $page = 1, $perPage = 10)
+    {
+        return $this->where('company_id', $companyId)
+            ->where('approval_status', 'pending')
+            ->paginate($perPage, 'default', $page);
+    }
+
+    /**
+     * 取得實質性帳號列表
+     */
+    public function getSubstantiveUsers($companyId, $page = 1, $perPage = 10)
+    {
+        return $this->where('company_id', $companyId)
+            ->where('is_substantive', 1)
+            ->where('is_active', 1)
+            ->paginate($perPage, 'default', $page);
+    }
+
+    /**
+     * 審核通過使用者
+     */
+    public function approveUser($userId, $approverId)
+    {
+        return $this->update($userId, [
+            'approval_status' => 'approved',
+            'approved_at' => date('Y-m-d H:i:s'),
+            'approved_by' => $approverId,
+            'is_substantive' => 1,
+            'is_active' => 1
+        ]);
+    }
+
+    /**
+     * 拒絕使用者申請
+     */
+    public function rejectUser($userId, $approverId)
+    {
+        return $this->update($userId, [
+            'approval_status' => 'rejected',
+            'approved_at' => date('Y-m-d H:i:s'),
+            'approved_by' => $approverId,
+            'is_active' => 0
+        ]);
     }
 }

@@ -74,13 +74,12 @@ class AuthController extends ResourceController
                 return response_validation_error('驗證失敗', $this->validator->getErrors());
             }
 
-            $username = $this->request->getJSON()->username;
-            $password = $this->request->getJSON()->password;
+            $json = $this->request->getJSON(true);
+            $username = $json['username'] ?? '';
+            $password = $json['password'] ?? '';
 
-            // 查找使用者
-            $user = $this->userModel->where('username', $username)
-                ->where('is_active', 1)
-                ->first();
+            // 查找使用者 (不先過濾 is_active，以便提供更精確的錯誤訊息)
+            $user = $this->userModel->where('username', $username)->first();
 
             if (!$user) {
                 // 記錄失敗登入事件（使用者不存在）
@@ -115,6 +114,17 @@ class AuthController extends ResourceController
                 ]);
 
                 return response_error('帳號或密碼錯誤', 401);
+            }
+
+            // 密碼驗證通過，檢查帳號狀態
+            if (!$user['is_active']) {
+                $status = $user['approval_status'] ?? 'approved';
+                if ($status === 'pending') {
+                    return response_error('您的帳號正在等待公司審核，請聯繫公司管理者', 401);
+                } elseif ($status === 'rejected') {
+                    return response_error('您的帳號申請已被拒絕，請聯繫公司管理者', 401);
+                }
+                return response_error('帳號已被停用', 401);
             }
 
             // 重置登入失敗次數
@@ -213,7 +223,8 @@ class AuthController extends ResourceController
             // 優先從 cookie 取得 refresh token
             $refreshToken = $this->getRefreshTokenFromCookie();
             if (!$refreshToken) {
-                $refreshToken = $this->request->getJSON()->refresh_token ?? '';
+                $json = $this->request->getJSON(true);
+                $refreshToken = $json['refresh_token'] ?? '';
             }
 
             $sessionModel = model('UserSessionModel');
@@ -362,6 +373,11 @@ class AuthController extends ResourceController
                 $rules['taxId'] = 'required|max_length[20]';
             }
 
+            // 個人帳號需填入公司邀請碼
+            if (isset($data['accountType']) && $data['accountType'] === 'personal') {
+                $rules['companyInviteCode'] = 'required|max_length[50]';
+            }
+
             if (!$this->validate($rules)) {
                 $errors = $this->validator->getErrors();
                 if ($logId) {
@@ -374,17 +390,17 @@ class AuthController extends ResourceController
             $db->transStart();
 
             $companyId = null;
+            $companyModel = new \App\Models\CompanyModel();
 
             // 如果是企業帳號，先建立 company 記錄
             if ($data['accountType'] === 'business') {
-                $companyModel = new \App\Models\CompanyModel();
-
                 $companyData = [
                     'name' => $data['businessName'],
                     'tax_id' => $data['taxId'] ?? null,
                     'company_phone' => $data['businessPhone'] ?? null,
                     'max_renewal_count' => 1, // 預設可建立 1 個更新會
                     'max_issue_count' => 8,   // 預設最多 8 個議題
+                    'invite_code' => strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 8)), // 自動產生初始邀請碼
                 ];
 
                 $companyId = $companyModel->insert($companyData);
@@ -398,6 +414,20 @@ class AuthController extends ResourceController
                     }
                     return response_error($errorMessage, 500);
                 }
+            } else {
+                // 個人帳號：驗證邀請碼
+                $company = $companyModel->where('invite_code', $data['companyInviteCode'])
+                    ->where('invite_code_active', 1)
+                    ->first();
+                if (!$company) {
+                    $db->transRollback();
+                    $errorMessage = '公司邀請碼無效或已停用';
+                    if ($logId) {
+                        $registrationLogModel->markAsError($logId, 400, $errorMessage);
+                    }
+                    return response_error($errorMessage, 400);
+                }
+                $companyId = $company['id'];
             }
 
             // 建立使用者記錄
@@ -412,10 +442,14 @@ class AuthController extends ResourceController
                 'position' => $data['jobTitle'] ?? null,
                 'user_type' => $data['accountType'] === 'business' ? 'enterprise' : 'general',
                 'is_company_manager' => $data['accountType'] === 'business' ? 1 : 0,
-                'company_id' => $companyId, // 設定企業 ID（新架構）
-                'urban_renewal_id' => null,  // 使用者不直接關聯更新會，透過企業關聯
-                'role' => 'member', // 預設角色
-                'is_active' => 1
+                'company_id' => $companyId,
+                'company_invite_code' => $data['accountType'] === 'personal' ? $data['companyInviteCode'] : null,
+                'urban_renewal_id' => null,
+                'role' => 'member',
+                // 狀態處理
+                'approval_status' => $data['accountType'] === 'business' ? 'approved' : 'pending',
+                'is_substantive' => $data['accountType'] === 'business' ? 1 : 0,
+                'is_active' => $data['accountType'] === 'business' ? 1 : 0 // 個人帳號需待審核後啟用
             ];
 
             $userId = $this->userModel->insert($userData);
@@ -447,17 +481,21 @@ class AuthController extends ResourceController
             // 記錄註冊事件
             log_auth_event('register', $userId, $data['account'], null, [
                 'user_type' => $userData['user_type'],
-                'company_id' => $companyId
+                'company_id' => $companyId,
+                'approval_status' => $userData['approval_status']
             ]);
+
+            $message = $data['accountType'] === 'business' ? '註冊成功' : '註冊成功，請等待公司審核';
 
             return $this->respond([
                 'success' => true,
                 'data' => [
                     'user_id' => $userId,
                     'username' => $data['account'],
-                    'company_id' => $companyId
+                    'company_id' => $companyId,
+                    'approval_status' => $userData['approval_status']
                 ],
-                'message' => '註冊成功'
+                'message' => $message
             ], 201);
         } catch (\Exception $e) {
             log_message('error', 'Registration error: ' . $e->getMessage());
@@ -493,7 +531,8 @@ class AuthController extends ResourceController
                 ], 422);
             }
 
-            $email = $this->request->getJSON()->email;
+            $json = $this->request->getJSON(true);
+            $email = $json['email'] ?? '';
             $user = $this->userModel->where('email', $email)->where('is_active', 1)->first();
 
             if (!$user) {
@@ -556,8 +595,9 @@ class AuthController extends ResourceController
                 ], 422);
             }
 
-            $token = $this->request->getJSON()->token;
-            $password = $this->request->getJSON()->password;
+            $json = $this->request->getJSON(true);
+            $token = $json['token'] ?? '';
+            $password = $json['password'] ?? '';
 
             $user = $this->userModel->where('password_reset_token', $token)
                 ->where('password_reset_expires >', date('Y-m-d H:i:s'))
