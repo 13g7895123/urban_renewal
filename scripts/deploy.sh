@@ -106,29 +106,29 @@ echo ""
 # 檢查並清理舊容器
 echo -e "${BLUE}🔍 檢查舊容器...${NC}"
 
-# 根據環境設定容器名稱模式
+# 根據環境設定專案名稱
 if [ "$ENV" = "production" ]; then
-    CONTAINER_PATTERN="urban_renewal_.*_prod"
+    PROJECT_NAME="urban_renewal_prod"
 else
-    CONTAINER_PATTERN="urban_renewal_.*_dev"
+    PROJECT_NAME="urban_renewal_dev"
 fi
 
-# 檢查是否存在相關容器（包含已停止的）
-EXISTING_CONTAINERS=$(docker ps -aq --filter "name=${CONTAINER_PATTERN}" 2>/dev/null)
+# 檢查是否存在相關容器（使用 project label 篩選）
+EXISTING_CONTAINERS=$(docker ps -aq --filter "label=com.docker.compose.project=${PROJECT_NAME}" 2>/dev/null)
 
 if [ -n "$EXISTING_CONTAINERS" ]; then
     echo -e "${YELLOW}⚠️  發現舊容器，正在清理...${NC}"
     
     # 顯示要清理的容器
     echo -e "${YELLOW}   容器列表:${NC}"
-    docker ps -a --filter "name=${CONTAINER_PATTERN}" --format "   - {{.Names}} ({{.Status}})" 2>/dev/null || true
+    docker ps -a --filter "label=com.docker.compose.project=${PROJECT_NAME}" --format "   - {{.Names}} ({{.Status}})" 2>/dev/null || true
     
     # 停止並移除所有相關容器
     echo -e "${YELLOW}   正在停止並移除...${NC}"
     docker rm -f $EXISTING_CONTAINERS 2>/dev/null || true
     
     # 再次檢查是否清理乾淨
-    REMAINING=$(docker ps -aq --filter "name=${CONTAINER_PATTERN}" 2>/dev/null)
+    REMAINING=$(docker ps -aq --filter "label=com.docker.compose.project=${PROJECT_NAME}" 2>/dev/null)
     if [ -n "$REMAINING" ]; then
         echo -e "${RED}⚠️  部分容器清理失敗，嘗試強制清理...${NC}"
         docker rm -f $REMAINING 2>/dev/null || true
@@ -143,7 +143,7 @@ fi
 OLD_NETWORK=$(docker network ls --filter "name=docker_urban_renewal_network" -q 2>/dev/null)
 if [ -n "$OLD_NETWORK" ]; then
     echo -e "${YELLOW}⚠️  發現舊網路，正在清理...${NC}"
-    docker network rm docker_urban_renewal_network 2>/dev/null || true
+    docker network rm ${PROJECT_NAME}_urban_renewal_network 2>/dev/null || true
 fi
 
 echo ""
@@ -201,21 +201,19 @@ echo ""
 echo -e "${BLUE}⏳ 等待後端容器啟動...${NC}"
 sleep 5
 
-# 執行資料庫遷移
-echo -e "${BLUE}🔄 執行資料庫遷移...${NC}"
-# 後端容器名稱：production 使用 backend-php，dev 使用 backend
+# 後端服務名稱：production 使用 backend-php，dev 使用 backend
 if [ "$ENV" = "production" ]; then
-    BACKEND_CONTAINER="urban_renewal_backend_php_prod"
+    BACKEND_SERVICE="backend-php"
 else
-    BACKEND_CONTAINER="urban_renewal_backend_dev"
+    BACKEND_SERVICE="backend"
 fi
 
-# 檢查容器是否存在且正在運行
-if docker ps --format '{{.Names}}' | grep -q "^${BACKEND_CONTAINER}$"; then
-    echo -e "${YELLOW}   執行指令: docker exec ${BACKEND_CONTAINER} php spark migrate --all${NC}"
+# 使用 docker compose exec 執行指令
+if docker compose -f "$COMPOSE_FILE" --env-file docker/.env ps --format '{{.Service}}' | grep -q "^${BACKEND_SERVICE}$"; then
+    echo -e "${YELLOW}   執行指令: docker compose exec ${BACKEND_SERVICE} php spark migrate --all${NC}"
     
     # 執行 migrate
-    if docker exec "$BACKEND_CONTAINER" php spark migrate --all 2>&1 | tee /tmp/migrate_output.log; then
+    if docker compose -f "$COMPOSE_FILE" --env-file docker/.env exec "$BACKEND_SERVICE" php spark migrate --all 2>&1 | tee /tmp/migrate_output.log; then
         echo -e "${GREEN}✓ 資料庫遷移完成${NC}"
     else
         # 檢查是否是 "沒有新的遷移" 的情況
@@ -227,8 +225,8 @@ if docker ps --format '{{.Names}}' | grep -q "^${BACKEND_CONTAINER}$"; then
     fi
     rm -f /tmp/migrate_output.log 2>/dev/null || true
 else
-    echo -e "${RED}⚠️  找不到後端容器: ${BACKEND_CONTAINER}${NC}"
-    echo -e "${YELLOW}   請手動執行: docker exec ${BACKEND_CONTAINER} php spark migrate --all${NC}"
+    echo -e "${RED}⚠️  找不到後端服務: ${BACKEND_SERVICE}${NC}"
+    echo -e "${YELLOW}   請手動執行: docker compose exec ${BACKEND_SERVICE} php spark migrate --all${NC}"
 fi
 echo ""
 
@@ -241,11 +239,11 @@ echo -e "${BLUE}💡 常用指令：${NC}"
 echo -e "  查看日誌: ${YELLOW}docker compose -f $COMPOSE_FILE logs -f${NC}"
 echo -e "  停止服務: ${YELLOW}docker compose -f $COMPOSE_FILE down${NC}"
 echo -e "  重啟服務: ${YELLOW}./scripts/deploy.sh $ENV${NC}"
-echo -e "  執行遷移: ${YELLOW}docker exec ${BACKEND_CONTAINER} php spark migrate --all${NC}"
-echo -e "  查看後端日誌: ${YELLOW}docker logs -f ${BACKEND_CONTAINER}${NC}"
+echo -e "  執行遷移: ${YELLOW}docker compose exec ${BACKEND_SERVICE} php spark migrate --all${NC}"
+echo -e "  查看後端日誌: ${YELLOW}docker compose logs -f ${BACKEND_SERVICE}${NC}"
 if [ "$ENV" = "production" ]; then
-    echo -e "  查看 Nginx 日誌: ${YELLOW}docker logs -f urban_renewal_nginx_prod${NC}"
+    echo -e "  查看 Nginx 日誌: ${YELLOW}docker compose logs -f nginx${NC}"
 else
-    echo -e "  查看 Nginx 日誌: ${YELLOW}docker logs -f urban_renewal_nginx_dev${NC}"
+    echo -e "  查看 Nginx 日誌: ${YELLOW}docker compose logs -f nginx${NC}"
 fi
 echo ""

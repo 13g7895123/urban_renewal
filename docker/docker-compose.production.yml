@@ -11,7 +11,6 @@ services:
   # 統一的 Nginx（處理前端和後端）
   nginx:
     image: nginx:alpine
-    container_name: urban_renewal_nginx_prod
     ports:
       - "${FRONTEND_PORT}:80" # 統一入口：前端和後端都通過這個端口
     volumes:
@@ -33,7 +32,6 @@ services:
     build:
       context: ../frontend
       dockerfile: Dockerfile
-    container_name: urban_renewal_frontend_prod
     # 不對外暴露端口，只通過 Nginx 訪問
     expose:
       - "3000"
@@ -57,7 +55,6 @@ services:
     build:
       context: ../backend
       dockerfile: Dockerfile
-    container_name: urban_renewal_backend_php_prod
     # 不對外暴露端口，只通過 Nginx 訪問
     expose:
       - "9000"
@@ -86,7 +83,6 @@ services:
 
   mariadb:
     image: mariadb:11.4
-    container_name: urban_renewal_db_prod
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
       - MYSQL_DATABASE=${DB_DATABASE}
@@ -108,7 +104,6 @@ services:
 
   phpmyadmin:
     image: phpmyadmin:5.2
-    container_name: urban_renewal_phpmyadmin_prod
     environment:
       - PMA_HOST=mariadb
       - PMA_PORT=3306
@@ -127,7 +122,6 @@ services:
     build:
       context: ../cron
       dockerfile: Dockerfile
-    container_name: urban_renewal_cron_prod
     volumes:
       - ../backend:/var/www/html/backend
       - cron_logs:/var/log/cron
