@@ -200,6 +200,7 @@
               </template>
             </UTable>
           </div>
+        </div>
         <!-- Tab 4: 案場指派管理 -->
         <div v-if="currentTab === 'renewals'" class="space-y-6">
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
