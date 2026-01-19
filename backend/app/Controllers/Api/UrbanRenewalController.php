@@ -356,27 +356,35 @@ class UrbanRenewalController extends BaseController
         try {
             $user = $_SERVER['AUTH_USER'] ?? null;
             $userRole = $user['role'] ?? '';
+            $isCompanyManager = ($user['is_company_manager'] ?? 0) == 1;
 
-            // Allow admin and land_owner to access this endpoint
-            $allowedRoles = ['admin', 'land_owner'];
-
-            if (!$user || !in_array($userRole, $allowedRoles)) {
+            if (!$user || (!$isCompanyManager && !in_array($userRole, ['admin', 'land_owner']))) {
                 return $this->response->setStatusCode(403)->setJSON([
                     'status' => 'error',
                     'message' => '您沒有權限存取此功能'
                 ]);
             }
 
-            // Get all company managers
+            // Get all company managers (filter by company_id if not admin)
             $userModel = model('UserModel');
-            $managers = $userModel->where('is_company_manager', 1)
-                ->where('is_active', 1)
-                ->select('id, name, email, company_id')
+            $builder = $userModel->where('is_company_manager', 1)
+                ->where('is_active', 1);
+
+            if ($userRole !== 'admin') {
+                $companyId = auth_get_user_company_id($user);
+                if ($companyId) {
+                    $builder->where('company_id', $companyId);
+                }
+            }
+
+            $managers = $builder->select('id, full_name as name, email, company_id')
                 ->findAll();
 
             return $this->response->setJSON([
                 'status' => 'success',
-                'data' => $managers,
+                'data' => [
+                    'managers' => $managers
+                ],
                 'message' => '取得企業管理員列表成功'
             ]);
         } catch (\Exception $e) {
@@ -396,10 +404,11 @@ class UrbanRenewalController extends BaseController
     {
         try {
             $user = $_SERVER['AUTH_USER'] ?? null;
-            $isAdmin = $user && isset($user['role']) && $user['role'] === 'admin';
+            $userRole = $user['role'] ?? '';
+            $isAdmin = $userRole === 'admin';
+            $isCompanyManager = ($user['is_company_manager'] ?? 0) == 1;
 
-            // Only admin can access this endpoint
-            if (!$isAdmin) {
+            if (!$user || (!$isAdmin && !$isCompanyManager)) {
                 return $this->response->setStatusCode(403)->setJSON([
                     'status' => 'error',
                     'message' => '您沒有權限存取此功能'
@@ -407,37 +416,44 @@ class UrbanRenewalController extends BaseController
             }
 
             $data = $this->request->getJSON(true);
+            $assignments = $data['assignments'] ?? [];
 
-            if (empty($data['manager_id']) || empty($data['urban_renewal_ids'])) {
+            if (empty($assignments)) {
                 return $this->response->setStatusCode(400)->setJSON([
                     'status' => 'error',
-                    'message' => '缺少必要參數'
+                    'message' => '請提供分配資料'
                 ]);
             }
 
-            $managerId = (int)$data['manager_id'];
-            $urbanRenewalIds = $data['urban_renewal_ids'];
-
-            // Get manager's company_id
             $userModel = model('UserModel');
-            $manager = $userModel->find($managerId);
-
-            if (!$manager || $manager['is_company_manager'] != 1) {
-                return $this->response->setStatusCode(400)->setJSON([
-                    'status' => 'error',
-                    'message' => '指定的管理員無效'
-                ]);
-            }
-
-            $companyId = $manager['company_id'];
-
-            // Update urban renewals
             $updatedCount = 0;
-            foreach ($urbanRenewalIds as $id) {
-                $result = $this->urbanRenewalModel->update($id, [
-                    'company_id' => $companyId,
-                    'manager_id' => $managerId
+
+            foreach ($assignments as $urbanRenewalId => $managerId) {
+                if (empty($managerId)) {
+                    // 取消分配
+                    $this->urbanRenewalModel->update($urbanRenewalId, ['assigned_admin_id' => null]);
+                    $updatedCount++;
+                    continue;
+                }
+
+                // 驗證管理員是否存在
+                $manager = $userModel->find($managerId);
+                if (!$manager || $manager['is_company_manager'] != 1) {
+                    continue;
+                }
+
+                // 驗證權限（企業管理者只能指派自己公司的成員）
+                if (!$isAdmin) {
+                    $companyId = auth_get_user_company_id($user);
+                    if ($manager['company_id'] != $companyId) {
+                        continue;
+                    }
+                }
+
+                $result = $this->urbanRenewalModel->update($urbanRenewalId, [
+                    'assigned_admin_id' => (int)$managerId
                 ]);
+
                 if ($result) {
                     $updatedCount++;
                 }
@@ -446,7 +462,7 @@ class UrbanRenewalController extends BaseController
             return $this->response->setJSON([
                 'status' => 'success',
                 'data' => ['updated_count' => $updatedCount],
-                'message' => "成功指派 {$updatedCount} 個更新會給管理員"
+                'message' => "成功更新 {$updatedCount} 個項目的指派內容"
             ]);
         } catch (\Exception $e) {
             log_message('error', 'Batch assign error: ' . $e->getMessage());

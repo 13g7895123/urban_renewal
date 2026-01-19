@@ -15,10 +15,10 @@ if (!function_exists('auth_validate_request')) {
         if ($enableDebug === null) {
             $enableDebug = ENVIRONMENT !== 'production';
         }
-        
+
         $startTime = microtime(true);
         $request = \Config\Services::request();
-        
+
         // 初始化除錯記錄
         $requestId = uniqid('jwt_', true);
         $debugData = [
@@ -33,7 +33,7 @@ if (!function_exists('auth_validate_request')) {
         // Stage 1: 取得 Token (優先從 Cookie，其次從 Header)
         $token = null;
         $tokenSource = null;
-        
+
         // 優先從 httpOnly Cookie 取得
         if (isset($_COOKIE['auth_token']) && !empty($_COOKIE['auth_token'])) {
             $token = $_COOKIE['auth_token'];
@@ -51,9 +51,9 @@ if (!function_exists('auth_validate_request')) {
                 }
             }
         }
-        
+
         $debugData['has_token'] = $token ? 1 : 0;
-        
+
         if (!$token) {
             $debugData['stage'] = 'token_check';
             $debugData['stage_status'] = 'fail';
@@ -69,11 +69,11 @@ if (!function_exists('auth_validate_request')) {
             // Stage 2: 解碼 JWT
             $jwtConfig = config('JWT');
             $debugData['stage'] = 'token_decode';
-            
+
             $decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key($jwtConfig->key, $jwtConfig->algorithm));
-            
+
             $debugData['signature_valid'] = 1;
-            
+
             if (!$decoded || !isset($decoded->user_id)) {
                 $debugData['stage_status'] = 'fail';
                 $debugData['stage_message'] = 'Invalid token structure: missing user_id';
@@ -94,7 +94,7 @@ if (!function_exists('auth_validate_request')) {
             // Stage 3: 檢查過期時間
             $debugData['stage'] = 'claims_validate';
             $currentTime = time();
-            
+
             if (isset($decoded->exp)) {
                 $debugData['is_expired'] = $decoded->exp < $currentTime ? 1 : 0;
                 $debugData['time_until_exp'] = $decoded->exp - $currentTime;
@@ -103,22 +103,22 @@ if (!function_exists('auth_validate_request')) {
             // Stage 4: 驗證使用者
             $debugData['stage'] = 'user_validate';
             $debugData['user_id'] = $decoded->user_id;
-            
+
             $userModel = model('UserModel');
             $user = $userModel->find($decoded->user_id);
-            
+
             $debugData['user_exists'] = $user ? 1 : 0;
-            
+
             if (!$user) {
                 $debugData['stage_status'] = 'fail';
                 $debugData['stage_message'] = 'User not found';
                 auth_save_debug_log($debugData, $startTime, $enableDebug);
                 return false;
             }
-            
+
             $debugData['user_is_active'] = $user['is_active'] ?? 0;
             $debugData['user_role'] = $user['role'] ?? null;
-            
+
             if (!$user['is_active']) {
                 $debugData['stage_status'] = 'fail';
                 $debugData['stage_message'] = 'User is inactive';
@@ -130,13 +130,13 @@ if (!function_exists('auth_validate_request')) {
             if (isset($decoded->session_id)) {
                 $sessionModel = model('UserSessionModel');
                 $session = $sessionModel->find($decoded->session_id);
-                
+
                 $debugData['session_exists'] = $session ? 1 : 0;
-                
+
                 if ($session) {
                     $debugData['session_is_expired'] = ($session['is_expired'] ?? 0) == 1 ? 1 : 0;
                     $debugData['session_logged_out'] = !empty($session['logged_out_at']) ? 1 : 0;
-                    
+
                     if ($session['is_expired'] || !empty($session['logged_out_at'])) {
                         $debugData['stage'] = 'user_validate';
                         $debugData['stage_status'] = 'fail';
@@ -144,7 +144,7 @@ if (!function_exists('auth_validate_request')) {
                         auth_save_debug_log($debugData, $startTime, $enableDebug);
                         return false;
                     }
-                    
+
                     // 更新最後活動時間
                     $sessionModel->updateActivity($decoded->session_id);
                 }
@@ -154,7 +154,7 @@ if (!function_exists('auth_validate_request')) {
             if (!empty($requiredRoles)) {
                 $debugData['stage'] = 'permission_check';
                 $debugData['role_check_passed'] = in_array($user['role'], $requiredRoles) ? 1 : 0;
-                
+
                 if (!in_array($user['role'], $requiredRoles)) {
                     $debugData['stage_status'] = 'fail';
                     $debugData['stage_message'] = sprintf(
@@ -172,9 +172,8 @@ if (!function_exists('auth_validate_request')) {
             $debugData['stage_status'] = 'pass';
             $debugData['stage_message'] = 'Authentication successful';
             auth_save_debug_log($debugData, $startTime, $enableDebug);
-            
-            return $user;
 
+            return $user;
         } catch (\Firebase\JWT\ExpiredException $e) {
             $debugData['stage'] = 'token_decode';
             $debugData['stage_status'] = 'fail';
@@ -187,7 +186,6 @@ if (!function_exists('auth_validate_request')) {
             }
             auth_save_debug_log($debugData, $startTime, $enableDebug);
             return false;
-            
         } catch (\Firebase\JWT\SignatureInvalidException $e) {
             $debugData['stage'] = 'signature_verify';
             $debugData['stage_status'] = 'fail';
@@ -200,7 +198,6 @@ if (!function_exists('auth_validate_request')) {
             }
             auth_save_debug_log($debugData, $startTime, $enableDebug);
             return false;
-            
         } catch (\Firebase\JWT\BeforeValidException $e) {
             $debugData['stage'] = 'claims_validate';
             $debugData['stage_status'] = 'fail';
@@ -212,7 +209,6 @@ if (!function_exists('auth_validate_request')) {
             }
             auth_save_debug_log($debugData, $startTime, $enableDebug);
             return false;
-            
         } catch (\Exception $e) {
             $debugData['stage'] = $debugData['stage'] ?? 'token_decode';
             $debugData['stage_status'] = 'error';
@@ -242,10 +238,10 @@ if (!function_exists('auth_save_debug_log')) {
         if (!$enableDebug) {
             return;
         }
-        
+
         $debugData['validation_time_ms'] = (microtime(true) - $startTime) * 1000;
         $debugData['created_at'] = date('Y-m-d H:i:s');
-        
+
         try {
             $db = \Config\Database::connect();
             $db->table('jwt_debug_logs')->insert($debugData);
@@ -291,6 +287,9 @@ if (!function_exists('auth_generate_token')) {
             'exp' => $now + $jwtConfig->expiry,
             'user_id' => $user['id'],
             'role' => $user['role'],
+            'user_type' => $user['user_type'] ?? 'general',
+            'is_company_manager' => $user['is_company_manager'] ?? 0,
+            'company_id' => $user['company_id'] ?? null,
             'urban_renewal_id' => $user['urban_renewal_id'],
             'property_owner_id' => $user['property_owner_id'] ?? null
         ];

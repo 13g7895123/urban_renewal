@@ -654,8 +654,9 @@ class AuthController extends ResourceController
             'user_id' => $user['id'],
             'username' => $user['username'],
             'role' => $user['role'],
-            // 管理員的 urban_renewal_id 為 null，允許存取所有資源
-            // 一般使用者只能存取其指派的 urban_renewal_id 資源
+            'user_type' => $user['user_type'] ?? 'general',
+            'is_company_manager' => $user['is_company_manager'] ?? 0,
+            'company_id' => $user['company_id'] ?? null,
             'urban_renewal_id' => $user['urban_renewal_id']
         ];
 
