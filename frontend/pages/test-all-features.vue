@@ -1709,7 +1709,8 @@
 import { ref, computed } from 'vue'
 
 definePageMeta({
-  layout: false
+  layout: false,
+  middleware: [] // 明確設定不需要任何 middleware，允許未登入訪問
 })
 
 // State
