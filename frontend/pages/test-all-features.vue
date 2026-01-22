@@ -1696,11 +1696,21 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeMount } from 'vue'
 
 definePageMeta({
   layout: false,
   middleware: [] // 明確設定不需要任何 middleware，允許未登入訪問
+})
+
+// 在組件掛載前停止 auth store 的自動初始化
+onBeforeMount(() => {
+  if (process.client) {
+    // 清除任何正在進行的認證請求
+    const authStore = useAuthStore()
+    authStore.clearLocalState()
+    console.log('[Test Page] Auth auto-initialization disabled')
+  }
 })
 
 // State
