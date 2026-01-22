@@ -686,7 +686,7 @@
             title="批次報到"
             :fields="[
               { name: 'meeting_id', label: '會議ID', type: 'number', value: '1', required: true },
-              { name: 'attendances', label: '報到資料 (JSON)', type: 'textarea', value: '[{"property_owner_id":1,"attendance_type":"present"}]', required: true }
+              { name: 'attendances', label: '報到資料 (JSON)', type: 'textarea', value: '[{&quot;property_owner_id&quot;:1,&quot;attendance_type&quot;:&quot;present&quot;}]', required: true }
             ]"
             method="POST"
             endpoint="/api/meetings/{meeting_id}/attendances/batch"
@@ -858,7 +858,7 @@
           <FeatureTest
             title="批次投票"
             :fields="[
-              { name: 'votes', label: '投票資料 (JSON)', type: 'textarea', value: '[{"voting_topic_id":1,"property_owner_id":1,"vote_choice":"agree"}]', required: true }
+              { name: 'votes', label: '投票資料 (JSON)', type: 'textarea', value: '[{&quot;voting_topic_id&quot;:1,&quot;property_owner_id&quot;:1,&quot;vote_choice&quot;:&quot;agree&quot;}]', required: true }
             ]"
             method="POST"
             endpoint="/api/voting/batch-vote"
@@ -1576,7 +1576,7 @@
           <FeatureTest
             title="批次設定"
             :fields="[
-              { name: 'settings', label: '設定資料 (JSON)', type: 'textarea', value: '{"site_name":"系統","max_upload_size":"10"}', required: true }
+              { name: 'settings', label: '設定資料 (JSON)', type: 'textarea', value: '{&quot;site_name&quot;:&quot;系統&quot;,&quot;max_upload_size&quot;:&quot;10&quot;}', required: true }
             ]"
             method="POST"
             endpoint="/api/system-settings/batch-set"
