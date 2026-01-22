@@ -1,8 +1,7 @@
 <template>
-  <ClientOnly>
-    <div class="min-h-screen bg-gray-50">
-      <!-- Header -->
-      <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 shadow-lg sticky top-0 z-50">
+  <div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 shadow-lg sticky top-0 z-50">
       <div class="container mx-auto">
         <h1 class="text-3xl font-bold mb-2">🧪 系統功能完整測試頁面</h1>
         <p class="text-blue-100">都市更新會管理系統 - 所有功能測試介面</p>
@@ -1694,19 +1693,10 @@
       </div>
     </div>
   </div>
-  <template #fallback>
-    <div class="min-h-screen flex items-center justify-center bg-gray-50">
-      <div class="text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p class="text-gray-600">載入測試頁面中...</p>
-      </div>
-    </div>
-  </template>
-</ClientOnly>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 
 definePageMeta({
   layout: false,
