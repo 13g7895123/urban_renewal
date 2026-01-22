@@ -168,7 +168,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 
 const props = defineProps({
   title: {
@@ -200,10 +200,13 @@ const isLoading = ref(false)
 const testResult = ref(null)
 const showFullResponse = ref(false)
 
-// Initialize form data with default values
+// Initialize form data with default values - use onMounted to avoid hydration issues
 const formData = reactive({})
-props.fields.forEach(field => {
-  formData[field.name] = field.value || ''
+
+onMounted(() => {
+  props.fields.forEach(field => {
+    formData[field.name] = field.value || ''
+  })
 })
 
 const toggleExpand = () => {
