@@ -2,11 +2,15 @@
 
 # 測試執行腳本
 # 用法:
-#   ./test.sh frontend  - 執行前端測試
-#   ./test.sh backend   - 執行後端測試
-#   ./test.sh all       - 執行所有測試
+#   ./scripts/test.sh frontend  - 執行前端測試
+#   ./scripts/test.sh backend   - 執行後端測試
+#   ./scripts/test.sh all       - 執行所有測試
 
 set -e
+
+# 獲取專案根目錄（腳本所在目錄的上一層）
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # 顏色輸出
 RED='\033[0;31m'
@@ -20,9 +24,9 @@ show_usage() {
     echo -e "${BLUE}測試執行腳本${NC}"
     echo ""
     echo "用法:"
-    echo "  ./test.sh frontend    執行前端測試"
-    echo "  ./test.sh backend     執行後端測試"
-    echo "  ./test.sh all         執行所有測試"
+    echo "  ./scripts/test.sh frontend    執行前端測試"
+    echo "  ./scripts/test.sh backend     執行後端測試"
+    echo "  ./scripts/test.sh all         執行所有測試"
     echo ""
 }
 
@@ -33,7 +37,7 @@ run_frontend_tests() {
     echo -e "${BLUE}========================================${NC}"
     echo ""
     
-    cd frontend
+    cd "$PROJECT_ROOT/frontend"
     
     # 檢查 node_modules 是否存在
     if [ ! -d "node_modules" ]; then
@@ -46,7 +50,7 @@ run_frontend_tests() {
     npm run test:run
     
     local exit_code=$?
-    cd ..
+    cd "$PROJECT_ROOT"
     
     if [ $exit_code -eq 0 ]; then
         echo -e "${GREEN}✓ 前端測試通過${NC}"
@@ -88,7 +92,7 @@ run_backend_tests() {
         
     else
         echo -e "${GREEN}在本地執行測試...${NC}"
-        cd backend
+        cd "$PROJECT_ROOT/backend"
         
         # 檢查 vendor 是否存在
         if [ ! -d "vendor" ]; then
@@ -99,7 +103,7 @@ run_backend_tests() {
         # 執行測試
         ./vendor/bin/phpunit
         local exit_code=$?
-        cd ..
+        cd "$PROJECT_ROOT"
     fi
     
     if [ $exit_code -eq 0 ]; then

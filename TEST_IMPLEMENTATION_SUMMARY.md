@@ -143,7 +143,7 @@
 
 ## 如何執行測試
 
-### 後端測試
+### 後端
 ```bash
 # 進入後端目錄
 cd backend
@@ -160,6 +160,9 @@ cd backend
 
 # 生成覆蓋率報告
 ./vendor/bin/phpunit --coverage-html build/coverage
+
+# 或使用測試腳本（推薦）
+./scripts/test.sh backend
 ```
 
 ### 前端測試
@@ -175,6 +178,15 @@ npm run test:run
 
 # 生成覆蓋率報告
 npm run test:coverage
+
+# 或使用測試腳本（推薦）
+./scripts/test.sh frontend
+```
+
+### 執行所有測試
+```bash
+# 從專案根目錄
+./scripts/test.sh all
 ```
 
 ---

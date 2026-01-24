@@ -208,7 +208,7 @@ Duration  463ms
 
 ## Docker 環境特殊處理
 
-test.sh 腳本已針對 Docker 環境優化：
+scripts/test.sh 腳本已針對 Docker 環境優化：
 
 1. **自動檢測 Docker 容器**
    - 檢測 `urban_renewal_dev-backend-1` 容器是否運行
@@ -253,7 +253,7 @@ test.sh 腳本已針對 Docker 環境優化：
 ## 文件清單
 
 ### 新建文件
-- ✅ `test.sh` - 測試執行腳本
+- ✅ `scripts/test.sh` - 測試執行腳本
 - ✅ `backend/tests/Support/ApiTestCase.php` - API 測試基類
 - ✅ `backend/tests/Unit/Services/AuthorizationServiceTest.php` - 通過 25 個測試
 - ✅ `frontend/tests/utils/test-helpers.ts` - 測試輔助函數
@@ -282,4 +282,4 @@ test.sh 腳本已針對 Docker 環境優化：
 - ✅ 前端 35 個測試通過
 - ⚠️ 部分需要資料庫的測試需要進一步配置
 
-測試腳本已可正常使用，可透過 `./test.sh frontend` 和 `./test.sh backend` 分別執行前後端測試。
+測試腳本已可正常使用，可透過 `./scripts/test.sh frontend` 和 `./scripts/test.sh backend` 分別執行前後端測試。
