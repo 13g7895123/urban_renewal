@@ -23,8 +23,14 @@
         </report>
     </coverage>
     <testsuites>
-        <testsuite name="App">
-            <directory>./tests</directory>
+        <testsuite name="Unit">
+            <directory>./tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>./tests/Feature</directory>
+        </testsuite>
+        <testsuite name="Legacy">
+            <directory>./tests/app</directory>
         </testsuite>
     </testsuites>
     <logging>

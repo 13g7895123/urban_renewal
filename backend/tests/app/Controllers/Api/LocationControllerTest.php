@@ -627,7 +627,7 @@ class LocationControllerTest extends DatabaseTestCase
     public function test_location_endpoints_with_special_characters(): void
     {
         // Test with special characters that might cause issues
-        $specialCodes = ['<script>', ''; DROP TABLE counties; --', '../../../etc/passwd'];
+        $specialCodes = ['<script>', '\'; DROP TABLE counties; --', '../../../etc/passwd'];
 
         foreach ($specialCodes as $code) {
             $result = $this->get("/api/locations/districts/" . urlencode($code));

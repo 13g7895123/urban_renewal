@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="CLI Arguments" tests="21" assertions="0" errors="21" failures="0" skipped="0" time="0.000000">
+    <testsuite name="Tests\Unit\Models\AuthenticationEventModelTest" file="/var/www/html/tests/Unit/Models/AuthenticationEventModelTest.php" tests="7" assertions="0" errors="7" failures="0" skipped="0" time="0.000000">
+      <testcase name="testGetFailedLoginsByIPReturnsCorrectCount" file="/var/www/html/tests/Unit/Models/AuthenticationEventModelTest.php" line="52" class="Tests\Unit\Models\AuthenticationEventModelTest" classname="Tests.Unit.Models.AuthenticationEventModelTest" assertions="0" time="0.000000">
+        <error type="CodeIgniter\Database\Exceptions\DatabaseException">Tests\Unit\Models\AuthenticationEventModelTest::testGetFailedLoginsByIPReturnsCorrectCount
+CodeIgniter\Database\Exceptions\DatabaseException: Unable to prepare statement: 1, no such table: db_users
+
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseConnection.php:684
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseBuilder.php:1649
+/var/www/html/vendor/codeigniter4/framework/system/Validation/Rules.php:175
+/var/www/html/vendor/codeigniter4/framework/system/Validation/StrictRules/Rules.php:187
+/var/www/html/vendor/codeigniter4/framework/system/Validation/Validation.php:336
+/var/www/html/vendor/codeigniter4/framework/system/Validation/Validation.php:201
+/var/www/html/vendor/codeigniter4/framework/system/BaseModel.php:1570
+/var/www/html/vendor/codeigniter4/framework/system/BaseModel.php:807
+/var/www/html/vendor/codeigniter4/framework/system/Model.php:797
+/var/www/html/tests/Unit/Models/AuthenticationEventModelTest.php:30</error>
+      </testcase>
+      <testcase name="testGetFailedLoginsByIPIgnoresSuccessfulLogins" file="/var/www/html/tests/Unit/Models/AuthenticationEventModelTest.php" line="78" class="Tests\Unit\Models\AuthenticationEventModelTest" classname="Tests.Unit.Models.AuthenticationEventModelTest" assertions="0" time="0.000000">
+        <error type="CodeIgniter\Database\Exceptions\DatabaseException">Tests\Unit\Models\AuthenticationEventModelTest::testGetFailedLoginsByIPIgnoresSuccessfulLogins
+CodeIgniter\Database\Exceptions\DatabaseException: Unable to prepare statement: 1, no such table: db_users
+
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseConnection.php:684
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseBuilder.php:1649
+/var/www/html/vendor/codeigniter4/framework/system/Validation/Rules.php:175
+/var/www/html/vendor/codeigniter4/framework/system/Validation/StrictRules/Rules.php:187
+/var/www/html/vendor/codeigniter4/framework/system/Validation/Validation.php:336
+/var/www/html/vendor/codeigniter4/framework/system/Validation/Validation.php:201
+/var/www/html/vendor/codeigniter4/framework/system/BaseModel.php:1570
+/var/www/html/vendor/codeigniter4/framework/system/BaseModel.php:807
+/var/www/html/vendor/codeigniter4/framework/system/Model.php:797
+/var/www/html/tests/Unit/Models/AuthenticationEventModelTest.php:30</error>
+      </testcase>
+      <testcase name="testGetUserAuthHistoryReturnsRecentEvents" file="/var/www/html/tests/Unit/Models/AuthenticationEventModelTest.php" line="108" class="Tests\Unit\Models\AuthenticationEventModelTest" classname="Tests.Unit.Models.AuthenticationEventModelTest" assertions="0" time="0.000000">
+        <error type="CodeIgniter\Database\Exceptions\DatabaseException">Tests\Unit\Models\AuthenticationEventModelTest::testGetUserAuthHistoryReturnsRecentEvents
+CodeIgniter\Database\Exceptions\DatabaseException: Unable to prepare statement: 1, no such table: db_users
+
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseConnection.php:684
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseBuilder.php:1649
+/var/www/html/vendor/codeigniter4/framework/system/Validation/Rules.php:175
+/var/www/html/vendor/codeigniter4/framework/system/Validation/StrictRules/Rules.php:187
+/var/www/html/vendor/codeigniter4/framework/system/Validation/Validation.php:336
+/var/www/html/vendor/codeigniter4/framework/system/Validation/Validation.php:201
+/var/www/html/vendor/codeigniter4/framework/system/BaseModel.php:1570
+/var/www/html/vendor/codeigniter4/framework/system/BaseModel.php:807
+/var/www/html/vendor/codeigniter4/framework/system/Model.php:797
+/var/www/html/tests/Unit/Models/AuthenticationEventModelTest.php:30</error>
+      </testcase>
+      <testcase name="testGetUserAuthHistoryRespectsLimit" file="/var/www/html/tests/Unit/Models/AuthenticationEventModelTest.php" line="134" class="Tests\Unit\Models\AuthenticationEventModelTest" classname="Tests.Unit.Models.AuthenticationEventModelTest" assertions="0" time="0.000000">
+        <error type="CodeIgniter\Database\Exceptions\DatabaseException">Tests\Unit\Models\AuthenticationEventModelTest::testGetUserAuthHistoryRespectsLimit
+CodeIgniter\Database\Exceptions\DatabaseException: Unable to prepare statement: 1, no such table: db_users
+
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseConnection.php:684
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseBuilder.php:1649
+/var/www/html/vendor/codeigniter4/framework/system/Validation/Rules.php:175
+/var/www/html/vendor/codeigniter4/framework/system/Validation/StrictRules/Rules.php:187
+/var/www/html/vendor/codeigniter4/framework/system/Validation/Validation.php:336
+/var/www/html/vendor/codeigniter4/framework/system/Validation/Validation.php:201
+/var/www/html/vendor/codeigniter4/framework/system/BaseModel.php:1570
+/var/www/html/vendor/codeigniter4/framework/system/BaseModel.php:807
+/var/www/html/vendor/codeigniter4/framework/system/Model.php:797
+/var/www/html/tests/Unit/Models/AuthenticationEventModelTest.php:30</error>
+      </testcase>
+      <testcase name="testDeleteOldEventsRemovesExpiredRecords" file="/var/www/html/tests/Unit/Models/AuthenticationEventModelTest.php" line="151" class="Tests\Unit\Models\AuthenticationEventModelTest" classname="Tests.Unit.Models.AuthenticationEventModelTest" assertions="0" time="0.000000">
+        <error type="CodeIgniter\Database\Exceptions\DatabaseException">Tests\Unit\Models\AuthenticationEventModelTest::testDeleteOldEventsRemovesExpiredRecords
+CodeIgniter\Database\Exceptions\DatabaseException: Unable to prepare statement: 1, no such table: db_users
+
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseConnection.php:684
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseBuilder.php:1649
+/var/www/html/vendor/codeigniter4/framework/system/Validation/Rules.php:175
+/var/www/html/vendor/codeigniter4/framework/system/Validation/StrictRules/Rules.php:187
+/var/www/html/vendor/codeigniter4/framework/system/Validation/Validation.php:336
+/var/www/html/vendor/codeigniter4/framework/system/Validation/Validation.php:201
+/var/www/html/vendor/codeigniter4/framework/system/BaseModel.php:1570
+/var/www/html/vendor/codeigniter4/framework/system/BaseModel.php:807
+/var/www/html/vendor/codeigniter4/framework/system/Model.php:797
+/var/www/html/tests/Unit/Models/AuthenticationEventModelTest.php:30</error>
+      </testcase>
+      <testcase name="testGetEventStatsReturnsCorrectCounts" file="/var/www/html/tests/Unit/Models/AuthenticationEventModelTest.php" line="185" class="Tests\Unit\Models\AuthenticationEventModelTest" classname="Tests.Unit.Models.AuthenticationEventModelTest" assertions="0" time="0.000000">
+        <error type="CodeIgniter\Database\Exceptions\DatabaseException">Tests\Unit\Models\AuthenticationEventModelTest::testGetEventStatsReturnsCorrectCounts
+CodeIgniter\Database\Exceptions\DatabaseException: Unable to prepare statement: 1, no such table: db_users
+
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseConnection.php:684
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseBuilder.php:1649
+/var/www/html/vendor/codeigniter4/framework/system/Validation/Rules.php:175
+/var/www/html/vendor/codeigniter4/framework/system/Validation/StrictRules/Rules.php:187
+/var/www/html/vendor/codeigniter4/framework/system/Validation/Validation.php:336
+/var/www/html/vendor/codeigniter4/framework/system/Validation/Validation.php:201
+/var/www/html/vendor/codeigniter4/framework/system/BaseModel.php:1570
+/var/www/html/vendor/codeigniter4/framework/system/BaseModel.php:807
+/var/www/html/vendor/codeigniter4/framework/system/Model.php:797
+/var/www/html/tests/Unit/Models/AuthenticationEventModelTest.php:30</error>
+      </testcase>
+      <testcase name="testGetEventStatsFiltersByEventType" file="/var/www/html/tests/Unit/Models/AuthenticationEventModelTest.php" line="220" class="Tests\Unit\Models\AuthenticationEventModelTest" classname="Tests.Unit.Models.AuthenticationEventModelTest" assertions="0" time="0.000000">
+        <error type="CodeIgniter\Database\Exceptions\DatabaseException">Tests\Unit\Models\AuthenticationEventModelTest::testGetEventStatsFiltersByEventType
+CodeIgniter\Database\Exceptions\DatabaseException: Unable to prepare statement: 1, no such table: db_users
+
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseConnection.php:684
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseBuilder.php:1649
+/var/www/html/vendor/codeigniter4/framework/system/Validation/Rules.php:175
+/var/www/html/vendor/codeigniter4/framework/system/Validation/StrictRules/Rules.php:187
+/var/www/html/vendor/codeigniter4/framework/system/Validation/Validation.php:336
+/var/www/html/vendor/codeigniter4/framework/system/Validation/Validation.php:201
+/var/www/html/vendor/codeigniter4/framework/system/BaseModel.php:1570
+/var/www/html/vendor/codeigniter4/framework/system/BaseModel.php:807
+/var/www/html/vendor/codeigniter4/framework/system/Model.php:797
+/var/www/html/tests/Unit/Models/AuthenticationEventModelTest.php:30</error>
+      </testcase>
+    </testsuite>
+    <testsuite name="Tests\Unit\Models\MeetingModelTest" file="/var/www/html/tests/Unit/Models/MeetingModelTest.php" tests="3" assertions="0" errors="3" failures="0" skipped="0" time="0.000000">
+      <testcase name="testCreateMeetingWithValidData" file="/var/www/html/tests/Unit/Models/MeetingModelTest.php" line="21" class="Tests\Unit\Models\MeetingModelTest" classname="Tests.Unit.Models.MeetingModelTest" assertions="0" time="0.000000">
+        <error type="CodeIgniter\Database\Exceptions\DatabaseException">Tests\Unit\Models\MeetingModelTest::testCreateMeetingWithValidData
+CodeIgniter\Database\Exceptions\DatabaseException: index idx_urban_renewal_id already exists
+
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseConnection.php:684
+/var/www/html/vendor/codeigniter4/framework/system/Database/Forge.php:578
+/var/www/html/app/Database/Migrations/2025-01-01-000005_CreateBuildingsTable.php:82
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:876
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:182
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:175
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:120
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:60
+/var/www/html/vendor/codeigniter4/framework/system/Test/CIUnitTestCase.php:251
+/var/www/html/tests/Unit/Models/MeetingModelTest.php:16</error>
+      </testcase>
+      <testcase name="testGetUpcomingMeetings" file="/var/www/html/tests/Unit/Models/MeetingModelTest.php" line="49" class="Tests\Unit\Models\MeetingModelTest" classname="Tests.Unit.Models.MeetingModelTest" assertions="0" time="0.000000">
+        <error type="CodeIgniter\Database\Exceptions\DatabaseException">Tests\Unit\Models\MeetingModelTest::testGetUpcomingMeetings
+CodeIgniter\Database\Exceptions\DatabaseException: table `db_buildings` already exists
+
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseConnection.php:684
+/var/www/html/vendor/codeigniter4/framework/system/Database/Forge.php:570
+/var/www/html/app/Database/Migrations/2025-01-01-000005_CreateBuildingsTable.php:82
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:876
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:182
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:175
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:120
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:60
+/var/www/html/vendor/codeigniter4/framework/system/Test/CIUnitTestCase.php:251
+/var/www/html/tests/Unit/Models/MeetingModelTest.php:16</error>
+      </testcase>
+      <testcase name="testUpdateMeetingStatus" file="/var/www/html/tests/Unit/Models/MeetingModelTest.php" line="82" class="Tests\Unit\Models\MeetingModelTest" classname="Tests.Unit.Models.MeetingModelTest" assertions="0" time="0.000000">
+        <error type="CodeIgniter\Database\Exceptions\DatabaseException">Tests\Unit\Models\MeetingModelTest::testUpdateMeetingStatus
+CodeIgniter\Database\Exceptions\DatabaseException: table `db_buildings` already exists
+
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseConnection.php:684
+/var/www/html/vendor/codeigniter4/framework/system/Database/Forge.php:570
+/var/www/html/app/Database/Migrations/2025-01-01-000005_CreateBuildingsTable.php:82
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:876
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:182
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:175
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:120
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:60
+/var/www/html/vendor/codeigniter4/framework/system/Test/CIUnitTestCase.php:251
+/var/www/html/tests/Unit/Models/MeetingModelTest.php:16</error>
+      </testcase>
+    </testsuite>
+    <testsuite name="Tests\Unit\Models\UserModelTest" file="/var/www/html/tests/Unit/Models/UserModelTest.php" tests="6" assertions="0" errors="6" failures="0" skipped="0" time="0.000000">
+      <testcase name="testCreateUserWithValidData" file="/var/www/html/tests/Unit/Models/UserModelTest.php" line="18" class="Tests\Unit\Models\UserModelTest" classname="Tests.Unit.Models.UserModelTest" assertions="0" time="0.000000">
+        <error type="CodeIgniter\Database\Exceptions\DatabaseException">Tests\Unit\Models\UserModelTest::testCreateUserWithValidData
+CodeIgniter\Database\Exceptions\DatabaseException: table `db_buildings` already exists
+
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseConnection.php:684
+/var/www/html/vendor/codeigniter4/framework/system/Database/Forge.php:570
+/var/www/html/app/Database/Migrations/2025-01-01-000005_CreateBuildingsTable.php:82
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:876
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:182
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:175
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:120
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:60
+/var/www/html/vendor/codeigniter4/framework/system/Test/CIUnitTestCase.php:251
+/var/www/html/tests/Unit/Models/UserModelTest.php:14</error>
+      </testcase>
+      <testcase name="testEmailMustBeUnique" file="/var/www/html/tests/Unit/Models/UserModelTest.php" line="40" class="Tests\Unit\Models\UserModelTest" classname="Tests.Unit.Models.UserModelTest" assertions="0" time="0.000000">
+        <error type="CodeIgniter\Database\Exceptions\DatabaseException">Tests\Unit\Models\UserModelTest::testEmailMustBeUnique
+CodeIgniter\Database\Exceptions\DatabaseException: table `db_buildings` already exists
+
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseConnection.php:684
+/var/www/html/vendor/codeigniter4/framework/system/Database/Forge.php:570
+/var/www/html/app/Database/Migrations/2025-01-01-000005_CreateBuildingsTable.php:82
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:876
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:182
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:175
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:120
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:60
+/var/www/html/vendor/codeigniter4/framework/system/Test/CIUnitTestCase.php:251
+/var/www/html/tests/Unit/Models/UserModelTest.php:14</error>
+      </testcase>
+      <testcase name="testUsernameMustBeUnique" file="/var/www/html/tests/Unit/Models/UserModelTest.php" line="57" class="Tests\Unit\Models\UserModelTest" classname="Tests.Unit.Models.UserModelTest" assertions="0" time="0.000000">
+        <error type="CodeIgniter\Database\Exceptions\DatabaseException">Tests\Unit\Models\UserModelTest::testUsernameMustBeUnique
+CodeIgniter\Database\Exceptions\DatabaseException: table `db_buildings` already exists
+
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseConnection.php:684
+/var/www/html/vendor/codeigniter4/framework/system/Database/Forge.php:570
+/var/www/html/app/Database/Migrations/2025-01-01-000005_CreateBuildingsTable.php:82
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:876
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:182
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:175
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:120
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:60
+/var/www/html/vendor/codeigniter4/framework/system/Test/CIUnitTestCase.php:251
+/var/www/html/tests/Unit/Models/UserModelTest.php:14</error>
+      </testcase>
+      <testcase name="testFindActiveUsers" file="/var/www/html/tests/Unit/Models/UserModelTest.php" line="71" class="Tests\Unit\Models\UserModelTest" classname="Tests.Unit.Models.UserModelTest" assertions="0" time="0.000000">
+        <error type="CodeIgniter\Database\Exceptions\DatabaseException">Tests\Unit\Models\UserModelTest::testFindActiveUsers
+CodeIgniter\Database\Exceptions\DatabaseException: table `db_buildings` already exists
+
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseConnection.php:684
+/var/www/html/vendor/codeigniter4/framework/system/Database/Forge.php:570
+/var/www/html/app/Database/Migrations/2025-01-01-000005_CreateBuildingsTable.php:82
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:876
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:182
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:175
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:120
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:60
+/var/www/html/vendor/codeigniter4/framework/system/Test/CIUnitTestCase.php:251
+/var/www/html/tests/Unit/Models/UserModelTest.php:14</error>
+      </testcase>
+      <testcase name="testSoftDelete" file="/var/www/html/tests/Unit/Models/UserModelTest.php" line="81" class="Tests\Unit\Models\UserModelTest" classname="Tests.Unit.Models.UserModelTest" assertions="0" time="0.000000">
+        <error type="CodeIgniter\Database\Exceptions\DatabaseException">Tests\Unit\Models\UserModelTest::testSoftDelete
+CodeIgniter\Database\Exceptions\DatabaseException: table `db_buildings` already exists
+
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseConnection.php:684
+/var/www/html/vendor/codeigniter4/framework/system/Database/Forge.php:570
+/var/www/html/app/Database/Migrations/2025-01-01-000005_CreateBuildingsTable.php:82
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:876
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:182
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:175
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:120
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:60
+/var/www/html/vendor/codeigniter4/framework/system/Test/CIUnitTestCase.php:251
+/var/www/html/tests/Unit/Models/UserModelTest.php:14</error>
+      </testcase>
+      <testcase name="testUpdateUser" file="/var/www/html/tests/Unit/Models/UserModelTest.php" line="98" class="Tests\Unit\Models\UserModelTest" classname="Tests.Unit.Models.UserModelTest" assertions="0" time="0.000000">
+        <error type="CodeIgniter\Database\Exceptions\DatabaseException">Tests\Unit\Models\UserModelTest::testUpdateUser
+CodeIgniter\Database\Exceptions\DatabaseException: table `db_buildings` already exists
+
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseConnection.php:684
+/var/www/html/vendor/codeigniter4/framework/system/Database/Forge.php:570
+/var/www/html/app/Database/Migrations/2025-01-01-000005_CreateBuildingsTable.php:82
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:876
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:182
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:175
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:120
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:60
+/var/www/html/vendor/codeigniter4/framework/system/Test/CIUnitTestCase.php:251
+/var/www/html/tests/Unit/Models/UserModelTest.php:14</error>
+      </testcase>
+    </testsuite>
+    <testsuite name="Tests\Unit\Models\VotingRecordModelTest" file="/var/www/html/tests/Unit/Models/VotingRecordModelTest.php" tests="5" assertions="0" errors="5" failures="0" skipped="0" time="0.000000">
+      <testcase name="testCastVoteCreatesNewRecord" file="/var/www/html/tests/Unit/Models/VotingRecordModelTest.php" line="30" class="Tests\Unit\Models\VotingRecordModelTest" classname="Tests.Unit.Models.VotingRecordModelTest" assertions="0" time="0.000000">
+        <error type="CodeIgniter\Database\Exceptions\DatabaseException">Tests\Unit\Models\VotingRecordModelTest::testCastVoteCreatesNewRecord
+CodeIgniter\Database\Exceptions\DatabaseException: table `db_buildings` already exists
+
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseConnection.php:684
+/var/www/html/vendor/codeigniter4/framework/system/Database/Forge.php:570
+/var/www/html/app/Database/Migrations/2025-01-01-000005_CreateBuildingsTable.php:82
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:876
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:182
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:175
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:120
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:60
+/var/www/html/vendor/codeigniter4/framework/system/Test/CIUnitTestCase.php:251
+/var/www/html/tests/Unit/Models/VotingRecordModelTest.php:22</error>
+      </testcase>
+      <testcase name="testCannotVoteTwiceForSameTopic" file="/var/www/html/tests/Unit/Models/VotingRecordModelTest.php" line="85" class="Tests\Unit\Models\VotingRecordModelTest" classname="Tests.Unit.Models.VotingRecordModelTest" assertions="0" time="0.000000">
+        <error type="CodeIgniter\Database\Exceptions\DatabaseException">Tests\Unit\Models\VotingRecordModelTest::testCannotVoteTwiceForSameTopic
+CodeIgniter\Database\Exceptions\DatabaseException: table `db_buildings` already exists
+
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseConnection.php:684
+/var/www/html/vendor/codeigniter4/framework/system/Database/Forge.php:570
+/var/www/html/app/Database/Migrations/2025-01-01-000005_CreateBuildingsTable.php:82
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:876
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:182
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:175
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:120
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:60
+/var/www/html/vendor/codeigniter4/framework/system/Test/CIUnitTestCase.php:251
+/var/www/html/tests/Unit/Models/VotingRecordModelTest.php:22</error>
+      </testcase>
+      <testcase name="testHasVotedReturnsTrueWhenVoted" file="/var/www/html/tests/Unit/Models/VotingRecordModelTest.php" line="135" class="Tests\Unit\Models\VotingRecordModelTest" classname="Tests.Unit.Models.VotingRecordModelTest" assertions="0" time="0.000000">
+        <error type="CodeIgniter\Database\Exceptions\DatabaseException">Tests\Unit\Models\VotingRecordModelTest::testHasVotedReturnsTrueWhenVoted
+CodeIgniter\Database\Exceptions\DatabaseException: table `db_buildings` already exists
+
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseConnection.php:684
+/var/www/html/vendor/codeigniter4/framework/system/Database/Forge.php:570
+/var/www/html/app/Database/Migrations/2025-01-01-000005_CreateBuildingsTable.php:82
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:876
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:182
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:175
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:120
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:60
+/var/www/html/vendor/codeigniter4/framework/system/Test/CIUnitTestCase.php:251
+/var/www/html/tests/Unit/Models/VotingRecordModelTest.php:22</error>
+      </testcase>
+      <testcase name="testRemoveVoteDeletesRecord" file="/var/www/html/tests/Unit/Models/VotingRecordModelTest.php" line="177" class="Tests\Unit\Models\VotingRecordModelTest" classname="Tests.Unit.Models.VotingRecordModelTest" assertions="0" time="0.000000">
+        <error type="CodeIgniter\Database\Exceptions\DatabaseException">Tests\Unit\Models\VotingRecordModelTest::testRemoveVoteDeletesRecord
+CodeIgniter\Database\Exceptions\DatabaseException: table `db_buildings` already exists
+
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseConnection.php:684
+/var/www/html/vendor/codeigniter4/framework/system/Database/Forge.php:570
+/var/www/html/app/Database/Migrations/2025-01-01-000005_CreateBuildingsTable.php:82
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:876
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:182
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:175
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:120
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:60
+/var/www/html/vendor/codeigniter4/framework/system/Test/CIUnitTestCase.php:251
+/var/www/html/tests/Unit/Models/VotingRecordModelTest.php:22</error>
+      </testcase>
+      <testcase name="testGetUserVoteReturnsCorrectRecord" file="/var/www/html/tests/Unit/Models/VotingRecordModelTest.php" line="221" class="Tests\Unit\Models\VotingRecordModelTest" classname="Tests.Unit.Models.VotingRecordModelTest" assertions="0" time="0.000000">
+        <error type="CodeIgniter\Database\Exceptions\DatabaseException">Tests\Unit\Models\VotingRecordModelTest::testGetUserVoteReturnsCorrectRecord
+CodeIgniter\Database\Exceptions\DatabaseException: table `db_buildings` already exists
+
+/var/www/html/vendor/codeigniter4/framework/system/Database/BaseConnection.php:684
+/var/www/html/vendor/codeigniter4/framework/system/Database/Forge.php:570
+/var/www/html/app/Database/Migrations/2025-01-01-000005_CreateBuildingsTable.php:82
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:876
+/var/www/html/vendor/codeigniter4/framework/system/Database/MigrationRunner.php:182
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:175
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:120
+/var/www/html/vendor/codeigniter4/framework/system/Test/DatabaseTestTrait.php:60
+/var/www/html/vendor/codeigniter4/framework/system/Test/CIUnitTestCase.php:251
+/var/www/html/tests/Unit/Models/VotingRecordModelTest.php:22</error>
+      </testcase>
+    </testsuite>
+  </testsuite>
+</testsuites>

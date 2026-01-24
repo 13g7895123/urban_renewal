@@ -1,0 +1,29 @@
+Authentication Event Model (Tests\Unit\Models\AuthenticationEventModel)
+ [ ] Get failed logins by i p returns correct count
+ [ ] Get failed logins by i p ignores successful logins
+ [ ] Get user auth history returns recent events
+ [ ] Get user auth history respects limit
+ [ ] Delete old events removes expired records
+ [ ] Get event stats returns correct counts
+ [ ] Get event stats filters by event type
+
+Meeting Model (Tests\Unit\Models\MeetingModel)
+ [ ] Create meeting with valid data
+ [ ] Get upcoming meetings
+ [ ] Update meeting status
+
+User Model (Tests\Unit\Models\UserModel)
+ [ ] Create user with valid data
+ [ ] Email must be unique
+ [ ] Username must be unique
+ [ ] Find active users
+ [ ] Soft delete
+ [ ] Update user
+
+Voting Record Model (Tests\Unit\Models\VotingRecordModel)
+ [ ] Cast vote creates new record
+ [ ] Cannot vote twice for same topic
+ [ ] Has voted returns true when voted
+ [ ] Remove vote deletes record
+ [ ] Get user vote returns correct record
+
