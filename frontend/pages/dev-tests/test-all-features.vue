@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 shadow-lg sticky top-0 z-50">
       <div class="container mx-auto">
-        <h1 class="text-3xl font-bold mb-2">🧪 系統功能完整測試頁面</h1>
+        <h1 class="text-3xl font-bold mb-2">🧪 系統功能完整測試頁面 123</h1>
         <p class="text-blue-100">都市更新會管理系統 - 所有功能測試介面</p>
         <div class="mt-4 flex gap-4 items-center flex-wrap">
           <div class="bg-white/20 px-4 py-2 rounded-lg">

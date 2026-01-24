@@ -7,43 +7,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const { useAuthStore } = await import('~/stores/auth')
   const authStore = useAuthStore()
 
-  // 在 SPA 模式下，頁面重整時可能需要等待 Pinia 持久化插件恢復狀態
-  // 如果 store 沒有 token，嘗試從 localStorage (主要) 或 sessionStorage (舊版) 讀取
-  if (!authStore.token && process.client) {
-    const persistedAuth = localStorage.getItem('auth') || sessionStorage.getItem('auth')
-    if (persistedAuth) {
-      try {
-        const authData = JSON.parse(persistedAuth)
-        console.log('[Company Manager Middleware] Restoring auth from storage', {
-          source: localStorage.getItem('auth') ? 'localStorage' : 'sessionStorage'
-        })
-        
-        // 手動恢復狀態
-        if (authData.token) {
-          authStore.token = authData.token
-        }
-        if (authData.user) {
-          authStore.user = authData.user
-        }
-        if (authData.refreshToken) {
-          authStore.refreshToken = authData.refreshToken
-        }
-        if (authData.tokenExpiresAt) {
-          authStore.tokenExpiresAt = authData.tokenExpiresAt
-        }
-      } catch (e) {
-        console.error('[Company Manager Middleware] Failed to parse auth from storage:', e)
-      }
-    }
-  }
-
-  // 檢查是否已登入
+  // 檢查是否已登入（使用 HttpOnly Cookie）
   if (!authStore.isLoggedIn) {
     console.log('[Company Manager Middleware] User not authenticated, redirecting to login')
     return navigateTo('/login')
   }
 
-  // 嘗試驗證token是否仍然有效
+  // 驗證 token 是否仍然有效並獲取用戶資訊
   try {
     // 只有當用戶數據不存在時才重新獲取
     if (!authStore.user) {
@@ -62,3 +32,4 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return navigateTo('/unauthorized')
   }
 })
+

@@ -586,18 +586,4 @@ class PropertyOwnerController extends ResourceController
             return $this->respond(['status' => 'error', 'message' => '匯入失敗：' . $e->getMessage()], 500);
         }
     }
-
-    /**
-     * Handle OPTIONS request for CORS
-     */
-    public function options(): ResponseInterface
-    {
-        $response = $this->response;
-        $response->setHeader('Access-Control-Allow-Origin', '*');
-        $response->setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-        $response->setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-        $response->setStatusCode(200);
-
-        return $response;
-    }
 }

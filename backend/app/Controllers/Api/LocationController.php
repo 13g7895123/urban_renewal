@@ -24,9 +24,6 @@ class LocationController extends ResourceController
         $counties = $countyModel->getCountiesForDropdown();
 
         return $this->response
-            ->setHeader('Access-Control-Allow-Origin', '*')
-            ->setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
-            ->setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
             ->setJSON([
                 'status' => 'success',
                 'data' => $counties
@@ -46,9 +43,6 @@ class LocationController extends ResourceController
         $districts = $districtModel->getByCountyCode($countyCode);
 
         return $this->response
-            ->setHeader('Access-Control-Allow-Origin', '*')
-            ->setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
-            ->setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
             ->setJSON([
                 'status' => 'success',
                 'data' => $districts
@@ -68,9 +62,6 @@ class LocationController extends ResourceController
         $sections = $sectionModel->getByDistrictAndCountyCode($districtCode, $countyCode);
 
         return $this->response
-            ->setHeader('Access-Control-Allow-Origin', '*')
-            ->setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
-            ->setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
             ->setJSON([
                 'status' => 'success',
                 'data' => $sections
@@ -129,16 +120,4 @@ class LocationController extends ResourceController
         ]);
     }
 
-    /**
-     * Handle OPTIONS requests for CORS
-     */
-    public function options()
-    {
-        return $this->response
-            ->setHeader('Access-Control-Allow-Origin', '*')
-            ->setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-            ->setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-            ->setHeader('Access-Control-Max-Age', '86400')
-            ->setStatusCode(200);
-    }
 }

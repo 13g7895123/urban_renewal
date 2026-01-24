@@ -116,23 +116,33 @@ class VotingController extends ResourceController
             $isChairman = $user['role'] === 'chairman';
             $isCompanyManager = isset($user['is_company_manager']) && $user['is_company_manager'] == 1;
             
-            // admin、chairman、企業管理者可以代理投票
-            if (!$isAdmin && !$isChairman && !$isCompanyManager) {
-                // 一般會員只能為自己投票
-                if ($user['role'] === 'member') {
-                    if (($user['property_owner_id'] ?? null) !== $data['property_owner_id']) {
-                        return $this->failForbidden('只能為自己投票');
+            // 取得會議資訊（用於企業權限檢查）
+            $meetingModel = model('MeetingModel');
+            $meeting = $meetingModel->find($topic['meeting_id']);
+            if (!$meeting) {
+                return response_error('找不到相關會議', 404);
+            }
+            
+            // admin 有完整權限
+            if (!$isAdmin) {
+                // chairman、企業管理者需檢查是否為同一個企業
+                if ($isChairman || $isCompanyManager) {
+                    helper('auth');
+                    if (!auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
+                        return $this->failForbidden('無權限在此議題投票');
                     }
                 } else {
-                    return $this->failForbidden('無權限在此議題投票');
-                }
-            } else if ($isCompanyManager && !$isAdmin) {
-                // 企業管理者需檢查是否為同一個企業
-                $meetingModel = model('MeetingModel');
-                $meeting = $meetingModel->find($topic['meeting_id']);
-                helper('auth');
-                if (!auth_check_company_access((int)$meeting['urban_renewal_id'], $user)) {
-                    return $this->failForbidden('無權限在此議題投票');
+                    // 一般會員只能為自己投票
+                    // 注意：property_owner_id 可能不存在，需要明確檢查
+                    $userPropertyOwnerId = $user['property_owner_id'] ?? null;
+                    
+                    if ($userPropertyOwnerId === null) {
+                        return $this->failForbidden('您尚未綁定所有權人資料，無法投票');
+                    }
+                    
+                    if ($userPropertyOwnerId !== $data['property_owner_id']) {
+                        return $this->failForbidden('一般會員只能為自己投票');
+                    }
                 }
             }
 

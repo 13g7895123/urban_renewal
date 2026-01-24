@@ -18,6 +18,7 @@ backend/.env
 .idea/
 *.swp
 *.swo
+*.bak
 
 # OS generated files
 .DS_Store

@@ -35,19 +35,9 @@ class MeetingController extends ResourceController
         $this->authService = service('authorizationService');
         $this->meetingModel = model('MeetingModel');
         $this->urbanRenewalModel = model('UrbanRenewalModel');
-
-        // Set CORS headers
-        header('Access-Control-Allow-Origin: *');
-        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
-        header('Access-Control-Expose-Headers: Content-Disposition');
     }
 
     /**
-     * Handle preflight OPTIONS requests
-     */
-    public function options()
-    {
         return $this->response->setStatusCode(200);
     }
 

@@ -27,36 +27,9 @@ class AuthController extends ResourceController
         helper(['auth', 'response', 'audit', 'cookie']);
     }
 
-    /**
-     * 設定 CORS headers (支援 credentials)
-     */
-    private function setCorsHeaders()
-    {
-        $allowedOrigins = [
-            'https://urban.l',
-            'http://localhost:9128',
-            'http://localhost:3000'
-        ];
 
-        $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
-        if (in_array($origin, $allowedOrigins)) {
-            header("Access-Control-Allow-Origin: {$origin}");
-        }
 
-        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
-        header('Access-Control-Allow-Credentials: true');
-    }
-
-    /**
-     * Handle preflight OPTIONS requests
-     */
-    public function options()
-    {
-        $this->setCorsHeaders();
-        return $this->response->setStatusCode(200);
-    }
 
     /**
      * 使用者登入
@@ -153,8 +126,6 @@ class AuthController extends ResourceController
             // 移除敏感資料（保留 is_company_manager 和 user_type 等必要欄位）
             unset($user['password_hash'], $user['password_reset_token'], $user['login_attempts']);
 
-            $this->setCorsHeaders();
-
             return $this->respond([
                 'success' => true,
                 'data' => [
@@ -195,7 +166,6 @@ class AuthController extends ResourceController
 
             // 清除 cookies
             $this->clearAuthCookies();
-            $this->setCorsHeaders();
 
             return $this->respond([
                 'success' => true,
@@ -275,8 +245,6 @@ class AuthController extends ResourceController
             // 記錄 token 更新事件
             log_auth_event('token_refresh', $user['id']);
 
-            $this->setCorsHeaders();
-
             return $this->respond([
                 'success' => true,
                 'data' => [
@@ -303,8 +271,6 @@ class AuthController extends ResourceController
     public function me()
     {
         try {
-            $this->setCorsHeaders();
-
             $user = $this->getCurrentUser();
             if (!$user) {
                 return $this->fail([

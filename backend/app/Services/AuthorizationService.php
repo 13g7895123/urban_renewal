@@ -44,9 +44,6 @@ class AuthorizationService
 
     /**
      * 取得用戶的企業 ID
-     * 
-     * 新架構：優先使用 company_id
-     * 過渡期：從 urban_renewal_id 推導 company_id
      */
     public function getUserCompanyId(?array $user): ?int
     {
@@ -54,17 +51,9 @@ class AuthorizationService
             return null;
         }
 
-        // 新架構：優先使用 company_id
+        // 直接使用 company_id
         if (!empty($user['company_id'])) {
             return (int)$user['company_id'];
-        }
-
-        // 過渡期兼容：從 urban_renewal_id 推導 company_id
-        if (!empty($user['urban_renewal_id'])) {
-            $renewal = $this->urbanRenewalModel->find($user['urban_renewal_id']);
-            if ($renewal && !empty($renewal['company_id'])) {
-                return (int)$renewal['company_id'];
-            }
         }
 
         return null;
