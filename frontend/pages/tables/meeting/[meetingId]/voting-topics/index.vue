@@ -264,14 +264,33 @@ const exportVotingResultsAction = async () => {
 
   console.log('[Voting Topics] Exporting results for topic:', selectedTopic.value)
 
-  const response = await exportVotingResults(selectedTopic.value.id)
+  try {
+    showLoading('匯出中...', '正在生成投票結果檔案，請稍候...')
+    
+    const response = await exportVotingResults(selectedTopic.value.id, 'xlsx')
 
-  if (response.success) {
-    showSuccess('匯出成功', '投票結果已匯出')
-    // TODO: Handle file download
-  } else {
-    console.error('[Voting Topics] Failed to export results:', response.error)
-    showError('匯出失敗', response.error?.message || '無法匯出投票結果')
+    close()
+
+    if (response.success && response.data) {
+      // Create download link
+      const url = window.URL.createObjectURL(response.data)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `投票結果_${selectedTopic.value.title}_${new Date().toISOString().split('T')[0]}.xlsx`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      
+      showSuccess('匯出成功！', 'Excel檔案下載中...')
+    } else {
+      console.error('[Voting Topics] Failed to export results:', response.error)
+      showError('匯出失敗', response.error?.message || '無法匯出投票結果')
+    }
+  } catch (err) {
+    close()
+    console.error('[Voting Topics] Export exception:', err)
+    showError('匯出失敗', err.message || '無法匯出投票結果')
   }
 
   showOtherModal.value = false

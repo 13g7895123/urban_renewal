@@ -236,9 +236,46 @@ const showOtherOptions = (topic) => {
   showOtherModal.value = true
 }
 
-const exportVotingResults = () => {
+const exportVotingResults = async () => {
+  if (!selectedTopic.value) return
+  
   console.log('Exporting voting results for topic:', selectedTopic.value)
-  // TODO: Implement export functionality
+  
+  try {
+    const { showLoading, showSuccess, showError, close } = useSweetAlert()
+    const config = useRuntimeConfig()
+    const baseURL = config.public.apiBaseUrl || `${config.public.backendUrl}/api`
+    
+    showLoading('匯出中...', '正在生成投票結果檔案，請稍候...')
+    
+    // Use $fetch with blob response type for file download
+    const blob = await $fetch(`/voting/export/${selectedTopic.value.id}?format=xlsx`, {
+      baseURL,
+      method: 'GET',
+      responseType: 'blob',
+      credentials: 'include'
+    })
+    
+    close()
+    
+    // Create download link
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `投票結果_${selectedTopic.value.title}_${new Date().toISOString().split('T')[0]}.xlsx`
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+    
+    showSuccess('匯出成功！', 'Excel檔案下載中...')
+  } catch (err) {
+    const { showError, close } = useSweetAlert()
+    close()
+    console.error('[Voting Topics] Export error:', err)
+    showError('匯出失敗', err.message || '無法匯出投票結果')
+  }
+  
   showOtherModal.value = false
 }
 

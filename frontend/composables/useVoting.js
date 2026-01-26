@@ -128,8 +128,32 @@ export const useVoting = () => {
   /**
    * Export voting results
    */
-  const exportVotingResults = async (topicId) => {
-    return await get(`/voting/export/${topicId}`)
+  const exportVotingResults = async (topicId, format = 'xlsx') => {
+    try {
+      const config = useRuntimeConfig()
+      const baseURL = config.public.apiBaseUrl || `${config.public.backendUrl}/api`
+      
+      // Use $fetch with blob response type for file download
+      const blob = await $fetch(`/voting/export/${topicId}?format=${format}`, {
+        baseURL,
+        method: 'GET',
+        responseType: 'blob',
+        credentials: 'include'
+      })
+      
+      return {
+        success: true,
+        data: blob,
+        error: null
+      }
+    } catch (error) {
+      console.error('[Voting] Export error:', error)
+      return {
+        success: false,
+        data: null,
+        error: error
+      }
+    }
   }
 
   /**
