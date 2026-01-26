@@ -166,10 +166,10 @@ const fetchPropertyOwners = async () => {
   loading.value = true
 
   try {
-    console.log('[Property Owners] Fetching from:', `/urban-renewals/${urbanRenewalId.value}/property-owners`)
+    console.log('[Property Owners] Fetching from:', `/api/urban-renewals/${urbanRenewalId.value}/property-owners`)
 
     // Use useApi() composable which automatically adds Authorization header
-    const response = await get(`/urban-renewals/${urbanRenewalId.value}/property-owners`)
+    const response = await get(`/api/urban-renewals/${urbanRenewalId.value}/property-owners`)
 
     if (response.success && response.data.status === 'success') {
       propertyOwners.value = response.data.data || []
@@ -198,9 +198,9 @@ const refreshData = async () => {
 
 const deletePropertyOwner = async (id) => {
   try {
-    console.log('[Property Owners] DELETE request to:', `/property-owners/${id}`)
+    console.log('[Property Owners] DELETE request to:', `/api/property-owners/${id}`)
     // Use useApi() composable which automatically adds Authorization header
-    const response = await del(`/property-owners/${id}`)
+    const response = await del(`/api/property-owners/${id}`)
     console.log('[Property Owners] Raw delete response:', response)
     return response
   } catch (err) {
@@ -227,7 +227,7 @@ const exportOwners = async () => {
     console.log('[Export] Downloading property owners...')
 
     // Use $fetch with blob response type (authentication handled by httpOnly cookie)
-    const blob = await $fetch(`/urban-renewals/${urbanRenewalId.value}/property-owners/export`, {
+    const blob = await $fetch(`/api/urban-renewals/${urbanRenewalId.value}/property-owners/export`, {
       method: 'GET',
       responseType: 'blob'
     })
@@ -261,7 +261,7 @@ const downloadTemplate = async () => {
     console.log('[Template] Downloading template...')
 
     // Use $fetch with blob response type (authentication handled by httpOnly cookie)
-    const blob = await $fetch('/property-owners/template', {
+    const blob = await $fetch('/api/property-owners/template', {
       method: 'GET',
       responseType: 'blob'
     })
@@ -384,7 +384,7 @@ const importOwners = async () => {
       formData.append('file', file)
 
       // Use post() from useApi() composable for automatic authentication
-      const response = await post(`/urban-renewals/${urbanRenewalId.value}/property-owners/import`, formData)
+      const response = await post(`/api/urban-renewals/${urbanRenewalId.value}/property-owners/import`, formData)
 
       console.log('[Import] Response:', response)
 
