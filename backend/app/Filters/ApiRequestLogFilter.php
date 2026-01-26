@@ -41,7 +41,7 @@ class ApiRequestLogFilter implements FilterInterface
         }
 
         // Debug log
-        log_message('info', 'ApiRequestLogFilter::before - ' . $request->getMethod() . ' ' . $request->getUri()->getPath());
+        log_message('info', '[API_LOG_BEFORE] ' . $request->getMethod() . ' ' . $request->getUri()->getPath());
 
         // 不阻擋請求
         return null;
@@ -52,11 +52,11 @@ class ApiRequestLogFilter implements FilterInterface
         $requestId = spl_object_id($request);
         
         // Debug log
-        log_message('info', 'ApiRequestLogFilter::after - ' . $request->getMethod() . ' ' . $request->getUri()->getPath());
+        log_message('info', '[API_LOG_AFTER] ' . $request->getMethod() . ' ' . $request->getUri()->getPath());
         
         // 如果沒有對應的請求資料，直接返回（可能 before 沒有執行）
         if (!isset(self::$requestData[$requestId])) {
-            log_message('warning', 'ApiRequestLogFilter::after - No request data found for request ID: ' . $requestId);
+            log_message('warning', '[API_LOG_AFTER] No request data found for request ID: ' . $requestId);
             return $response;
         }
 
@@ -79,9 +79,9 @@ class ApiRequestLogFilter implements FilterInterface
         }
 
         // Debug log
-        log_message('info', 'ApiRequestLogFilter::after - About to log: ' . json_encode(['endpoint' => $logData['endpoint'], 'status' => $logData['response_status']]));
+        log_message('info', '[API_LOG_AFTER] Calling logAsync for: ' . $logData['endpoint'] . ' (status: ' . $logData['response_status'] . ')');
 
-        // 非同步記錄日誌（避免影響回應速度）
+        // 記錄日誌
         $this->logAsync($logData);
 
         // 清理已使用的資料
@@ -181,31 +181,39 @@ class ApiRequestLogFilter implements FilterInterface
      */
     private function logAsync(array $data): void
     {
+        // 改為同步記錄（方便除錯）
         try {
-            log_message('info', 'ApiRequestLogFilter::logAsync - Registering shutdown function');
+            log_message('info', '[API_LOG] Attempting to log request: ' . $data['method'] . ' ' . $data['endpoint']);
             
-            // 使用 register_shutdown_function 在回應發送後執行
-            register_shutdown_function(function () use ($data) {
-                try {
-                    log_message('info', 'ApiRequestLogFilter - Shutdown function executing, attempting to log request');
-                    
-                    $model = new ApiRequestLogModel();
-                    $result = $model->logRequest($data);
-                    
-                    if ($result) {
-                        log_message('info', 'ApiRequestLogFilter - Successfully logged API request to database');
-                    } else {
-                        log_message('error', 'ApiRequestLogFilter - Failed to log API request (returned false)');
-                        log_message('error', 'Model errors: ' . json_encode($model->errors()));
-                    }
-                } catch (\Exception $e) {
-                    // 記錄失敗不應影響主要流程
-                    log_message('error', 'Failed to log API request: ' . $e->getMessage());
-                    log_message('error', 'Stack trace: ' . $e->getTraceAsString());
+            // 檢查資料表是否存在
+            $db = \Config\Database::connect();
+            
+            if (!$db->tableExists('api_request_logs')) {
+                log_message('error', '[API_LOG] Table api_request_logs does NOT exist! Please run: php spark migrate');
+                return;
+            }
+            
+            log_message('info', '[API_LOG] Table exists, creating model...');
+            
+            $model = new ApiRequestLogModel();
+            
+            log_message('info', '[API_LOG] Model created, calling logRequest...');
+            
+            $result = $model->logRequest($data);
+            
+            if ($result) {
+                log_message('info', '[API_LOG] ✓ Successfully logged to database');
+            } else {
+                log_message('error', '[API_LOG] ✗ Failed to log (returned false)');
+                $errors = $model->errors();
+                if (!empty($errors)) {
+                    log_message('error', '[API_LOG] Model errors: ' . json_encode($errors));
                 }
-            });
+            }
         } catch (\Exception $e) {
-            log_message('error', 'Failed to register API log: ' . $e->getMessage());
+            log_message('error', '[API_LOG] Exception: ' . $e->getMessage());
+            log_message('error', '[API_LOG] File: ' . $e->getFile() . ':' . $e->getLine());
+            log_message('error', '[API_LOG] Trace: ' . $e->getTraceAsString());
         }
     }
 }
