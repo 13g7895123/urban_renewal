@@ -323,4 +323,16 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
 
         $routes->options('(:any)', 'RegistrationLogController::options');
     });
+
+    // API Request Logs (Admin only)
+    $routes->group('request-logs', function ($routes) {
+        $routes->get('/', 'ApiRequestLogController::index');                                    // GET /api/request-logs
+        $routes->get('errors', 'ApiRequestLogController::errors');                              // GET /api/request-logs/errors
+        $routes->get('slow', 'ApiRequestLogController::slow');                                  // GET /api/request-logs/slow
+        $routes->get('statistics', 'ApiRequestLogController::statistics');                      // GET /api/request-logs/statistics
+        $routes->delete('clean', 'ApiRequestLogController::clean');                             // DELETE /api/request-logs/clean
+        $routes->get('(:num)', 'ApiRequestLogController::show/$1');                             // GET /api/request-logs/{id}
+
+        $routes->options('(:any)', 'ApiRequestLogController::options');
+    });
 });

@@ -36,6 +36,7 @@ class Filters extends BaseFilters
         'performance'   => PerformanceMetrics::class,
         'jwtauth'       => \App\Filters\JWTAuthFilter::class,
         'role'          => \App\Filters\RoleFilter::class,
+        'apiRequestLog' => \App\Filters\ApiRequestLogFilter::class,
     ];
 
     /**
@@ -80,6 +81,9 @@ class Filters extends BaseFilters
             // 'invalidchars',
         ],
         'after' => [
+            'apiRequestLog' => ['except' => [
+                'api/request-logs*',  // 避免記錄日誌查詢本身
+            ]],
             // 'honeypot',
             // 'secureheaders',
         ],

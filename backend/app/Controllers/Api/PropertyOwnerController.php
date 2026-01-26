@@ -181,97 +181,47 @@ class PropertyOwnerController extends ResourceController
      */
     public function create(): ResponseInterface
     {
-        $startTime = microtime(true);
-        $logModel = model('ApiRequestLogModel');
-        $logData = [
-            'method' => $this->request->getMethod(),
-            'endpoint' => $this->request->getUri()->getPath(),
-            'ip_address' => $this->request->getIPAddress(),
-            'user_agent' => $this->request->getUserAgent()->toString(),
-        ];
-
         try {
             $this->response->setHeader('Content-Type', 'application/json; charset=utf-8');
 
             $rawInput = $this->request->getBody();
-            
-            // 記錄請求內容
-            $logData['request_body'] = $rawInput ? json_decode($rawInput, true) : null;
-            $logData['user_id'] = $_SERVER['AUTH_USER']['id'] ?? null;
 
             if (empty($rawInput)) {
-                $errorResponse = ['status' => 'error', 'message' => 'No data provided'];
-                $this->logApiRequest($logModel, $logData, 400, $errorResponse, $startTime, 'No data provided');
-                return $this->respond($errorResponse, 400);
+                return $this->respond(['status' => 'error', 'message' => 'No data provided'], 400);
             }
 
             try {
                 $data = json_decode($rawInput, true, 512, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
             } catch (JsonException $e) {
                 log_message('error', 'JSON decode error: ' . $e->getMessage());
-                $errorResponse = ['status' => 'error', 'message' => 'Invalid JSON format: ' . $e->getMessage()];
-                $this->logApiRequest($logModel, $logData, 400, $errorResponse, $startTime, 'JSON decode error: ' . $e->getMessage());
-                return $this->respond($errorResponse, 400);
+                return $this->respond(['status' => 'error', 'message' => 'Invalid JSON format: ' . $e->getMessage()], 400);
             }
 
             if (!$data || !is_array($data)) {
-                $errorResponse = ['status' => 'error', 'message' => 'Invalid data format'];
-                $this->logApiRequest($logModel, $logData, 400, $errorResponse, $startTime, 'Invalid data format');
-                return $this->respond($errorResponse, 400);
+                return $this->respond(['status' => 'error', 'message' => 'Invalid data format'], 400);
             }
 
             $user = $_SERVER['AUTH_USER'] ?? null;
             $result = $this->propertyOwnerService->create($user, $data);
 
-            $successResponse = [
+            return $this->respond([
                 'status' => 'success',
                 'data' => $result,
                 'message' => 'Property owner created successfully'
-            ];
-            $this->logApiRequest($logModel, $logData, 201, $successResponse, $startTime);
-            return $this->respond($successResponse, 201);
+            ], 201);
 
         } catch (UnauthorizedException $e) {
-            $errorResponse = ['status' => 'error', 'message' => $e->getMessage()];
-            $this->logApiRequest($logModel, $logData, 401, $errorResponse, $startTime, $e->getMessage());
-            return $this->respond($errorResponse, 401);
+            return $this->respond(['status' => 'error', 'message' => $e->getMessage()], 401);
         } catch (ForbiddenException $e) {
-            $errorResponse = ['status' => 'error', 'message' => $e->getMessage()];
-            $this->logApiRequest($logModel, $logData, 403, $errorResponse, $startTime, $e->getMessage());
-            return $this->respond($errorResponse, 403);
+            return $this->respond(['status' => 'error', 'message' => $e->getMessage()], 403);
         } catch (ValidationException $e) {
-            $errorResponse = ['status' => 'error', 'message' => $e->getMessage(), 'errors' => $e->getErrors()];
-            $this->logApiRequest($logModel, $logData, 400, $errorResponse, $startTime, $e->getMessage());
-            return $this->respond($errorResponse, 400);
+            return $this->respond(['status' => 'error', 'message' => $e->getMessage(), 'errors' => $e->getErrors()], 400);
         } catch (\InvalidArgumentException $e) {
-            $errorResponse = ['status' => 'error', 'message' => $e->getMessage()];
-            $this->logApiRequest($logModel, $logData, 400, $errorResponse, $startTime, $e->getMessage());
-            return $this->respond($errorResponse, 400);
+            return $this->respond(['status' => 'error', 'message' => $e->getMessage()], 400);
         } catch (\Exception $e) {
             log_message('error', 'Error creating property owner: ' . $e->getMessage());
             log_message('error', 'Stack trace: ' . $e->getTraceAsString());
-            $errorResponse = ['status' => 'error', 'message' => 'Failed to create property owner'];
-            $this->logApiRequest($logModel, $logData, 500, $errorResponse, $startTime, $e->getMessage() . "\n" . $e->getTraceAsString());
-            return $this->respond($errorResponse, 500);
-        }
-    }
-
-    /**
-     * Helper method to log API request
-     */
-    private function logApiRequest($logModel, array $baseData, int $statusCode, array $response, float $startTime, string $errorMessage = null): void
-    {
-        try {
-            $duration = microtime(true) - $startTime;
-            $logModel->logRequest(array_merge($baseData, [
-                'response_status' => $statusCode,
-                'response_body' => json_encode($response, JSON_UNESCAPED_UNICODE),
-                'duration_ms' => round($duration * 1000),
-                'error_message' => $errorMessage,
-            ]));
-        } catch (\Exception $e) {
-            // Don't let logging errors break the main flow
-            log_message('error', 'Failed to log API request: ' . $e->getMessage());
+            return $this->respond(['status' => 'error', 'message' => 'Failed to create property owner'], 500);
         }
     }
 
