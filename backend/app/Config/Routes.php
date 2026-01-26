@@ -332,6 +332,18 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         $routes->get('statistics', 'ApiRequestLogController::statistics');                      // GET /api/request-logs/statistics
         $routes->delete('clean', 'ApiRequestLogController::clean');                             // DELETE /api/request-logs/clean
         $routes->get('(:num)', 'ApiRequestLogController::show/$1');                             // GET /api/request-logs/{id}
+    });
+
+    // Error Logs (Admin only)
+    $routes->group('error-logs', function ($routes) {
+        $routes->get('/', 'ErrorLogController::index');                                         // GET /api/error-logs
+        $routes->get('unresolved', 'ErrorLogController::unresolved');                           // GET /api/error-logs/unresolved
+        $routes->get('critical', 'ErrorLogController::critical');                               // GET /api/error-logs/critical
+        $routes->get('statistics', 'ErrorLogController::statistics');                           // GET /api/error-logs/statistics
+        $routes->post('resolve-multiple', 'ErrorLogController::resolveMultiple');               // POST /api/error-logs/resolve-multiple
+        $routes->delete('clean', 'ErrorLogController::clean');                                  // DELETE /api/error-logs/clean
+        $routes->get('(:num)', 'ErrorLogController::show/$1');                                  // GET /api/error-logs/{id}
+        $routes->patch('(:num)/resolve', 'ErrorLogController::resolve/$1');                     // PATCH /api/error-logs/{id}/resolve
 
         $routes->options('(:any)', 'ApiRequestLogController::options');
     });

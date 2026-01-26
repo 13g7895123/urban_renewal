@@ -110,3 +110,25 @@ Events::on('pre_system', static function (): void {
         log_message('error', $message);
     }
 });
+
+/*
+ * --------------------------------------------------------------------
+ * Error Logging System
+ * --------------------------------------------------------------------
+ * Automatically log exceptions and errors to database for debugging.
+ */
+Events::on('pre_system', static function (): void {
+    // Skip in testing environment
+    if (ENVIRONMENT === 'testing') {
+        return;
+    }
+
+    // Register global error and exception handlers
+    try {
+        $errorLogger = new \App\Libraries\ErrorLogger();
+        $errorLogger->register();
+    } catch (\Throwable $e) {
+        // If error logger fails to initialize, just log it
+        log_message('error', 'Failed to initialize error logger: ' . $e->getMessage());
+    }
+});
