@@ -14,16 +14,18 @@ use App\Models\ApiRequestLogModel;
  */
 class ApiRequestLogFilter implements FilterInterface
 {
-    private $startTime;
-    private $requestData;
+    private static $startTimes = [];
+    private static $requestData = [];
 
     public function before(RequestInterface $request, $arguments = null)
     {
+        $requestId = spl_object_id($request);
+        
         // 記錄開始時間
-        $this->startTime = microtime(true);
+        self::$startTimes[$requestId] = microtime(true);
 
         // 收集請求資訊
-        $this->requestData = [
+        self::$requestData[$requestId] = [
             'method' => $request->getMethod(),
             'endpoint' => $request->getUri()->getPath(),
             'request_headers' => $this->getHeaders($request),
@@ -35,7 +37,7 @@ class ApiRequestLogFilter implements FilterInterface
 
         // 取得使用者 ID（如果已認證）
         if (isset($_SERVER['AUTH_USER']['id'])) {
-            $this->requestData['user_id'] = $_SERVER['AUTH_USER']['id'];
+            self::$requestData[$requestId]['user_id'] = $_SERVER['AUTH_USER']['id'];
         }
 
         // 不阻擋請求
@@ -44,12 +46,20 @@ class ApiRequestLogFilter implements FilterInterface
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
+        $requestId = spl_object_id($request);
+        
+        // 如果沒有對應的請求資料，直接返回（可能 before 沒有執行）
+        if (!isset(self::$requestData[$requestId])) {
+            return $response;
+        }
+
         // 計算執行時間
-        $duration = microtime(true) - $this->startTime;
+        $startTime = self::$startTimes[$requestId] ?? microtime(true);
+        $duration = microtime(true) - $startTime;
         $durationMs = round($duration * 1000);
 
         // 收集回應資訊
-        $logData = array_merge($this->requestData, [
+        $logData = array_merge(self::$requestData[$requestId], [
             'response_status' => $response->getStatusCode(),
             'response_headers' => $this->getResponseHeaders($response),
             'response_body' => $this->getResponseBody($response),
@@ -63,6 +73,10 @@ class ApiRequestLogFilter implements FilterInterface
 
         // 非同步記錄日誌（避免影響回應速度）
         $this->logAsync($logData);
+
+        // 清理已使用的資料
+        unset(self::$startTimes[$requestId]);
+        unset(self::$requestData[$requestId]);
 
         return $response;
     }
