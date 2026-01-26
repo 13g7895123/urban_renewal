@@ -296,9 +296,13 @@ export const usePropertyOwnerForm = (options) => {
    * 新增地號
    */
   const addLand = () => {
-    addLandHelper(formData.lands, landForm, availablePlots.value)
-    resetLandForm(landForm)
-    showAddLandModal.value = false
+    try {
+      addLandHelper(formData.lands, landForm, availablePlots.value)
+      resetLandForm(landForm)
+      showAddLandModal.value = false
+    } catch (error) {
+      showError('新增失敗', error.message || '無法新增地號')
+    }
   }
 
   /**
@@ -312,20 +316,24 @@ export const usePropertyOwnerForm = (options) => {
    * 新增建號
    */
   const addBuilding = () => {
-    addBuildingHelper(
-      formData.buildings,
-      buildingForm,
-      {
-        counties: counties.value,
-        districts: buildingDistricts.value,
-        sections: buildingSections.value
-      }
-    )
+    try {
+      addBuildingHelper(
+        formData.buildings,
+        buildingForm,
+        {
+          counties: counties.value,
+          districts: buildingDistricts.value,
+          sections: buildingSections.value
+        }
+      )
 
-    resetBuildingForm(buildingForm)
-    buildingDistricts.value = []
-    buildingSections.value = []
-    showAddBuildingModal.value = false
+      resetBuildingForm(buildingForm)
+      buildingDistricts.value = []
+      buildingSections.value = []
+      showAddBuildingModal.value = false
+    } catch (error) {
+      showError('新增失敗', error.message || '無法新增建號')
+    }
   }
 
   /**

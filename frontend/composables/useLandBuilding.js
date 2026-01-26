@@ -12,6 +12,13 @@ export const useLandBuilding = () => {
    * @param {Object} availablePlots - 可用地號列表(用於查找顯示名稱)
    */
   const addLand = (lands, landData, availablePlots = []) => {
+    // 檢查是否已存在相同的地號
+    const isDuplicate = lands.some(land => land.plot_number === landData.plot_number)
+    
+    if (isDuplicate) {
+      throw new Error(`地號 ${landData.plot_number} 已經存在，請勿重複新增`)
+    }
+
     // 從可用地號列表中找到對應的地號資訊
     const selectedPlot = availablePlots.find(plot =>
       (plot.landNumber || plot.plot_number) === landData.plot_number
@@ -43,6 +50,22 @@ export const useLandBuilding = () => {
    */
   const addBuilding = (buildings, buildingData, locationData) => {
     const { counties = [], districts = [], sections = [] } = locationData
+
+    // 檢查是否已存在相同的建號（縣市、行政區、段小段、主號、副號都相同）
+    const isDuplicate = buildings.some(building =>
+      building.county === buildingData.county &&
+      building.district === buildingData.district &&
+      building.section === buildingData.section &&
+      building.building_number_main === buildingData.building_number_main &&
+      building.building_number_sub === buildingData.building_number_sub
+    )
+    
+    if (isDuplicate) {
+      const buildingNumber = buildingData.building_number_sub 
+        ? `${buildingData.building_number_main}-${buildingData.building_number_sub}`
+        : buildingData.building_number_main
+      throw new Error(`建號 ${buildingNumber} 已經存在，請勿重複新增`)
+    }
 
     // 取得中文名稱用於顯示
     const countyObj = counties.find(c => c.code === buildingData.county)

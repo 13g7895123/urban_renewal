@@ -651,6 +651,32 @@ const addLandPlot = () => {
 
   const fullLandNumber = `${countyName}${districtName}${sectionName}${landNumber}`
 
+  // 檢查是否已存在相同的地號（相同縣市、行政區、段、地號主號、地號副號）
+  const isDuplicate = landPlots.value.some(plot => {
+    const existingCounty = plot.county
+    const existingDistrict = plot.district
+    const existingSection = plot.section
+    const existingMain = plot.landNumberMain || plot.land_number_main
+    const existingSub = plot.landNumberSub || plot.land_number_sub || ''
+
+    const newCounty = selectedCounty?.code || landForm.county
+    const newDistrict = selectedDistrict?.code || landForm.district
+    const newSection = selectedSection?.code || landForm.section
+    const newMain = landForm.landNumberMain
+    const newSub = landForm.landNumberSub || ''
+
+    return existingCounty === newCounty &&
+           existingDistrict === newDistrict &&
+           existingSection === newSection &&
+           existingMain === newMain &&
+           existingSub === newSub
+  })
+
+  if (isDuplicate) {
+    showError('新增失敗', `地號 ${fullLandNumber} 已經存在，請勿重複新增`)
+    return
+  }
+
   const newPlot = {
     id: `temp_${Date.now()}`, // Temporary ID for new plots
     county: selectedCounty?.code || landForm.county,

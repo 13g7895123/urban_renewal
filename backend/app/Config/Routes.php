@@ -344,6 +344,15 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
         $routes->delete('clean', 'ErrorLogController::clean');                                  // DELETE /api/error-logs/clean
         $routes->get('(:num)', 'ErrorLogController::show/$1');                                  // GET /api/error-logs/{id}
         $routes->patch('(:num)/resolve', 'ErrorLogController::resolve/$1');                     // PATCH /api/error-logs/{id}/resolve
+    });
+
+    // OPcache Management (Admin only)
+    $routes->group('admin/opcache', ['namespace' => 'App\Controllers\Api\Admin'], function ($routes) {
+        $routes->get('status', 'OpcacheController::status');                                    // GET /api/admin/opcache/status
+        $routes->get('scripts', 'OpcacheController::scripts');                                  // GET /api/admin/opcache/scripts
+        $routes->post('reset', 'OpcacheController::reset');                                     // POST /api/admin/opcache/reset
+        $routes->post('reset-system', 'OpcacheController::resetSystem');                        // POST /api/admin/opcache/reset-system
+        $routes->post('invalidate', 'OpcacheController::invalidate');                           // POST /api/admin/opcache/invalidate
 
         $routes->options('(:any)', 'ApiRequestLogController::options');
     });

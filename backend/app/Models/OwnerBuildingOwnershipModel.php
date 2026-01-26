@@ -11,7 +11,7 @@ class OwnerBuildingOwnershipModel extends Model
 
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
-    protected $useSoftDeletes = false;
+    protected $useSoftDeletes = false;  // 確認：不使用軟刪除
 
     protected $allowedFields = [
         'property_owner_id',

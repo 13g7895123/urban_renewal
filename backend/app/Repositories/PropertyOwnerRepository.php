@@ -372,17 +372,48 @@ class PropertyOwnerRepository implements PropertyOwnerRepositoryInterface
      */
     private function syncBuildings(int $ownerId, array $buildings): void
     {
-        // 刪除舊關聯
+        // 停用 callbacks 避免干擾事務
+        $this->ownerBuildingModel->allowCallbacks(false);
+        
+        // 刪除舊關聯（硬刪除）
         $this->ownerBuildingModel->where('property_owner_id', $ownerId)->delete();
-
-        // 新增新關聯
+        
+        // 去重：確保同一個 building_id 只出現一次
+        $uniqueBuildings = [];
         foreach ($buildings as $building) {
-            $this->ownerBuildingModel->insert([
+            $buildingId = $building->getBuildingId();
+            if (!isset($uniqueBuildings[$buildingId])) {
+                $uniqueBuildings[$buildingId] = $building;
+            } else {
+                log_message('warning', "Duplicate building_id {$buildingId} for owner {$ownerId}, skipping duplicate");
+            }
+        }
+        
+        // 批次插入（更高效）
+        $insertData = [];
+        foreach ($uniqueBuildings as $building) {
+            $insertData[] = [
                 'property_owner_id' => $ownerId,
                 'building_id' => $building->getBuildingId(),
                 'ownership_numerator' => $building->getOwnershipNumerator(),
                 'ownership_denominator' => $building->getOwnershipDenominator(),
-            ]);
+            ];
+        }
+        
+        if (!empty($insertData)) {
+            $this->ownerBuildingModel->insertBatch($insertData);
+        }
+        
+        // 重新啟用 callbacks
+        $this->ownerBuildingModel->allowCallbacks(true);
+        
+        // 手動更新總面積（在 callbacks 之外，避免在事務中干擾）
+        try {
+            $propertyOwnerModel = model('PropertyOwnerModel');
+            $propertyOwnerModel->updateTotalAreas($ownerId);
+        } catch (\Exception $e) {
+            log_message('warning', 'Failed to update total areas after sync buildings: ' . $e->getMessage());
+            // 不拋出異常，避免中斷主流程
         }
     }
 
@@ -391,17 +422,48 @@ class PropertyOwnerRepository implements PropertyOwnerRepositoryInterface
      */
     private function syncLands(int $ownerId, array $lands): void
     {
-        // 刪除舊關聯
+        // 停用 callbacks 避免干擾事務
+        $this->ownerLandModel->allowCallbacks(false);
+        
+        // 刪除舊關聯（硬刪除）
         $this->ownerLandModel->where('property_owner_id', $ownerId)->delete();
-
-        // 新增新關聯
+        
+        // 去重：確保同一個 land_plot_id 只出現一次
+        $uniqueLands = [];
         foreach ($lands as $land) {
-            $this->ownerLandModel->insert([
+            $landId = $land->getLandPlotId();
+            if (!isset($uniqueLands[$landId])) {
+                $uniqueLands[$landId] = $land;
+            } else {
+                log_message('warning', "Duplicate land_plot_id {$landId} for owner {$ownerId}, skipping duplicate");
+            }
+        }
+        
+        // 批次插入（更高效）
+        $insertData = [];
+        foreach ($uniqueLands as $land) {
+            $insertData[] = [
                 'property_owner_id' => $ownerId,
                 'land_plot_id' => $land->getLandPlotId(),
                 'ownership_numerator' => $land->getOwnershipNumerator(),
                 'ownership_denominator' => $land->getOwnershipDenominator(),
-            ]);
+            ];
+        }
+        
+        if (!empty($insertData)) {
+            $this->ownerLandModel->insertBatch($insertData);
+        }
+        
+        // 重新啟用 callbacks
+        $this->ownerLandModel->allowCallbacks(true);
+        
+        // 手動更新總面積（在 callbacks 之外，避免在事務中干擾）
+        try {
+            $propertyOwnerModel = model('PropertyOwnerModel');
+            $propertyOwnerModel->updateTotalAreas($ownerId);
+        } catch (\Exception $e) {
+            log_message('warning', 'Failed to update total areas after sync lands: ' . $e->getMessage());
+            // 不拋出異常，避免中斷主流程
         }
     }
 }
