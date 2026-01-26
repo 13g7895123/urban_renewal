@@ -218,25 +218,18 @@ const goBack = () => {
 const exportOwners = async () => {
   try {
     const authStore = useAuthStore()
-    const token = authStore.token
     
-    if (!token) {
+    if (!authStore.isLoggedIn) {
       showError('未授權', '請先登入')
       return
     }
 
     console.log('[Export] Downloading property owners...')
 
-    // Use $fetch with blob response type and proper authentication
+    // Use $fetch with blob response type (authentication handled by httpOnly cookie)
     const blob = await $fetch(`/urban-renewals/${urbanRenewalId.value}/property-owners/export`, {
       method: 'GET',
-      responseType: 'blob',
-      onRequest({ options }) {
-        options.headers = {
-          ...options.headers,
-          Authorization: `Bearer ${token}`
-        }
-      }
+      responseType: 'blob'
     })
     
     // Create download link
@@ -259,25 +252,18 @@ const exportOwners = async () => {
 const downloadTemplate = async () => {
   try {
     const authStore = useAuthStore()
-    const token = authStore.token
     
-    if (!token) {
+    if (!authStore.isLoggedIn) {
       showError('未授權', '請先登入')
       return
     }
 
     console.log('[Template] Downloading template...')
 
-    // Use $fetch with blob response type and proper authentication
+    // Use $fetch with blob response type (authentication handled by httpOnly cookie)
     const blob = await $fetch('/property-owners/template', {
       method: 'GET',
-      responseType: 'blob',
-      onRequest({ options }) {
-        options.headers = {
-          ...options.headers,
-          Authorization: `Bearer ${token}`
-        }
-      }
+      responseType: 'blob'
     })
     
     // Create download link
