@@ -124,6 +124,14 @@ const roleLabel = computed(() => {
   return roleMap[authStore.user?.role] || authStore.user?.role || ''
 })
 
+// Helper to check if user is admin or company manager
+const isCompanyManager = (user) => {
+  const isManager = user?.is_company_manager === 1 ||
+                    user?.is_company_manager === '1' ||
+                    user?.is_company_manager === true
+  return user?.role === 'admin' || isManager
+}
+
 // Menu items configuration with role restrictions
 const menuItems = [
   {
@@ -137,26 +145,14 @@ const menuItems = [
     icon: 'heroicons:building-office-2',
     label: '更新會管理',
     roles: ['admin'],
-    customCheck: (user) => {
-      // Admin 或企業管理者都可以訪問
-      const isManager = user?.is_company_manager === 1 ||
-                        user?.is_company_manager === '1' ||
-                        user?.is_company_manager === true
-      return user?.role === 'admin' || isManager
-    }
+    customCheck: isCompanyManager
   },
   {
     path: '/tables/meeting',
     icon: 'heroicons:document-text',
     label: '會議管理',
     roles: ['admin'],
-    customCheck: (user) => {
-      // Admin 或企業管理者都可以訪問
-      const isManager = user?.is_company_manager === 1 ||
-                        user?.is_company_manager === '1' ||
-                        user?.is_company_manager === true
-      return user?.role === 'admin' || isManager
-    }
+    customCheck: isCompanyManager
   },
   {
     path: '/tables/issue',
@@ -186,15 +182,30 @@ const menuItems = [
   {
     path: '/tables/company-profile',
     icon: 'heroicons:building-office',
-    label: '企業管理',
+    label: '企業基本資料',
     roles: ['admin'],
-    customCheck: (user) => {
-      // 後端返回的可能是字串 "1" 或數字 1
-      const isManager = user?.is_company_manager === 1 ||
-                        user?.is_company_manager === '1' ||
-                        user?.is_company_manager === true
-      return user?.role === 'admin' || isManager
-    }
+    customCheck: isCompanyManager
+  },
+  {
+    path: '/tables/company-members',
+    icon: 'heroicons:user-group',
+    label: '成員管理',
+    roles: ['admin'],
+    customCheck: isCompanyManager
+  },
+  {
+    path: '/tables/company-approvals',
+    icon: 'heroicons:finger-print',
+    label: '帳號審核與邀請',
+    roles: ['admin'],
+    customCheck: isCompanyManager
+  },
+  {
+    path: '/tables/company-assignments',
+    icon: 'heroicons:map-pin',
+    label: '更新會指派',
+    roles: ['admin'],
+    customCheck: isCompanyManager
   }
 ]
 
