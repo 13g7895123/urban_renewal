@@ -225,24 +225,21 @@ const exportOwners = async () => {
       return
     }
 
-    const apiBaseUrl = runtimeConfig.public.apiBaseUrl || ''
-    const baseURL = apiBaseUrl.replace(/\/api$/, '')
-    const exportUrl = `${baseURL}/api/urban-renewals/${urbanRenewalId.value}/property-owners/export`
+    console.log('[Export] Downloading property owners...')
 
-    console.log('[Export] Downloading from:', exportUrl)
-
-    // Create a temporary link with authorization header using fetch + blob
-    const response = await fetch(exportUrl, {
-      headers: {
-        'Authorization': `Bearer ${token}`
+    // Use $fetch with blob response type and proper authentication
+    const blob = await $fetch(`/urban-renewals/${urbanRenewalId.value}/property-owners/export`, {
+      method: 'GET',
+      responseType: 'blob',
+      onRequest({ options }) {
+        options.headers = {
+          ...options.headers,
+          Authorization: `Bearer ${token}`
+        }
       }
     })
     
-    if (!response.ok) {
-      throw new Error('匯出失敗')
-    }
-    
-    const blob = await response.blob()
+    // Create download link
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url

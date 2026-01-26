@@ -180,6 +180,7 @@ class UrbanRenewalRepository implements UrbanRenewalRepositoryInterface
             'chairman_phone' => $entity->getChairmanPhone(),
             'representative' => $entity->getRepresentative(),
             'notes' => $entity->getNotes(),
+            'assigned_admin_id' => $entity->getAssignedAdminId(),
         ];
     }
 }
