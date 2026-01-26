@@ -318,21 +318,24 @@ const runTest = async () => {
       body: requestBody
     })
 
-    // Execute request
-    const response = await fetch(options.url || url, options)
-    const duration = Date.now() - startTime
-    
+    // Execute request using $fetch
     let data
-    const contentType = response.headers.get('content-type')
-    if (contentType && contentType.includes('application/json')) {
-      data = await response.json()
-    } else {
-      data = await response.text()
+    let status = 200
+    let success = true
+    
+    try {
+      data = await $fetch(options.url || url, options)
+    } catch (error) {
+      success = false
+      status = error.response?.status || 500
+      data = error.data || error.message
     }
+    
+    const duration = Date.now() - startTime
 
     testResult.value = {
-      success: response.ok,
-      status: response.status,
+      success: success,
+      status: status,
       duration,
       data,
       error: response.ok ? null : (data.message || data.error || '請求失敗')

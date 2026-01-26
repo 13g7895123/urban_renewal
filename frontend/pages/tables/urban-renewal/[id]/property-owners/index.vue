@@ -266,24 +266,21 @@ const downloadTemplate = async () => {
       return
     }
 
-    const apiBaseUrl = runtimeConfig.public.apiBaseUrl || ''
-    const baseURL = apiBaseUrl.replace(/\/api$/, '')
-    const templateUrl = `${baseURL}/api/property-owners/template`
+    console.log('[Template] Downloading template...')
 
-    console.log('[Template] Downloading from:', templateUrl)
-
-    // Download with authorization header
-    const response = await fetch(templateUrl, {
-      headers: {
-        'Authorization': `Bearer ${token}`
+    // Use $fetch with blob response type and proper authentication
+    const blob = await $fetch('/property-owners/template', {
+      method: 'GET',
+      responseType: 'blob',
+      onRequest({ options }) {
+        options.headers = {
+          ...options.headers,
+          Authorization: `Bearer ${token}`
+        }
       }
     })
     
-    if (!response.ok) {
-      throw new Error('下載失敗')
-    }
-    
-    const blob = await response.blob()
+    // Create download link
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url

@@ -82,46 +82,18 @@ export const useMeetings = () => {
     try {
       const config = useRuntimeConfig()
 
-      // 使用 runtimeConfig 取得正確的後端 URL
-      const backendUrl = config.public.backendUrl ||
-        config.public.apiBaseUrl?.replace('/api', '') ||
-        `http://localhost:${config.public.backendPort || 9228}`
+      console.log('[Export] Exporting meeting notice...')
 
-      console.log('[Export] Using backend URL:', backendUrl)
-
-      // 使用 credentials: 'include' 發送 httpOnly cookies
-      const response = await fetch(`${backendUrl}/api/meetings/${id}/export-notice`, {
+      // Use $fetch to download the file with automatic authentication
+      const blob = await $fetch(`/meetings/${id}/export-notice`, {
         method: 'GET',
-        credentials: 'include'
+        responseType: 'blob'
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        return {
-          success: false,
-          error: errorData.error || { message: '匯出失敗' }
-        }
-      }
-
-      // Get filename from response header
-      const contentDisposition = response.headers.get('Content-Disposition')
-      let filename = '會議通知.docx'
-      if (contentDisposition) {
-        // Try to match filename*=UTF-8''... first
-        let matches = /filename\*=UTF-8''([^;=\n]*)/.exec(contentDisposition)
-        if (matches != null && matches[1]) {
-          filename = decodeURIComponent(matches[1])
-        } else {
-          // Fallback to filename="..."
-          matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition)
-          if (matches != null && matches[1]) {
-            filename = decodeURIComponent(matches[1].replace(/['"]/g, ''))
-          }
-        }
-      }
+      // Default filename
+      let filename = `會議通知_${id}_${new Date().toISOString().split('T')[0]}.docx`
 
       // Download file
-      const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -151,46 +123,18 @@ export const useMeetings = () => {
     try {
       const config = useRuntimeConfig()
 
-      // 使用 runtimeConfig 取得正確的後端 URL
-      const backendUrl = config.public.backendUrl ||
-        config.public.apiBaseUrl?.replace('/api', '') ||
-        `http://localhost:${config.public.backendPort || 9228}`
+      console.log('[Export] Exporting signature book...')
 
-      console.log('[Export] Using backend URL:', backendUrl)
-
-      // 使用 credentials: 'include' 發送 httpOnly cookies
-      const response = await fetch(`${backendUrl}/api/meetings/${id}/export-signature-book?anonymous=${isAnonymous}`, {
+      // Use $fetch to download the file with automatic authentication
+      const blob = await $fetch(`/meetings/${id}/export-signature-book?anonymous=${isAnonymous}`, {
         method: 'GET',
-        credentials: 'include'
+        responseType: 'blob'
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        return {
-          success: false,
-          error: errorData.error || { message: '匯出失敗' }
-        }
-      }
-
-      // Get filename from response header
-      const contentDisposition = response.headers.get('Content-Disposition')
-      let filename = '簽到冊.docx'
-      if (contentDisposition) {
-        // Try to match filename*=UTF-8''... first
-        let matches = /filename\*=UTF-8''([^;=\n]*)/.exec(contentDisposition)
-        if (matches != null && matches[1]) {
-          filename = decodeURIComponent(matches[1])
-        } else {
-          // Fallback to filename="..."
-          matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition)
-          if (matches != null && matches[1]) {
-            filename = decodeURIComponent(matches[1].replace(/['"]/g, ''))
-          }
-        }
-      }
+      // Default filename
+      let filename = `簽到冊_${id}_${new Date().toISOString().split('T')[0]}.docx`
 
       // Download file
-      const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url

@@ -461,27 +461,14 @@ const refreshData = async () => {
 
 const exportCheckinResults = async () => {
   try {
-    const config = useRuntimeConfig()
-    const apiBaseUrl = config.public.apiBaseUrl || config.public.backendUrl || ''
-    const backendUrl = apiBaseUrl.replace(/\/api$/, '')
-    
-    // 呼叫後端 API 匯出 Excel
-    const response = await fetch(`${backendUrl}/api/meetings/${meetingId}/attendances/export`, {
+    // Use $fetch to download the file with automatic authentication
+    const blob = await $fetch(`/meetings/${meetingId}/attendances/export`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+      responseType: 'blob',
+      body: {
         format: 'excel'
-      })
+      }
     })
-
-    if (!response.ok) {
-      throw new Error('匯出失敗')
-    }
-
-    // 取得檔案 blob
-    const blob = await response.blob()
     
     // 建立下載連結
     const url = window.URL.createObjectURL(blob)
