@@ -25,14 +25,13 @@
       <!-- Cards Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-16">
         <!-- Shopping Mall Card (Always Visible) -->
-        <NuxtLink to="/pages/shopping" class="transform hover:scale-105 transition-transform">
-          <UCard class="bg-gradient-to-br from-green-50 to-white shadow-lg hover:shadow-xl transition-all duration-300 py-8 border-2 border-green-100">
+        <NuxtLink to="/pages/shopping" class="h-full transform hover:scale-105 transition-transform">
+          <UCard class="h-full bg-gradient-to-br from-green-50 to-white shadow-lg hover:shadow-xl transition-all duration-300 py-8">
             <div class="h-full flex flex-col items-center justify-center">
               <div class="w-48 h-48 mb-6 flex items-center justify-center bg-white rounded-full shadow-inner p-4">
                 <Icon name="heroicons:shopping-bag" class="w-32 h-32 text-green-600" />
               </div>
               <h3 class="text-2xl font-bold text-green-700">線上商城</h3>
-              <p class="text-sm text-green-600 mt-2 font-medium">購買增開更新會與議題數量</p>
             </div>
           </UCard>
         </NuxtLink>
@@ -42,9 +41,9 @@
           <NuxtLink 
             v-if="canAccess('admin') || authStore.user?.is_company_manager"
             to="/tables/urban-renewal" 
-            class="transform hover:scale-105 transition-transform"
+            class="h-full transform hover:scale-105 transition-transform"
           >
-            <UCard class="bg-white shadow-lg hover:shadow-xl transition-all duration-300 py-8">
+            <UCard class="h-full bg-white shadow-lg hover:shadow-xl transition-all duration-300 py-8">
               <div class="h-full flex flex-col items-center justify-center">
                 <div class="w-48 h-48 mb-6 flex items-center justify-center">
                   <img src="~/assets/images/urban.png" alt="更新會管理" class="w-full h-full object-contain" />
@@ -58,9 +57,9 @@
           <NuxtLink 
             v-if="canAccess('admin') || authStore.user?.is_company_manager"
             to="/tables/meeting" 
-            class="transform hover:scale-105 transition-transform"
+            class="h-full transform hover:scale-105 transition-transform"
           >
-            <UCard class="bg-white shadow-lg hover:shadow-xl transition-all duration-300 py-8">
+            <UCard class="h-full bg-white shadow-lg hover:shadow-xl transition-all duration-300 py-8">
               <div class="h-full flex flex-col items-center justify-center">
                 <div class="w-48 h-48 mb-6 flex items-center justify-center">
                   <img src="~/assets/images/meeting.png" alt="會議管理" class="w-full h-full object-contain" />
@@ -74,9 +73,9 @@
           <NuxtLink 
             v-if="canAccess('member')"
             to="/tables/issue" 
-            class="transform hover:scale-105 transition-transform"
+            class="h-full transform hover:scale-105 transition-transform"
           >
-            <UCard class="bg-white shadow-lg hover:shadow-xl transition-all duration-300 py-8">
+            <UCard class="h-full bg-white shadow-lg hover:shadow-xl transition-all duration-300 py-8">
               <div class="h-full flex flex-col items-center justify-center">
                 <div class="w-48 h-48 mb-6 flex items-center justify-center">
                   <img src="~/assets/images/voting.png" alt="投票管理" class="w-full h-full object-contain" />
@@ -87,8 +86,8 @@
           </NuxtLink>
 
           <!-- User Profile Update Card -->
-          <NuxtLink to="/pages/user" class="transform hover:scale-105 transition-transform">
-            <UCard class="bg-white shadow-lg hover:shadow-xl transition-all duration-300 py-8">
+          <NuxtLink to="/pages/user" class="h-full transform hover:scale-105 transition-transform">
+            <UCard class="h-full bg-white shadow-lg hover:shadow-xl transition-all duration-300 py-8">
               <div class="h-full flex flex-col items-center justify-center">
                 <div class="w-48 h-48 mb-6 flex items-center justify-center">
                   <img src="~/assets/images/profile.png" alt="使用者基本資料變更" class="w-full h-full object-contain" />
@@ -101,8 +100,8 @@
         
         <!-- Registration/Login Card for Guests -->
         <template v-else>
-          <NuxtLink to="/login" class="transform hover:scale-105 transition-transform">
-            <UCard class="bg-gray-50 shadow-md hover:shadow-lg transition-all duration-300 py-8 border-dashed border-2 border-gray-300">
+          <NuxtLink to="/login" class="h-full transform hover:scale-105 transition-transform">
+            <UCard class="h-full bg-gray-50 shadow-md hover:shadow-lg transition-all duration-300 py-8 border-dashed border-2 border-gray-300">
               <div class="h-full flex flex-col items-center justify-center text-center px-4">
                 <Icon name="heroicons:lock-closed" class="w-24 h-24 text-gray-400 mb-6" />
                 <h3 class="text-xl font-bold text-gray-500">管理功能位元登入</h3>
