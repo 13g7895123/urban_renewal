@@ -40,6 +40,9 @@ class ApiRequestLogFilter implements FilterInterface
             self::$requestData[$requestId]['user_id'] = $_SERVER['AUTH_USER']['id'];
         }
 
+        // Debug log
+        log_message('info', 'ApiRequestLogFilter::before - ' . $request->getMethod() . ' ' . $request->getUri()->getPath());
+
         // 不阻擋請求
         return null;
     }
@@ -48,8 +51,12 @@ class ApiRequestLogFilter implements FilterInterface
     {
         $requestId = spl_object_id($request);
         
+        // Debug log
+        log_message('info', 'ApiRequestLogFilter::after - ' . $request->getMethod() . ' ' . $request->getUri()->getPath());
+        
         // 如果沒有對應的請求資料，直接返回（可能 before 沒有執行）
         if (!isset(self::$requestData[$requestId])) {
+            log_message('warning', 'ApiRequestLogFilter::after - No request data found for request ID: ' . $requestId);
             return $response;
         }
 
@@ -70,6 +77,9 @@ class ApiRequestLogFilter implements FilterInterface
         if ($response->getStatusCode() >= 400) {
             $logData['error_message'] = $this->extractErrorMessage($response);
         }
+
+        // Debug log
+        log_message('info', 'ApiRequestLogFilter::after - About to log: ' . json_encode(['endpoint' => $logData['endpoint'], 'status' => $logData['response_status']]));
 
         // 非同步記錄日誌（避免影響回應速度）
         $this->logAsync($logData);
@@ -172,14 +182,26 @@ class ApiRequestLogFilter implements FilterInterface
     private function logAsync(array $data): void
     {
         try {
+            log_message('info', 'ApiRequestLogFilter::logAsync - Registering shutdown function');
+            
             // 使用 register_shutdown_function 在回應發送後執行
             register_shutdown_function(function () use ($data) {
                 try {
+                    log_message('info', 'ApiRequestLogFilter - Shutdown function executing, attempting to log request');
+                    
                     $model = new ApiRequestLogModel();
-                    $model->logRequest($data);
+                    $result = $model->logRequest($data);
+                    
+                    if ($result) {
+                        log_message('info', 'ApiRequestLogFilter - Successfully logged API request to database');
+                    } else {
+                        log_message('error', 'ApiRequestLogFilter - Failed to log API request (returned false)');
+                        log_message('error', 'Model errors: ' . json_encode($model->errors()));
+                    }
                 } catch (\Exception $e) {
                     // 記錄失敗不應影響主要流程
                     log_message('error', 'Failed to log API request: ' . $e->getMessage());
+                    log_message('error', 'Stack trace: ' . $e->getTraceAsString());
                 }
             });
         } catch (\Exception $e) {
