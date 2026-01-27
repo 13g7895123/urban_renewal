@@ -188,11 +188,11 @@ class UserController extends ResourceController
                 return response_error('資料驗證失敗', 400, $validation->getErrors());
             }
 
-            // 檢驗密碼強度
-            $passwordValidation = $this->model->validatePasswordStrength($data['password']);
-            if ($passwordValidation !== true) {
-                return response_error('密碼強度不足', 400, ['password' => $passwordValidation]);
-            }
+            // 檢驗密碼強度（已停用 - 統一使用 min_length[6] 規則）
+            // $passwordValidation = $this->model->validatePasswordStrength($data['password']);
+            // if ($passwordValidation !== true) {
+            //     return response_error('密碼強度不足', 400, ['password' => $passwordValidation]);
+            // }
 
             // 權限檢查：主席只能建立同更新會的使用者
             if ($user['role'] === 'chairman') {
@@ -303,13 +303,13 @@ class UserController extends ResourceController
                 unset($data['role'], $data['urban_renewal_id']);
             }
 
-            // 檢驗密碼強度（如果有提供密碼）
-            if (isset($data['password'])) {
-                $passwordValidation = $this->model->validatePasswordStrength($data['password']);
-                if ($passwordValidation !== true) {
-                    return response_error('密碼強度不足', 400, ['password' => $passwordValidation]);
-                }
-            }
+            // 檢驗密碼強度（如果有提供密碼）（已停用 - 統一使用 min_length[6] 規則）
+            // if (isset($data['password'])) {
+            //     $passwordValidation = $this->model->validatePasswordStrength($data['password']);
+            //     if ($passwordValidation !== true) {
+            //         return response_error('密碼強度不足', 400, ['password' => $passwordValidation]);
+            //     }
+            // }
 
             // 檢驗使用者名稱唯一性
             if (isset($data['username']) && $this->model->usernameExists($data['username'], $id)) {
@@ -621,11 +621,11 @@ class UserController extends ResourceController
                 return response_error('當前密碼錯誤', 400);
             }
 
-            // 檢驗新密碼強度
-            $passwordValidation = $this->model->validatePasswordStrength($data['new_password']);
-            if ($passwordValidation !== true) {
-                return response_error('新密碼強度不足', 400, ['new_password' => $passwordValidation]);
-            }
+            // 檢驗新密碼強度（已停用 - 統一使用 min_length[6] 規則）
+            // $passwordValidation = $this->model->validatePasswordStrength($data['new_password']);
+            // if ($passwordValidation !== true) {
+            //     return response_error('新密碼強度不足', 400, ['new_password' => $passwordValidation]);
+            // }
 
             $success = $this->model->updateUser($user['id'], [
                 'password' => $data['new_password']
