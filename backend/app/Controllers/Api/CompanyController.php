@@ -517,6 +517,10 @@ class CompanyController extends BaseController
             $assignmentModel = new UserRenewalAssignmentModel();
             $members = $assignmentModel->getAssignedUsers($renewalId);
 
+            log_message('debug', '[CompanyController::getRenewalMembers] Renewal ID: ' . $renewalId);
+            log_message('debug', '[CompanyController::getRenewalMembers] Members count: ' . count($members));
+            log_message('debug', '[CompanyController::getRenewalMembers] Members data: ' . json_encode($members));
+
             return $this->response->setJSON([
                 'status' => 'success',
                 'data' => $members

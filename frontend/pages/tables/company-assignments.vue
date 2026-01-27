@@ -221,8 +221,12 @@ const selectRenewal = async (renewal) => {
 const fetchRenewalMembers = async (renewalId) => {
   try {
     const result = await getRenewalMembers(renewalId)
+    console.log('getRenewalMembers result:', result)
+    console.log('result.data:', result.data)
+    console.log('result.data.data:', result.data.data)
     if (result.success) {
       renewalMembers.value = result.data.data || []
+      console.log('renewalMembers set to:', renewalMembers.value)
     }
   } catch (error) {
     console.error('Failed to fetch renewal members:', error)
