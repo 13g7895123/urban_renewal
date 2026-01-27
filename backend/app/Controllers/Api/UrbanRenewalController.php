@@ -425,6 +425,21 @@ class UrbanRenewalController extends BaseController
                     // 取消分配：移除舊管理員的指派記錄
                     if ($oldAdminId) {
                         $assignmentModel->unassign($oldAdminId, $urbanRenewalId);
+                        
+                        // 清除舊管理員的 urban_renewal_id
+                        // 檢查舊管理員是否還有其他更新會的負責管理
+                        $otherAssignments = $this->urbanRenewalModel
+                            ->where('assigned_admin_id', $oldAdminId)
+                            ->where('id !=', $urbanRenewalId)
+                            ->countAllResults();
+                        
+                        // 如果舊管理員沒有其他負責的更新會，清除其 urban_renewal_id
+                        if ($otherAssignments === 0) {
+                            $oldAdmin = $userModel->find($oldAdminId);
+                            if ($oldAdmin && $oldAdmin['urban_renewal_id'] == $urbanRenewalId) {
+                                $userModel->update($oldAdminId, ['urban_renewal_id' => null]);
+                            }
+                        }
                     }
                     $this->urbanRenewalModel->update($urbanRenewalId, ['assigned_admin_id' => null]);
                     $updatedCount++;
@@ -453,6 +468,21 @@ class UrbanRenewalController extends BaseController
                     // 如果更換管理員，先移除舊管理員的指派記錄
                     if ($oldAdminId && $oldAdminId != $managerId) {
                         $assignmentModel->unassign($oldAdminId, $urbanRenewalId);
+                        
+                        // 清除舊管理員的 urban_renewal_id
+                        // 檢查舊管理員是否還有其他更新會的負責管理
+                        $otherAssignments = $this->urbanRenewalModel
+                            ->where('assigned_admin_id', $oldAdminId)
+                            ->where('id !=', $urbanRenewalId)
+                            ->countAllResults();
+                        
+                        // 如果舊管理員沒有其他負責的更新會，清除其 urban_renewal_id
+                        if ($otherAssignments === 0) {
+                            $oldAdmin = $userModel->find($oldAdminId);
+                            if ($oldAdmin && $oldAdmin['urban_renewal_id'] == $urbanRenewalId) {
+                                $userModel->update($oldAdminId, ['urban_renewal_id' => null]);
+                            }
+                        }
                     }
                     
                     // 同步在 user_renewal_assignments 表中創建新管理員的指派記錄
@@ -464,8 +494,9 @@ class UrbanRenewalController extends BaseController
                         ['role' => 'assigned_admin'] // 標記為負責管理員
                     );
                     
-                    // 如果該管理員目前沒有預設更新會，設為此更新會
-                    if (empty($manager['urban_renewal_id'])) {
+                    // 設置新管理員的 urban_renewal_id 為此更新會
+                    // 如果新管理員目前沒有預設更新會，或者是負責這個更新會，就設為此更新會
+                    if (empty($manager['urban_renewal_id']) || $manager['urban_renewal_id'] == $urbanRenewalId) {
                         $userModel->update($managerId, ['urban_renewal_id' => $urbanRenewalId]);
                     }
                     
