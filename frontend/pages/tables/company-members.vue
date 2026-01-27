@@ -80,8 +80,6 @@ const {
   createUser
 } = useCompany()
 
-const { $swal } = useNuxtApp()
-const { showSuccess, showError, showConfirm, showDeleteConfirm, showCustom } = useSweetAlert()
 const authStore = useAuthStore()
 
 const companyId = computed(() => authStore.companyId)
@@ -126,56 +124,46 @@ const loadMembers = async () => {
 }
 
 const addNewManager = async () => {
-  const { value: formValues } = await $swal.fire({
-    title: '新增核心成員',
-    html: `
-      <div class="space-y-4 text-left p-4">
-        <div>
-          <label class="block text-sm font-medium gray-700">帳號*</label>
-          <input id="swal-username" class="w-full border p-2 rounded" placeholder="帳號">
-        </div>
-        <div>
-          <label class="block text-sm font-medium gray-700">姓名*</label>
-          <input id="swal-fullname" class="w-full border p-2 rounded" placeholder="姓名">
-        </div>
-        <div>
-          <label class="block text-sm font-medium gray-700">密碼* (至少6位)</label>
-          <input id="swal-password" type="password" class="w-full border p-2 rounded" placeholder="密碼">
-        </div>
-      </div>
-    `,
-    showCancelButton: true,
-    confirmButtonText: '新增',
-    preConfirm: () => {
-      const username = document.getElementById('swal-username').value
-      const fullName = document.getElementById('swal-fullname').value
-      const password = document.getElementById('swal-password').value
-      if (!username || !fullName || !password) {
-        $swal.showValidationMessage('請填寫所有必填欄位')
-        return false
-      }
-      return { username, full_name: fullName, password }
-    }
-  })
+  // 使用原生 prompt 對話框
+  const username = prompt('請輸入帳號：')
+  if (!username) return
+  
+  const fullName = prompt('請輸入姓名：')
+  if (!fullName) return
+  
+  const password = prompt('請輸入密碼（至少6位）：')
+  if (!password) return
+  
+  // 驗證密碼長度
+  if (password.length < 6) {
+    alert('密碼至少需要6位字元')
+    return
+  }
 
-  if (formValues) {
-    try {
-      const userData = {
-        ...formValues,
-        role: 'member',
-        company_id: companyId.value,
-        is_company_manager: 1,
-        is_active: 1,
-        approval_status: 'approved'
-      }
-      // Assuming createUser is available via a composable or global
-      const { signup } = useAuthStore()
-      // Note: useCompany doesn't have createUser, but we can use the signup logic or a direct API call
-      // For consistency with company-profile.vue, I should check if createUser was defined there.
-      // It wasn't imported in useCompany in the snippets, let's double check.
-    } catch (error) {
-      showError('錯誤', error.message)
+  try {
+    const userData = {
+      username,
+      full_name: fullName,
+      password,
+      role: 'member',
+      company_id: companyId.value,
+      is_company_manager: 1,
+      is_active: 1,
+      approval_status: 'approved'
     }
+    
+    // 使用 useCompany 中的 createUser 方法
+    const result = await createUser(userData)
+    
+    if (result.success) {
+      alert('新增成功！')
+      await loadMembers()
+    } else {
+      alert('新增失敗：' + (result.error?.message || result.data?.message || '未知錯誤'))
+    }
+  } catch (error) {
+    console.error('Failed to create manager:', error)
+    alert('新增失敗：' + (error.message || '未知錯誤'))
   }
 }
 
@@ -184,10 +172,10 @@ const setAsUser = async (manager) => {
     const result = await setAsCompanyUser(manager.id)
     if (result.success) {
       await loadMembers()
-      showSuccess('成功', '已降級為一般用戶')
+      alert('已降級為一般用戶')
     }
   } catch (error) {
-    showError('錯誤', '操作失敗')
+    alert('操作失敗：' + (error.message || '未知錯誤'))
   }
 }
 
@@ -196,25 +184,28 @@ const setAsManager = async (user) => {
     const result = await setAsCompanyManager(user.id)
     if (result.success) {
       await loadMembers()
-      showSuccess('成功', '已提升為管理者')
+      alert('已提升為管理者')
     }
   } catch (error) {
-    showError('錯誤', '操作失敗')
+    alert('操作失敗：' + (error.message || '未知錯誤'))
   }
 }
 
 const deleteManager = async (id) => {
-  const result = await showDeleteConfirm('確認刪除', '確定要刪除此成員嗎？')
-  if (result.isConfirmed) {
-    try {
-      const res = await deleteUserApi(id)
-      if (res.success) {
-        await loadMembers()
-        showSuccess('已刪除', '成員已移除')
-      }
-    } catch (error) {
-      showError('錯誤', '刪除失敗')
+  if (!confirm('確定要刪除此成員嗎？')) {
+    return
+  }
+  
+  try {
+    const res = await deleteUserApi(id)
+    if (res.success) {
+      await loadMembers()
+      alert('成員已移除')
+    } else {
+      alert('刪除失敗：' + (res.error?.message || res.data?.message || '未知錯誤'))
     }
+  } catch (error) {
+    alert('刪除失敗：' + (error.message || '未知錯誤'))
   }
 }
 

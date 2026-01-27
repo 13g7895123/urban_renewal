@@ -591,6 +591,14 @@ class CompanyController extends BaseController
                 return $this->response->setStatusCode(403)->setJSON(['status' => 'error', 'message' => '無權限操作此更新會']);
             }
 
+            // 檢查該使用者是否為此更新會的負責管理員
+            if (!empty($renewal['assigned_admin_id']) && $renewal['assigned_admin_id'] == $userId) {
+                return $this->response->setStatusCode(403)->setJSON([
+                    'status' => 'error', 
+                    'message' => '無法移除指派：該使用者是此更新會的負責管理員，請先在「分配更新會」功能中取消分配後再操作'
+                ]);
+            }
+
             $assignmentModel = new UserRenewalAssignmentModel();
             $assignmentModel->unassign($userId, $renewalId);
 

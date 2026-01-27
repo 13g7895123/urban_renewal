@@ -413,11 +413,19 @@ class UrbanRenewalController extends BaseController
             }
 
             $userModel = model('UserModel');
+            $assignmentModel = model('UserRenewalAssignmentModel');
             $updatedCount = 0;
 
             foreach ($assignments as $urbanRenewalId => $managerId) {
+                // 獲取當前更新會的資料，檢查是否有舊的管理員
+                $currentRenewal = $this->urbanRenewalModel->find($urbanRenewalId);
+                $oldAdminId = $currentRenewal['assigned_admin_id'] ?? null;
+                
                 if (empty($managerId)) {
-                    // 取消分配
+                    // 取消分配：移除舊管理員的指派記錄
+                    if ($oldAdminId) {
+                        $assignmentModel->unassign($oldAdminId, $urbanRenewalId);
+                    }
                     $this->urbanRenewalModel->update($urbanRenewalId, ['assigned_admin_id' => null]);
                     $updatedCount++;
                     continue;
@@ -442,6 +450,25 @@ class UrbanRenewalController extends BaseController
                 ]);
 
                 if ($result) {
+                    // 如果更換管理員，先移除舊管理員的指派記錄
+                    if ($oldAdminId && $oldAdminId != $managerId) {
+                        $assignmentModel->unassign($oldAdminId, $urbanRenewalId);
+                    }
+                    
+                    // 同步在 user_renewal_assignments 表中創建新管理員的指派記錄
+                    // 確保管理責任分配與成員指派資料一致
+                    $assignmentModel->assign(
+                        (int)$managerId, 
+                        (int)$urbanRenewalId, 
+                        $user['id'],
+                        ['role' => 'assigned_admin'] // 標記為負責管理員
+                    );
+                    
+                    // 如果該管理員目前沒有預設更新會，設為此更新會
+                    if (empty($manager['urban_renewal_id'])) {
+                        $userModel->update($managerId, ['urban_renewal_id' => $urbanRenewalId]);
+                    }
+                    
                     $updatedCount++;
                 }
             }
