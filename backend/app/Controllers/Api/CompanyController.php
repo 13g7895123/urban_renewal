@@ -232,7 +232,11 @@ class CompanyController extends BaseController
             $page = $this->request->getGet('page') ?? 1;
             $perPage = $this->request->getGet('per_page') ?? 10;
 
-            $renewals = $this->companyModel->getRenewals($companyId, $page, $perPage);
+            // Use urbanRenewalModel directly to maintain pager reference
+            $renewals = $this->urbanRenewalModel
+                ->where('company_id', $companyId)
+                ->orderBy('created_at', 'DESC')
+                ->paginate($perPage, 'default', $page);
 
             // Add calculated member count and area to each renewal
             foreach ($renewals as &$renewal) {
@@ -247,7 +251,7 @@ class CompanyController extends BaseController
                 'status' => 'success',
                 'message' => '查詢成功',
                 'data' => $renewals,
-                'pager' => $pager->getDetails()
+                'pager' => $pager ? $pager->getDetails() : null
             ]);
         } catch (\Exception $e) {
             log_message('error', '[CompanyController::getRenewals] Exception: ' . $e->getMessage());
