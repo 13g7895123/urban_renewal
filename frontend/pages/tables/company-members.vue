@@ -61,6 +61,122 @@
         </div>
       </UCard>
     </div>
+
+    <!-- Add New Manager Modal -->
+    <UModal v-model="showAddManagerModal" :ui="{ width: 'max-w-md' }">
+      <UCard>
+        <template #header>
+          <h3 class="text-lg font-semibold text-gray-900">新增核心成員</h3>
+        </template>
+
+        <div class="p-6 space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">帳號</label>
+            <UInput v-model="newManagerForm.username" placeholder="請輸入帳號" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">姓名</label>
+            <UInput v-model="newManagerForm.fullName" placeholder="請輸入姓名" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">密碼</label>
+            <UInput 
+              v-model="newManagerForm.password" 
+              type="password" 
+              placeholder="請輸入密碼（至少6位）" 
+            />
+          </div>
+
+          <div class="flex justify-end gap-3 pt-4">
+            <UButton variant="outline" @click="closeAddManagerModal">
+              取消
+            </UButton>
+            <UButton 
+              color="green" 
+              @click="confirmAddManager"
+              :disabled="!newManagerForm.username || !newManagerForm.fullName || !newManagerForm.password"
+            >
+              <Icon name="heroicons:check" class="w-4 h-4 mr-2" />
+              確認新增
+            </UButton>
+          </div>
+        </div>
+      </UCard>
+    </UModal>
+
+    <!-- Set As User Confirmation Modal -->
+    <UModal v-model="showSetAsUserModal" :ui="{ width: 'max-w-md' }">
+      <UCard>
+        <template #header>
+          <h3 class="text-lg font-semibold text-gray-900">確認降級</h3>
+        </template>
+
+        <div class="p-6">
+          <p class="text-gray-700 mb-6">
+            確定要將 <strong>{{ selectedMember?.name }}</strong> 降級為一般用戶嗎？
+          </p>
+
+          <div class="flex justify-end gap-3">
+            <UButton variant="outline" @click="showSetAsUserModal = false">
+              取消
+            </UButton>
+            <UButton color="blue" @click="confirmSetAsUser">
+              確認降級
+            </UButton>
+          </div>
+        </div>
+      </UCard>
+    </UModal>
+
+    <!-- Set As Manager Confirmation Modal -->
+    <UModal v-model="showSetAsManagerModal" :ui="{ width: 'max-w-md' }">
+      <UCard>
+        <template #header>
+          <h3 class="text-lg font-semibold text-gray-900">確認提升</h3>
+        </template>
+
+        <div class="p-6">
+          <p class="text-gray-700 mb-6">
+            確定要將 <strong>{{ selectedMember?.name }}</strong> 提升為管理者嗎？
+          </p>
+
+          <div class="flex justify-end gap-3">
+            <UButton variant="outline" @click="showSetAsManagerModal = false">
+              取消
+            </UButton>
+            <UButton color="blue" @click="confirmSetAsManager">
+              確認提升
+            </UButton>
+          </div>
+        </div>
+      </UCard>
+    </UModal>
+
+    <!-- Delete Member Confirmation Modal -->
+    <UModal v-model="showDeleteModal" :ui="{ width: 'max-w-md' }">
+      <UCard>
+        <template #header>
+          <h3 class="text-lg font-semibold text-gray-900">確認刪除</h3>
+        </template>
+
+        <div class="p-6">
+          <p class="text-gray-700 mb-6">
+            確定要刪除 <strong>{{ selectedMember?.name }}</strong> 嗎？此操作無法復原。
+          </p>
+
+          <div class="flex justify-end gap-3">
+            <UButton variant="outline" @click="showDeleteModal = false">
+              取消
+            </UButton>
+            <UButton color="red" @click="confirmDelete">
+              確定刪除
+            </UButton>
+          </div>
+        </div>
+      </UCard>
+    </UModal>
   </NuxtLayout>
 </template>
 
@@ -86,6 +202,20 @@ const companyId = computed(() => authStore.companyId)
 const managers = ref([])
 const users = ref([])
 const loading = ref(false)
+
+// Modal states
+const showAddManagerModal = ref(false)
+const showSetAsUserModal = ref(false)
+const showSetAsManagerModal = ref(false)
+const showDeleteModal = ref(false)
+const selectedMember = ref(null)
+
+// New manager form data
+const newManagerForm = ref({
+  username: '',
+  fullName: '',
+  password: ''
+})
 
 const memberColumns = [
   { key: 'name', label: '使用者' },
@@ -123,16 +253,27 @@ const loadMembers = async () => {
   }
 }
 
-const addNewManager = async () => {
-  // 使用原生 prompt 對話框
-  const username = prompt('請輸入帳號：')
-  if (!username) return
-  
-  const fullName = prompt('請輸入姓名：')
-  if (!fullName) return
-  
-  const password = prompt('請輸入密碼（至少6位）：')
-  if (!password) return
+const addNewManager = () => {
+  // 重置表單
+  newManagerForm.value = {
+    username: '',
+    fullName: '',
+    password: ''
+  }
+  showAddManagerModal.value = true
+}
+
+const closeAddManagerModal = () => {
+  showAddManagerModal.value = false
+  newManagerForm.value = {
+    username: '',
+    fullName: '',
+    password: ''
+  }
+}
+
+const confirmAddManager = async () => {
+  const { username, fullName, password } = newManagerForm.value
   
   // 驗證密碼長度
   if (password.length < 6) {
@@ -152,11 +293,11 @@ const addNewManager = async () => {
       approval_status: 'approved'
     }
     
-    // 使用 useCompany 中的 createUser 方法
     const result = await createUser(userData)
     
     if (result.success) {
       alert('新增成功！')
+      closeAddManagerModal()
       await loadMembers()
     } else {
       alert('新增失敗：' + (result.error?.message || result.data?.message || '未知錯誤'))
@@ -167,10 +308,17 @@ const addNewManager = async () => {
   }
 }
 
-const setAsUser = async (manager) => {
+const setAsUser = (manager) => {
+  selectedMember.value = manager
+  showSetAsUserModal.value = true
+}
+
+const confirmSetAsUser = async () => {
   try {
-    const result = await setAsCompanyUser(manager.id)
+    const result = await setAsCompanyUser(selectedMember.value.id)
     if (result.success) {
+      showSetAsUserModal.value = false
+      selectedMember.value = null
       await loadMembers()
       alert('已降級為一般用戶')
     }
@@ -179,10 +327,17 @@ const setAsUser = async (manager) => {
   }
 }
 
-const setAsManager = async (user) => {
+const setAsManager = (user) => {
+  selectedMember.value = user
+  showSetAsManagerModal.value = true
+}
+
+const confirmSetAsManager = async () => {
   try {
-    const result = await setAsCompanyManager(user.id)
+    const result = await setAsCompanyManager(selectedMember.value.id)
     if (result.success) {
+      showSetAsManagerModal.value = false
+      selectedMember.value = null
       await loadMembers()
       alert('已提升為管理者')
     }
@@ -191,14 +346,17 @@ const setAsManager = async (user) => {
   }
 }
 
-const deleteManager = async (id) => {
-  if (!confirm('確定要刪除此成員嗎？')) {
-    return
-  }
-  
+const deleteManager = (row) => {
+  selectedMember.value = row
+  showDeleteModal.value = true
+}
+
+const confirmDelete = async () => {
   try {
-    const res = await deleteUserApi(id)
+    const res = await deleteUserApi(selectedMember.value.id)
     if (res.success) {
+      showDeleteModal.value = false
+      selectedMember.value = null
       await loadMembers()
       alert('成員已移除')
     } else {
