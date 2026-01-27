@@ -63,7 +63,7 @@
     </div>
 
     <!-- Add New Manager Modal -->
-    <UModal v-model="showAddManagerModal" :ui="{ width: 'max-w-md' }">
+    <UModal v-model="showAddManagerModal" :ui="{ width: 'max-w-md', overlay: { background: 'bg-gray-200/75' } }">
       <UCard>
         <template #header>
           <h3 class="text-lg font-semibold text-gray-900">新增核心成員</h3>
@@ -107,7 +107,7 @@
     </UModal>
 
     <!-- Set As User Confirmation Modal -->
-    <UModal v-model="showSetAsUserModal" :ui="{ width: 'max-w-md' }">
+    <UModal v-model="showSetAsUserModal" :ui="{ width: 'max-w-md', overlay: { background: 'bg-gray-200/75' } }">
       <UCard>
         <template #header>
           <h3 class="text-lg font-semibold text-gray-900">確認降級</h3>
@@ -131,7 +131,7 @@
     </UModal>
 
     <!-- Set As Manager Confirmation Modal -->
-    <UModal v-model="showSetAsManagerModal" :ui="{ width: 'max-w-md' }">
+    <UModal v-model="showSetAsManagerModal" :ui="{ width: 'max-w-md', overlay: { background: 'bg-gray-200/75' } }">
       <UCard>
         <template #header>
           <h3 class="text-lg font-semibold text-gray-900">確認提升</h3>
@@ -155,7 +155,7 @@
     </UModal>
 
     <!-- Delete Member Confirmation Modal -->
-    <UModal v-model="showDeleteModal" :ui="{ width: 'max-w-md' }">
+    <UModal v-model="showDeleteModal" :ui="{ width: 'max-w-md', overlay: { background: 'bg-gray-200/75' } }">
       <UCard>
         <template #header>
           <h3 class="text-lg font-semibold text-gray-900">確認刪除</h3>
