@@ -34,7 +34,7 @@ class UserRenewalAssignmentModel extends Model
     {
         return $this->select('user_renewal_assignments.*, users.username, users.full_name as name, users.email')
             ->join('users', 'users.id = user_renewal_assignments.user_id')
-            ->where('urban_renewal_id', $urbanRenewalId)
+            ->where('user_renewal_assignments.urban_renewal_id', $urbanRenewalId)
             ->findAll();
     }
 
