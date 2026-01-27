@@ -52,20 +52,45 @@ class UrbanRenewalRepository implements UrbanRenewalRepositoryInterface
      */
     public function getPaginated(int $page, int $perPage, array $filters = []): array
     {
-        $builder = $this->urbanRenewalModel;
-
+        // Create a fresh builder instance for count
+        $countBuilder = $this->urbanRenewalModel->builder();
+        
         if (!empty($filters['company_id'])) {
-            $builder->where('company_id', $filters['company_id']);
+            $countBuilder->where('company_id', $filters['company_id']);
         }
 
         if (!empty($filters['search'])) {
-            $builder->like('name', $filters['search']);
+            $countBuilder->like('name', $filters['search']);
+        }
+        
+        // Add deleted_at filter for soft deletes
+        $countBuilder->where('deleted_at', null);
+
+        $total = $countBuilder->countAllResults();
+
+        // Create a new builder instance for the actual query
+        $builder = $this->urbanRenewalModel->builder();
+        $builder->select('urban_renewals.*');
+        
+        // Add LEFT JOIN to get assigned admin name
+        $builder->select('users.full_name as assigned_admin_name, users.username as assigned_admin_username');
+        $builder->join('users', 'users.id = urban_renewals.assigned_admin_id', 'left');
+        
+        if (!empty($filters['company_id'])) {
+            $builder->where('urban_renewals.company_id', $filters['company_id']);
         }
 
-        $total = $builder->countAllResults(false);
-        $data = $builder->orderBy('created_at', 'DESC')
+        if (!empty($filters['search'])) {
+            $builder->like('urban_renewals.name', $filters['search']);
+        }
+        
+        // Add deleted_at filter for soft deletes
+        $builder->where('urban_renewals.deleted_at', null);
+
+        $data = $builder->orderBy('urban_renewals.created_at', 'DESC')
             ->limit($perPage, ($page - 1) * $perPage)
-            ->findAll();
+            ->get()
+            ->getResultArray();
 
         return [
             'data' => array_map(fn($item) => $this->hydrateWithRelations($item), $data),
@@ -157,6 +182,18 @@ class UrbanRenewalRepository implements UrbanRenewalRepositoryInterface
             $company = $companyModel->find($data['company_id']);
             if ($company) {
                 $entity->setCompanyName($company['name']);
+            }
+        }
+        
+        // 設定 assigned admin 名稱（如果已經在 JOIN 中獲取）
+        if (!empty($data['assigned_admin_name'])) {
+            $entity->setAssignedAdminName($data['assigned_admin_name']);
+        } elseif (!empty($data['assigned_admin_id'])) {
+            // 如果沒有 JOIN，手動查詢
+            $userModel = model('UserModel');
+            $admin = $userModel->find($data['assigned_admin_id']);
+            if ($admin) {
+                $entity->setAssignedAdminName($admin['full_name'] ?? $admin['username']);
             }
         }
 

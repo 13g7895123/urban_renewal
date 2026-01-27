@@ -105,7 +105,9 @@ class UserModel extends Model
      */
     public function getUsers($page = 1, $perPage = 10, $filters = [])
     {
-        $builder = $this->select('users.*');
+        // Join urban_renewals table to get urban_renewal_name
+        $builder = $this->select('users.*, urban_renewals.name as urban_renewal_name')
+            ->join('urban_renewals', 'urban_renewals.id = users.urban_renewal_id', 'left');
 
         // 篩選條件
         if (!empty($filters['role'])) {

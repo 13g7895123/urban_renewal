@@ -20,6 +20,7 @@ class UrbanRenewal
     private ?string $representative = null;
     private ?string $notes = null;
     private ?int $assignedAdminId = null;
+    private ?string $assignedAdminName = null;
     private ?int $memberCount = null;
     private ?float $totalLandArea = null;
     private ?float $totalBuildingArea = null;
@@ -102,6 +103,11 @@ class UrbanRenewal
     public function getAssignedAdminId(): ?int
     {
         return $this->assignedAdminId;
+    }
+
+    public function getAssignedAdminName(): ?string
+    {
+        return $this->assignedAdminName;
     }
 
     public function getMemberCount(): ?int
@@ -203,6 +209,12 @@ class UrbanRenewal
         return $this;
     }
 
+    public function setAssignedAdminName(?string $assignedAdminName): self
+    {
+        $this->assignedAdminName = $assignedAdminName;
+        return $this;
+    }
+
     public function setMemberCount(?int $count): self
     {
         $this->memberCount = $count;
@@ -271,6 +283,7 @@ class UrbanRenewal
             'representative' => $this->representative,
             'notes' => $this->notes,
             'assigned_admin_id' => $this->assignedAdminId,
+            'assigned_admin_name' => $this->assignedAdminName,
             'member_count' => $this->memberCount,
             'total_land_area' => $this->totalLandArea,
             'total_building_area' => $this->totalBuildingArea,
@@ -302,6 +315,7 @@ class UrbanRenewal
         $entity->setNotes($data['notes'] ?? null);
 
         if (isset($data['assigned_admin_id'])) $entity->setAssignedAdminId((int)$data['assigned_admin_id']);
+        if (isset($data['assigned_admin_name'])) $entity->setAssignedAdminName($data['assigned_admin_name']);
         if (isset($data['member_count'])) $entity->setMemberCount((int)$data['member_count']);
         if (isset($data['total_land_area'])) $entity->setTotalLandArea((float)$data['total_land_area']);
         if (isset($data['total_building_area'])) $entity->setTotalBuildingArea((float)$data['total_building_area']);
