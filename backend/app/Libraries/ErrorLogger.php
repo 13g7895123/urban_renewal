@@ -162,7 +162,7 @@ class ErrorLogger
             // 取得 User Agent
             $userAgent = $request->getUserAgent();
             if ($userAgent) {
-                $data['user_agent'] = $userAgent->toString();
+                $data['user_agent'] = (string)$userAgent;
             }
 
             // 取得使用者 ID
