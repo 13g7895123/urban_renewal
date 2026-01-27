@@ -374,6 +374,30 @@ const validateForm = async () => {
     }
   }
 
+  // 驗證密碼強度
+  const passwordErrors = []
+  
+  if (formData.value.password.length < 8) {
+    passwordErrors.push('密碼至少需要8個字元')
+  }
+  
+  if (!/[A-Z]/.test(formData.value.password)) {
+    passwordErrors.push('密碼需包含至少一個大寫字母')
+  }
+  
+  if (!/[a-z]/.test(formData.value.password)) {
+    passwordErrors.push('密碼需包含至少一個小寫字母')
+  }
+  
+  if (!/[0-9]/.test(formData.value.password)) {
+    passwordErrors.push('密碼需包含至少一個數字')
+  }
+  
+  if (passwordErrors.length > 0) {
+    await showWarning('密碼強度不足', passwordErrors.join('\n'))
+    return false
+  }
+
   if (formData.value.password !== formData.value.confirmPassword) {
     await showError('密碼不一致', '密碼與確認密碼不符')
     return false

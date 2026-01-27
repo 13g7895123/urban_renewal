@@ -276,9 +276,27 @@ const closeAddManagerModal = () => {
 const confirmAddManager = async () => {
   const { username, fullName, password } = newManagerForm.value
   
-  // 驗證密碼長度
-  if (password.length < 6) {
-    showWarning('密碼強度不足', '密碼至少需要6位字元')
+  // 驗證密碼強度（與後端及註冊頁面一致）
+  const passwordErrors = []
+  
+  if (password.length < 8) {
+    passwordErrors.push('密碼至少需要8個字元')
+  }
+  
+  if (!/[A-Z]/.test(password)) {
+    passwordErrors.push('密碼需包含至少一個大寫字母')
+  }
+  
+  if (!/[a-z]/.test(password)) {
+    passwordErrors.push('密碼需包含至少一個小寫字母')
+  }
+  
+  if (!/[0-9]/.test(password)) {
+    passwordErrors.push('密碼需包含至少一個數字')
+  }
+  
+  if (passwordErrors.length > 0) {
+    showWarning('密碼強度不足', passwordErrors.join('\n'))
     return
   }
 
