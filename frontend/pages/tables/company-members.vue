@@ -196,6 +196,7 @@ const {
   createUser
 } = useCompany()
 
+const { showSuccess, showError, showWarning } = useSweetAlert()
 const authStore = useAuthStore()
 
 const companyId = computed(() => authStore.companyId)
@@ -277,7 +278,7 @@ const confirmAddManager = async () => {
   
   // 驗證密碼長度
   if (password.length < 6) {
-    alert('密碼至少需要6位字元')
+    showWarning('密碼強度不足', '密碼至少需要6位字元')
     return
   }
 
@@ -296,15 +297,15 @@ const confirmAddManager = async () => {
     const result = await createUser(userData)
     
     if (result.success) {
-      alert('新增成功！')
+      showSuccess('新增成功', '核心成員已成功新增')
       closeAddManagerModal()
       await loadMembers()
     } else {
-      alert('新增失敗：' + (result.error?.message || result.data?.message || '未知錯誤'))
+      showError('新增失敗', result.error?.message || result.data?.message || '未知錯誤')
     }
   } catch (error) {
     console.error('Failed to create manager:', error)
-    alert('新增失敗：' + (error.message || '未知錯誤'))
+    showError('新增失敗', error.message || '未知錯誤')
   }
 }
 
@@ -320,10 +321,10 @@ const confirmSetAsUser = async () => {
       showSetAsUserModal.value = false
       selectedMember.value = null
       await loadMembers()
-      alert('已降級為一般用戶')
+      showSuccess('操作成功', '已降級為一般用戶')
     }
   } catch (error) {
-    alert('操作失敗：' + (error.message || '未知錯誤'))
+    showError('操作失敗', error.message || '未知錯誤')
   }
 }
 
@@ -339,10 +340,10 @@ const confirmSetAsManager = async () => {
       showSetAsManagerModal.value = false
       selectedMember.value = null
       await loadMembers()
-      alert('已提升為管理者')
+      showSuccess('操作成功', '已提升為管理者')
     }
   } catch (error) {
-    alert('操作失敗：' + (error.message || '未知錯誤'))
+    showError('操作失敗', error.message || '未知錯誤')
   }
 }
 
@@ -358,12 +359,12 @@ const confirmDelete = async () => {
       showDeleteModal.value = false
       selectedMember.value = null
       await loadMembers()
-      alert('成員已移除')
+      showSuccess('刪除成功', '成員已成功移除')
     } else {
-      alert('刪除失敗：' + (res.error?.message || res.data?.message || '未知錯誤'))
+      showError('刪除失敗', res.error?.message || res.data?.message || '未知錯誤')
     }
   } catch (error) {
-    alert('刪除失敗：' + (error.message || '未知錯誤'))
+    showError('刪除失敗', error.message || '未知錯誤')
   }
 }
 
