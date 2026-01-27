@@ -57,7 +57,7 @@
                       :key="manager.id"
                       :value="manager.id"
                     >
-                      {{ manager.full_name }}
+                      {{ manager.name }}
                     </option>
                   </select>
                   <p v-if="!getManagersForRenewal(renewal.id) || getManagersForRenewal(renewal.id).length === 0" class="mt-1 text-xs text-gray-500">
