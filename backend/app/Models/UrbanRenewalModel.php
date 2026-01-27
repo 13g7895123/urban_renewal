@@ -195,6 +195,17 @@ class UrbanRenewalModel extends Model
     }
 
     /**
+     * Calculate assigned member count (工作人員指派數量)
+     * @param int $urbanRenewalId
+     * @return int
+     */
+    public function calculateAssignedMemberCount(int $urbanRenewalId): int
+    {
+        $assignmentModel = new \App\Models\UserRenewalAssignmentModel();
+        return $assignmentModel->where('urban_renewal_id', $urbanRenewalId)->countAllResults();
+    }
+
+    /**
      * Get urban renewal with calculated member count
      * @param int $id
      * @return array|null

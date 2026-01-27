@@ -240,7 +240,7 @@ class CompanyController extends BaseController
 
             // Add calculated member count and area to each renewal
             foreach ($renewals as &$renewal) {
-                $renewal['member_count'] = $this->urbanRenewalModel->calculateMemberCount($renewal['id']);
+                $renewal['member_count'] = $this->urbanRenewalModel->calculateAssignedMemberCount($renewal['id']);
                 $renewal['area'] = $this->urbanRenewalModel->calculateTotalLandArea($renewal['id']);
             }
             unset($renewal);
