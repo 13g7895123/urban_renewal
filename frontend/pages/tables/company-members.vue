@@ -320,8 +320,8 @@ const confirmSetAsUser = async () => {
     if (result.success) {
       showSetAsUserModal.value = false
       selectedMember.value = null
-      await loadMembers()
       showSuccess('操作成功', '已降級為一般用戶')
+      await loadMembers() // 重新載入資料
     }
   } catch (error) {
     showError('操作失敗', error.message || '未知錯誤')
@@ -339,8 +339,8 @@ const confirmSetAsManager = async () => {
     if (result.success) {
       showSetAsManagerModal.value = false
       selectedMember.value = null
-      await loadMembers()
       showSuccess('操作成功', '已提升為管理者')
+      await loadMembers() // 重新載入資料
     }
   } catch (error) {
     showError('操作失敗', error.message || '未知錯誤')
@@ -358,8 +358,8 @@ const confirmDelete = async () => {
     if (res.success) {
       showDeleteModal.value = false
       selectedMember.value = null
-      await loadMembers()
       showSuccess('刪除成功', '成員已成功移除')
+      await loadMembers() // 重新載入資料
     } else {
       showError('刪除失敗', res.error?.message || res.data?.message || '未知錯誤')
     }

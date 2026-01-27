@@ -334,6 +334,7 @@ const handleAssignSubmit = async (assignments) => {
 
       showAssignAdminModal.value = false
       await fetchRenewals() // 重新載入列表
+      await fetchCompanyManagers() // 重新載入管理者列表
     } else {
       alert.error('分配失敗', response.data?.message || '分配失敗，請稍後再試')
     }
