@@ -82,6 +82,78 @@
         </div>
       </UCard>
     </div>
+
+    <!-- Assign Member Modal -->
+    <UModal v-model="showAssignModal" :ui="{ width: 'max-w-md', overlay: { background: 'bg-gray-200/75' } }">
+      <UCard>
+        <template #header>
+          <h3 class="text-lg font-semibold text-gray-900">指派人員至更新會</h3>
+        </template>
+
+        <div class="p-6 space-y-4">
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+            <p class="text-sm text-blue-800">
+              <strong>{{ selectedRenewal?.name }}</strong>
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">選擇成員</label>
+            <select
+              v-model="selectedUserId"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            >
+              <option value="">-- 請選擇成員 --</option>
+              <option
+                v-for="user in availableUsers"
+                :key="user.id"
+                :value="user.id"
+              >
+                {{ user.full_name || user.username }} (@{{ user.username }})
+              </option>
+            </select>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-4">
+            <UButton variant="outline" @click="closeAssignModal">
+              取消
+            </UButton>
+            <UButton 
+              color="green" 
+              @click="confirmAssign"
+              :disabled="!selectedUserId"
+            >
+              <Icon name="heroicons:check" class="w-4 h-4 mr-2" />
+              確認指派
+            </UButton>
+          </div>
+        </div>
+      </UCard>
+    </UModal>
+
+    <!-- Unassign Confirmation Modal -->
+    <UModal v-model="showUnassignModal" :ui="{ width: 'max-w-md', overlay: { background: 'bg-gray-200/75' } }">
+      <UCard>
+        <template #header>
+          <h3 class="text-lg font-semibold text-gray-900">確認移除指派</h3>
+        </template>
+
+        <div class="p-6">
+          <p class="text-gray-700 mb-6">
+            確定要將此成員從更新會中移除嗎？
+          </p>
+
+          <div class="flex justify-end gap-3">
+            <UButton variant="outline" @click="showUnassignModal = false">
+              取消
+            </UButton>
+            <UButton color="red" @click="confirmUnassign">
+              確認移除
+            </UButton>
+          </div>
+        </div>
+      </UCard>
+    </UModal>
   </NuxtLayout>
 </template>
 
@@ -101,13 +173,19 @@ const {
   getAvailableMembers
 } = useCompany()
 
-const { $swal } = useNuxtApp()
-const { showSuccess, showError, showConfirm, showCustom } = useSweetAlert()
+const { showSuccess, showError } = useSweetAlert()
 
 const renewals = ref([])
 const selectedRenewal = ref(null)
 const renewalMembers = ref([])
 const loadingRenewals = ref(false)
+
+// Modal states
+const showAssignModal = ref(false)
+const showUnassignModal = ref(false)
+const availableUsers = ref([])
+const selectedUserId = ref('')
+const userToUnassign = ref(null)
 
 const assignmentColumns = [
   { key: 'name', label: '姓名' },
@@ -155,69 +233,67 @@ const openAssignMemberModal = async () => {
   if (!selectedRenewal.value) return
 
   const availableRes = await getAvailableMembers()
-  const availableUsers = availableRes.success ? availableRes.data.data : []
+  const allUsers = availableRes.success ? availableRes.data.data : []
   
-  const unassignedUsers = availableUsers.filter(u => 
+  const unassignedUsers = allUsers.filter(u => 
     !renewalMembers.value.some(m => m.user_id === u.id)
   )
 
   if (unassignedUsers.length === 0) {
-    await showCustom({
-      title: '無可用人員',
-      text: '所有公司成員皆已指派至此更新會，或目前無已核准的成員。',
-      icon: 'info'
-    })
+    showError('無可用人員', '所有公司成員皆已指派至此更新會，或目前無已核准的成員。')
     return
   }
 
-  const { value: userId } = await $swal.fire({
-    title: '指派人員至更新會',
-    text: `正在指派人員至：${selectedRenewal.value.name}`,
-    input: 'select',
-    inputOptions: unassignedUsers.reduce((acc, user) => {
-      acc[user.id] = `${user.full_name || user.username} (@${user.username})`
-      return acc
-    }, {}),
-    inputPlaceholder: '請選擇要指派的成員',
-    showCancelButton: true,
-    confirmButtonText: '確認指派',
-    cancelButtonText: '取消',
-    inputValidator: (value) => {
-      if (!value) return '請選擇成員'
-    }
-  })
+  availableUsers.value = unassignedUsers
+  selectedUserId.value = ''
+  showAssignModal.value = true
+}
 
-  if (userId) {
-    try {
-      const res = await assignMemberToRenewal(selectedRenewal.value.id, userId)
-      if (res.success) {
-        showSuccess('成功', '人員指派成功')
-        await fetchRenewalMembers(selectedRenewal.value.id)
-        await loadRenewals()
-      } else {
-        throw new Error(res.error?.message || '指派失敗')
-      }
-    } catch (error) {
-      showError('錯誤', error.message)
+const closeAssignModal = () => {
+  showAssignModal.value = false
+  selectedUserId.value = ''
+  availableUsers.value = []
+}
+
+const confirmAssign = async () => {
+  if (!selectedUserId.value) return
+
+  try {
+    const res = await assignMemberToRenewal(selectedRenewal.value.id, selectedUserId.value)
+    if (res.success) {
+      showSuccess('成功', '人員指派成功')
+      closeAssignModal()
+      await fetchRenewalMembers(selectedRenewal.value.id)
+      await loadRenewals()
+    } else {
+      throw new Error(res.error?.message || '指派失敗')
     }
+  } catch (error) {
+    showError('錯誤', error.message)
   }
 }
 
 const handleUnassign = async (userId) => {
-  const result = await showConfirm('取消指派', '確定要將此成員從更新會中移除嗎？', '確認移除')
-  if (result.isConfirmed) {
-    try {
-      const res = await unassignMemberFromRenewal(selectedRenewal.value.id, userId)
-      if (res.success) {
-        showSuccess('成功', '指派已移除')
-        await fetchRenewalMembers(selectedRenewal.value.id)
-        await loadRenewals()
-      } else {
-        throw new Error(res.error?.message || '移除失敗')
-      }
-    } catch (error) {
-      showError('錯誤', error.message)
+  userToUnassign.value = userId
+  showUnassignModal.value = true
+}
+
+const confirmUnassign = async () => {
+  if (!userToUnassign.value) return
+
+  try {
+    const res = await unassignMemberFromRenewal(selectedRenewal.value.id, userToUnassign.value)
+    if (res.success) {
+      showSuccess('成功', '指派已移除')
+      showUnassignModal.value = false
+      userToUnassign.value = null
+      await fetchRenewalMembers(selectedRenewal.value.id)
+      await loadRenewals()
+    } else {
+      throw new Error(res.error?.message || '移除失敗')
     }
+  } catch (error) {
+    showError('錯誤', error.message)
   }
 }
 
